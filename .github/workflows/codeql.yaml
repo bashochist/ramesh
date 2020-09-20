@@ -1,0 +1,24 @@
+# Broadly based on example Github action from
+# https://github.com/github/codeql-action#usage
+name: codeql
+# https://docs.github.com/en/actions/reference/workflow-syntax-for-github-actions#permissions
+# https://github.com/github/codeql-action/issues/572
+permissions:
+  actions: read
+  contents: read
+  pull-requests: read
+  security-events: write
+on:
+  push:
+    branches:
+      - main
+jobs:
+  codeql:
+    runs-on: ubuntu-20.04
+    steps:
+      - name: checkout
+        uses: actions/checkout@v3
+      - name: initialize
+        uses: github/codeql-action/init@v2
+        with:
+          # Limit analysis to Go f
