@@ -199,4 +199,59 @@
   of the core library, making generating the Well-Known Types separately undesirable.
 - Remove `buf protoc`. This was a pre-v1.0 demonstration to show that `buf` compilation
   produces equivalent results to mainline `protoc`, however `buf` is working on building
-  a better Protobuf future that 
+  a better Protobuf future that provides easier mechanics than our former `protoc`-based
+  world. `buf protoc` itself added no benefit over mainline `protoc` beyond being considerably
+  faster and allowing parallel compilation. If `protoc` is required, move back to mainline `protoc`
+  until you can upgrade to `buf`. See [#915](https://github.com/bufbuild/buf/pull/915) for more
+  details.
+- Context modifier no longer overrides an existing token on the context. This allows `buf registry login`
+  to properly check the user provided token without the token being overridden by the CLI interceptor.
+- Removed the `buf config init` command in favor of `buf mod init`.
+- Removed the `buf config ls-breaking-rules` command in favor of `buf mod ls-breaking-rules`.
+- Removed the `buf config ls-lint-rules` command in favor of `buf mod ls-lint-rules`.
+- Removed the `buf config migrate-v1beta1` command in favor of `buf beta migrate-v1beta1`.
+- Add `buf beta decode` command to decode message with provided image source and message type.
+- Disable `--config` flag for workspaces.
+- Move default config version from `v1beta1` to `v1`.
+
+## [v1.0.0-rc12] - 2022-02-01
+
+- Add `default`, `except` and `override` to `java_package_prefix`.
+- Add dependency commits as a part of the `b3` digest.
+- Upgrade to `protoc` 3.19.4 support.
+- Remove `branch` field from `buf.lock`.
+
+## [v1.0.0-rc11] - 2022-01-18
+
+- Upgrade to `protoc` 3.19.3 support.
+- Add `PACKAGE_NO_IMPORT_CYCLE` lint rule to detect package import cycles.
+- Add `buf beta registry {plugin,template} {deprecate,undeprecate}`.
+- Add warning when using enterprise dependencies without specifying a enterprise
+  remote in the module's identity.
+- Remove `digest`, and `created_at` fields from the `buf.lock`. This will temporarily create a new commit
+  when pushing the same contents to an existing repository, since the `ModulePin` has been reduced down.
+- Add `--track` flag to `buf push`
+- Update `buf beta registry commit list` to allow a track to be specified.
+- Add `buf beta registry track {list,delete}` commands.
+- Add manpages for `buf`.
+
+## [v1.0.0-rc10] - 2021-12-16
+
+- Fix issue where remote references were not correctly cached.
+
+## [v1.0.0-rc9] - 2021-12-15
+
+- Always set `compiler_version` parameter in the `CodeGeneratorRequest` to "(unknown)".
+- Fix issue where `buf mod update` was unable to resolve dependencies from different remotes.
+- Display the user-provided Buf Schema Registry remote, if specified, instead of the default within the `buf login` message.
+- Fix issue where `buf generate` fails when the same plugin was specified more than once in a single invocation.
+- Update the digest algorithm so that it encodes the `name`, `lint`, and `breaking` configuration encoded in the `buf.yaml`.
+  When this change is deployed, users will observe the following:
+  - Users on `v0.43.0` or before will notice mismatched digest errors similar to the one described in https://github.com/bufbuild/buf/issues/661.
+  - Users on `v0.44.0` or after will have their module cache invalidated, but it will repair itself automatically.
+  - The `buf.lock` (across all versions) will reflect the new `b3-` digest values for new commits.
+
+## [v1.0.0-rc8] - 2021-11-10
+
+- Add new endpoints to the recommendation service to make it configurable.
+- Add `--exclude-path` flag to `buf breaking`, `buf build`, `buf export`, `buf generate`, 
