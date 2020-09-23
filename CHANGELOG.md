@@ -130,4 +130,73 @@
 
 - Fix issue where `// buf:lint:ignore` comment ignores did not work for the
   `ENUM_FIRST_VALUE_ZERO` rule.
-- Add `buf beta studio-agent` command to support the up
+- Add `buf beta studio-agent` command to support the upcoming Buf Studio.
+
+## [v1.5.0] - 2022-05-30
+
+- Upgrade to `protoc` 3.20.1 support.
+- Fix an issue where `buf` would fail if two or more roots contained
+  a file with the same name, but with different file types (i.e. a
+  regular file vs. a directory).
+- Fix check for `PACKAGE_SERVICE_NO_DELETE` to detect deleted services.
+- Remove `buf beta registry track`.
+- Remove `buf beta registry branch`.
+
+## [v1.4.0] - 2022-04-21
+
+- Fix issue where duplicate synthetic oneofs (such as with proto3 maps or
+  optional fields) did not result in a properly formed error.
+- Add `buf beta registry repository update` command which supports updating
+  repository visibility (public vs private). As with all beta commands, this
+  is likely to change in the future.
+
+## [v1.3.1] - 2022-03-30
+
+- Allow `--config` flag to be set when targeting a module within a workspace.
+- Update `buf format`'s file option order so that default file options are
+  sorted before custom options.
+- Update `buf format` to write adjacent string literals across multiple lines.
+- Fix `buf format` so that the output directory (if any) is created if and only
+  if the input is successfully formatted.
+
+## [v1.3.0] - 2022-03-25
+
+- Add `--exit-code` flag to `buf format` to exit with a non-zero exit code if
+  the files were not already formatted.
+
+## [v1.2.1] - 2022-03-24
+
+- Fix a few formatting edge cases.
+
+## [v1.2.0] - 2022-03-24
+
+- Add `buf format` command to format `.proto` files.
+- Fix build scripts to avoid using the `command-line-arguments` pseudo-package
+  when building binaries and re-introduce checking for proper usage of private
+  packages.
+
+## [v1.1.1] - 2022-03-21
+
+- Remove check for proper usage of private packages due to a breaking change made in the Golang standard library in 1.18.
+
+## [v1.1.0] - 2022-03-01
+- Add `--type` flag to the `build` command to create filtered images containing
+  only the specified types and their required dependencies.
+- Trim spaces and new lines from user-supplied token for `buf registry login`.
+- Add support for conversion between JSON and binary serialized message for `buf beta convert`.
+
+## [v1.0.0] - 2022-02-17
+
+- Check that the user provided a valid token when running `buf registry login`.
+- Add `buf mod open` that opens a module's homepage in a browser.
+- Add `buf completion` command to generate auto-completion scripts in commonly used shells.
+- Add `--disable-symlinks` flag to the `breaking, build, export, generate, lint, ls-files, push`
+  commands. By default, the CLI will follow symlinks except on Windows, and this disables following
+  symlinks.
+- Add `--include-wkt` flag to `buf generate`. When this flag is specified alongside
+  `--include-imports`, this will result in the [Well-Known Types](https://github.com/bufbuild/wellknowntypes/tree/11ea259bf71c4d386131c1986ffe103cb1edb3d6/v3.19.4/google/protobuf)
+  being generated as well. Most language runtimes have the Well-Known Types included as part
+  of the core library, making generating the Well-Known Types separately undesirable.
+- Remove `buf protoc`. This was a pre-v1.0 demonstration to show that `buf` compilation
+  produces equivalent results to mainline `protoc`, however `buf` is working on building
+  a better Protobuf future that 
