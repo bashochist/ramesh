@@ -254,4 +254,66 @@
 ## [v1.0.0-rc8] - 2021-11-10
 
 - Add new endpoints to the recommendation service to make it configurable.
-- Add `--exclude-path` flag to `buf breaking`, `buf build`, `buf export`, `buf generate`, 
+- Add `--exclude-path` flag to `buf breaking`, `buf build`, `buf export`, `buf generate`, and `buf lint` commands. This allows users to exclude specific paths when running commands.
+- Change `GetModulePackages` endpoint to return a repeated `ModulePackage` message that now includes package description with the package name.
+- Add `Oneof` to the `Message` structure for documentation.
+
+## [v1.0.0-rc7] - 2021-11-08
+
+- Upgrade to `protoc` 3.19.1 support.
+- Fix issue with `buf generate` where multiple insertion points are defined in the same file.
+
+## [v1.0.0-rc6] - 2021-10-20
+
+- Fix issue with `buf ls-files` when given an image as an input, imports were being printed,
+  even without the `--include-imports` flag.
+- Add the ability for users to provide individual protobuf files as inputs to CLI commands. This allows users to run `buf` commands against and file input based on their current working directory, for example, `buf lint foo/bar.proto`, where `foo/bar.proto` is a path to protobuf file on disk.
+
+## [v1.0.0-rc5] - 2021-10-12
+
+- Add `buf beta registry repository deprecate` and `buf beta registry repository undeprecate`.
+- Support `--include-imports` for remote plugins.
+- Fix issue where `buf config migrate-v1beta1 fails` when files cannot be renamed.
+- Fix issue where `buf registry login` panics when an existing .netrc entry exists.
+
+## [v1.0.0-rc4] - 2021-10-07
+
+- Fix issue where `buf generate` could fail when used with large numbers of plugins and files on
+  systems with low file limits.
+- Add `buf protoc --version` flag back. This was accidentally removed.
+- Upgrade to `protoc` 3.18.1 support.
+
+## [v1.0.0-rc3] - 2021-10-04
+
+- Add `--as-import-paths` flag to `ls-files` that strips local directory paths and prints file
+  paths as they are imported.
+- Fix issue where groups used in custom options did not result in the same behavior as `protoc`.
+- Fix issue where insertion points were not applied with respect to the configured output directory.
+
+## [v1.0.0-rc2] - 2021-09-23
+
+- Add `--include-imports` flag to `ls-files`.
+- Upgrade to `protoc` 3.18.0 support.
+- Fix regression with git inputs using `recurse_submodules=true`.
+
+## [v1.0.0-rc1] - 2021-09-15
+
+This is our first v1.0 release candidate. This release largely concentrates on erroring for
+already-deprecated commands and flags.
+
+At Buf, we take compatibility very seriously. When we say v1.0, we mean it - we hope `buf` will be
+stable on v1 for the next decade, and if there is something we want to change, it is our responsibility to
+make sure that we don't break you, not your responsibility to change because of us. We have learned
+a lot about `buf` usage in the last two years of our beta, and have deprecated flags and commands as
+we go, but for v1.0, we are removing the deprecated items to make sure we have a clean setup going forward.
+
+All commands and flags have been printing warnings for a long time, and have an easy migration path.
+Simply update the command or flag, and you'll be good to go:
+
+- Removed the `buf login` command in favor of `buf registry login`.
+- Removed the `buf logout` command in favor of `buf registry logout`.
+- Removed the `buf mod init` command in favor of `buf config init`.
+- Removed the `--name` and `--dep` flags in `buf config init`.
+- Removed the `--log-level` global flag.
+- Moved the output of `--version` from stderr to stdout.
+- Moved the output of `--help` and `help` f
