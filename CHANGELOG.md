@@ -338,4 +338,35 @@ Simply update the command or flag, and you'll be good to go:
 - [From v0.29.0](https://github.com/bufbuild/buf/releases/tag/v0.29.0): Removed the `--input` flag on `buf lint` in favor of the first positional parameter.
 - [From v0.29.0](https://github.com/bufbuild/buf/releases/tag/v0.29.0): Removed the `--input-config` flag on `buf lint` in favor of the `--config` flag.
 - [From v0.29.0](https://github.com/bufbuild/buf/releases/tag/v0.29.0): Removed the `--input` flag on `buf breaking` in favor of the first positional parameter.
-- [From v0.29.0](http
+- [From v0.29.0](https://github.com/bufbuild/buf/releases/tag/v0.29.0): Removed the `--input-config` flag on `buf breaking` in favor of the `--config` flag.
+- [From v0.29.0](https://github.com/bufbuild/buf/releases/tag/v0.29.0): Removed the `--against-input` flag on `buf breaking` in favor of the `--against` flag.
+- [From v0.29.0](https://github.com/bufbuild/buf/releases/tag/v0.29.0): Removed the `--against-input-config` flag on `buf breaking` in favor of the `--against-config` flag.
+- [From v0.29.0](https://github.com/bufbuild/buf/releases/tag/v0.29.0): Removed the `--input` flag on `buf generate` in favor of the first positional parameter.
+- [From v0.29.0](https://github.com/bufbuild/buf/releases/tag/v0.29.0): Removed the `--input-config` flag on `buf generate` in favor of the `--config` flag.
+- [From v0.29.0](https://github.com/bufbuild/buf/releases/tag/v0.29.0): Removed the `--input` flag on `buf ls-files` in favor of the first positional parameter.
+- [From v0.29.0](https://github.com/bufbuild/buf/releases/tag/v0.29.0): Removed the `--input-config` flag on `buf ls-files` in favor of the `--config` flag.
+- [From v0.29.0](https://github.com/bufbuild/buf/releases/tag/v0.29.0): Removed the `buf image build` command in favor of `buf build`.
+- [From v0.29.0](https://github.com/bufbuild/buf/releases/tag/v0.29.0): Removed the `buf image convert` command.
+- [From v0.29.0](https://github.com/bufbuild/buf/releases/tag/v0.29.0): Removed the `buf beta image convert` command.
+- [From v0.23.0](https://github.com/bufbuild/buf/releases/tag/v0.23.0): Removed the `buf experimental image convert` command.
+- [From v0.52.0](https://github.com/bufbuild/buf/releases/tag/v0.52.0) [and v0.34.0](https://github.com/bufbuild/buf/releases/tag/v0.34.0): Complete deletion `protoc-gen-buf-check-breaking` and `protoc-gen-buf-check-lint`, which have been moved to `protoc-gen-buf-breaking` and `protoc-gen-buf-lint`.
+
+In January 2021 (v0.34.0), `protoc-gen-buf-check-breaking` and `protoc-gen-buf-check-lint` were deprecated and scheduled for removal for v1.0. In August 2021 (v0.52.0), we began returning error for every invocation of `protoc-gen-buf-check-breaking` and `protoc-gen-buf-check-lint`. This release completes the deletion process.
+
+The only migration necessary is to change your installation and invocation from `protoc-gen-buf-check-breaking` to `protoc-gen-buf-breaking` and `protoc-gen-buf-check-lint` to `protoc-gen-buf-lint`. These can be installed in the exact same manner, whether from GitHub Releases, Homebrew, AUR, or direct Go installation:
+
+```
+# instead of go get github.com/bufbuild/buf/cmd/protoc-gen-buf-check-breaking
+go get github.com/bufbuild/buf/cmd/protoc-gen-buf-breaking
+# instead of curl -sSL https://github.com/bufbuild/buf/releases/download/v0.57.0/protoc-gen-buf-check-breaking-Linux-x86_64
+curl -sSL https://github.com/bufbuild/buf/releases/download/v0.57.0/protoc-gen-buf-breaking-Linux-x86_64
+```
+
+## [v0.56.0] - 2021-09-08
+
+- Cascade `ENUM_ZERO_VALUE_SUFFIX` comment ignores from the enum level.
+- Fix issue where `buf genarate --output` was not being respected in 0.55.0.
+
+## [v0.55.0] - 2021-09-07
+
+- Error if `version:` is not set in `buf.yaml`. This is one of the few breaking changes we must make before v1.0 to guarantee stability for the future. If y
