@@ -369,4 +369,62 @@ curl -sSL https://github.com/bufbuild/buf/releases/download/v0.57.0/protoc-gen-b
 
 ## [v0.55.0] - 2021-09-07
 
-- Error if `version:` is not set in `buf.yaml`. This is one of the few breaking changes we must make before v1.0 to guarantee stability for the future. If y
+- Error if `version:` is not set in `buf.yaml`. This is one of the few breaking changes we must make before v1.0 to guarantee stability for the future. If you do not have a version set, simply add `version: v1beta1` to the top of your `buf.yaml`.
+- Support `BUF_TOKEN` for authentication. `buf` will now look for a token in the `BUF_TOKEN` environment variable, falling back to `.netrc` as set via `buf login`.
+- Add support for using remote plugins with local source files.
+- Add per-file overrides for managed mode.
+- Fix issue with the module cache where multiple simulataneous downloads would result in a temporarily-corrupted cache.
+- Hide verbose messaing behind the `--verbose` (`-v`) flag.
+- Add `--debug` flag to print out debug logging.
+
+## [v0.54.1] - 2021-08-30
+
+- Fix docker build.
+
+## [v0.54.0] - 2021-08-30
+
+- Add windows support.
+- Add `java_package_prefix` support to managed mode.
+- Fix issue with C# namespaces in managed mode.
+- Fix issue where `:main` was appended for errors containing references to modules.
+
+## [v0.53.0] - 2021-08-25
+
+- Fix issue where `buf generate --include-imports` would end up generating files for certain imports twice.
+- Error when both a `buf.mod` and `buf.yaml` are present. `buf.mod` was briefly used as the new default name for `buf.yaml`, but we've reverted back to `buf.yaml`.
+
+## [v0.52.0] - 2021-08-19
+
+Return error for all invocations of `protoc-gen-buf-check-breaking` and `protoc-gen-buf-check-lint`.
+
+As one of the few changes buf will ever make, `protoc-gen-buf-check-breaking` and `protoc-gen-buf-check-lint` were deprecated and scheduled for removal for v1.0 in January 2021. In preparation for v1.0, instead of just printing out a message notifying users of this, these commands now return an error for every invocation and will be completely removed when v1.0 is released.
+
+The only migration necessary is to change your installation and invocation from `protoc-gen-buf-check-breaking` to `protoc-gen-buf-breaking` and `protoc-gen-buf-check-lint` to `protoc-gen-buf-lint`. These can be installed in the exact same manner, whether from GitHub Releases, Homebrew, AUR, or direct Go installation:
+
+```
+# instead of go get github.com/bufbuild/buf/cmd/protoc-gen-buf-check-breaking
+go get github.com/bufbuild/buf/cmd/protoc-gen-buf-breaking
+# instead of curl -sSL https://github.com/bufbuild/buf/releases/download/v0.52.0/protoc-gen-buf-check-breaking-Linux-x86_64
+curl -sSL https://github.com/bufbuild/buf/releases/download/v0.52.0/protoc-gen-buf-breaking-Linux-x86_64
+```
+
+There is no change in functionality.
+
+## [v0.51.1] - 2021-08-16
+
+- Fix issue with git LFS where a remote must be set for fetch.
+
+## [v0.51.0] - 2021-08-13
+
+- Accept packages of the form `v\d+alpha` and `v\d+beta` as packages with valid versions. These will be considered unstable packages for the purposes of linting and breaking change detection if `ignore_unstable_packages` is set.
+- Fix issue with git clones that occurred when using a previous reference of the current branch.
+
+## [v0.50.0] - 2021-08-12
+
+- Add `buf generate --include-imports` that also generates all imports except for the Well-Known Types.
+- Fix issue where a deleted file within an unstable package that contained messages, enums, or services resulted in a breaking change failure if the `PACKAGE` category was used and `ignore_unstable_packages` was set.
+
+## [v0.49.0] - 2021-08-10
+
+- Split `FIELD_SAME_TYPE` breaking change rule into `FIELD_SAME_TYPE, FIELD_WIRE_COMPATIBLE_TYPE, FIELD_WIRE_JSON_COMPATIBLE_TYPE` in `v1`. See https://github.com/bufbuild/buf/pull/400 for details.
+- Only export imported depende
