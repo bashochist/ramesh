@@ -427,4 +427,64 @@ There is no change in functionality.
 ## [v0.49.0] - 2021-08-10
 
 - Split `FIELD_SAME_TYPE` breaking change rule into `FIELD_SAME_TYPE, FIELD_WIRE_COMPATIBLE_TYPE, FIELD_WIRE_JSON_COMPATIBLE_TYPE` in `v1`. See https://github.com/bufbuild/buf/pull/400 for details.
-- Only export imported depende
+- Only export imported dependencies from `buf export`.
+
+## [v0.48.2] - 2021-07-30
+
+- Fix git args for http auth with git lfs.
+
+## [v0.48.1] - 2021-07-30
+
+- Fix: use `-c` on `git` parent command instead of `--config` on `git fetch`.
+- Add `ruby_package` to managed mode.
+
+## [v0.48.0] - 2021-07-29
+
+- Add `buf export`. `buf export` will export the files from the specified input (default `"."`) to the given directory in a manner that is buildable by `protoc` without any `-I` flags. It also has options `--exclude-imports`, which excludes imports (and won't result in a buildable set of files), and `--path`, which filters to the specific paths.
+
+## [v0.47.0] - 2021-07-29
+
+- Rewrite the git cloner to use `git init && git fetch` rather than `git clone`. `git clone` is limited to local branches on the remote, whereas `git fetch` we can fetch any references on the remote including remote branches.
+- Add `php_namespace` managed mode handling.
+- Add `java_string_check_utf8` managed mode handling.
+
+## [v0.46.0] - 2021-07-27
+
+- Add `buf login` and `buf logout` to login and logout from the Buf Schema Registry.
+- Fix cache, configuration, and data environment variables for Windows. Note that while Windows is still not officially supported, `buf` largely works on Windows.
+
+## [v0.45.0] - 2021-07-26
+
+- Revert default configuration file location back from `buf.mod` to `buf.yaml`. Note that both continue to work.
+- Move default workspace configuration file location from `buf.work` to `buf.work.yaml`. Note that both continue to work.
+- Move `buf beta push` to `buf push`. Note that `buf beta push` continues to work.
+- Move most `buf beta mod` commands to `buf mod`. Note that all `buf beta mod` commands continue to work.
+- Add `--only` flag to `buf mod update`.
+- Warn if `buf.yaml` contains dependencies that are not represented in the `buf.lock` file.
+- Add `--version` flag to `buf config ls-{breaking,lint}-rules`.
+- Add `SYNTAX_SPECIFIED` lint rule to `BASIC, DEFAULT` categories for v1 configuration.
+- Add `IMPORT_USED` lint rule to `BASIC, DEFAULT` categories for v1 configuration.
+- Bring v1 configuration out of beta.
+- Add managed mode for `objc_class_prefix`, `csharp_namespace`.
+
+## [v0.44.0] - 2021-07-08
+
+- Fix issue where C++ scoping rules were not properly enforced.
+- Add support for splitting directory paths passed to `buf protoc -I` by a directory separator.
+- Fix Windows support for builtin `protoc` plugins when using `buf generate` or `buf protoc`. Note that Windows remains officially unsupported as we have not set up testing, but largely works.
+- Upgrade to `protoc` 3.17.3 support.
+- Change the default module configuration location from `buf.yaml` to `buf.mod`. Note that `buf.yaml` continues to work.
+- Continued work on the workspaces beta, including the `v1` configuration specification.
+- Continued work on the managed mode beta, including the `v1` configuration specification.
+- Add `v1` module configuration specification in beta - please continue to use `v1beta1` until the `v1` configuration specification is rolled out.
+- Add `buf config migrate-v1beta1`.
+
+## [v0.43.2] - 2021-05-31
+
+- Fix namespace resolution diff with protoc.
+
+## [v0.43.1] - 2021-05-28
+
+- Revert `protoc` namespace resolution diff change.
+
+## [v0.43.0] - 2021-
