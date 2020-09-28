@@ -487,4 +487,76 @@ There is no change in functionality.
 
 - Revert `protoc` namespace resolution diff change.
 
-## [v0.43.0] - 2021-
+## [v0.43.0] - 2021-05-28
+
+- Do not count `buf:lint:ignore` directives as valid comments for the `COMMENT_.*` lint rules.
+- Upgrade to `protoc` 3.17.1 support.
+- Fix namespace resolution diff with `protoc`.
+
+## [v0.42.1] - 2021-05-20
+
+- Change the architecture suffix of the Linux ARM release assets from `arm64` to `aarch64` to match the output of `uname -m` on Linux.
+
+## [v0.42.0] - 2021-05-20
+
+- Add managed mode in beta. This is a new feature that automatically sets file option values.
+- Add workspaces in beta. This is a new feature that allows multiple modules within the same directory structure.
+- Add arm64 releases.
+
+## [v0.41.0] - 2021-04-01
+
+* Add `MESSAGE_SAME_REQUIRED_FIELDS` breaking change rule. This checks to make sure no `required` fields are added or deleted from existing messages.
+* Support multi-architecture Docker image.
+* Exit with code 100 for `FileAnnotation` errors.
+
+## [v0.40.0] - 2021-03-15
+
+* Add `buf beta registry tag {create,list}` commands.
+* Add support for creating tags in `push` via `buf beta push -t`.
+* Fix an issue where errors were unnecessarily written in `buf lint` and `buf breaking`.
+
+## [v0.39.1] - 2021-03-04
+
+- Fix issue with CLI build process in 0.39.0.
+
+## [v0.39.0] - 2021-03-04
+
+* `buf beta push` doesn't create a new commit if the content of the push is the same as the latest commit on the branch.
+* Fix an issue where no error was shown when authentication failed.
+* Fix an issue where `buf protoc` would error if a plugin returned an empty error string.
+
+## [v0.38.0] - 2021-02-25
+
+- Update the tested `protoc` version for compatibility to 3.15.2. The `--experimental_allow_proto3_optional` flag is no longer set for versions >=3.15.
+- Update the Well-Known Types to 3.15.2. The `go_package` values for the Well-Known Types now point at google.golang.org/protobuf instead of github.com/golang/protobuf.
+
+## [v0.37.1] - 2021-02-23
+
+- Fix bug where authentication headers were not threaded through for certain Buf Schema Registry commands.
+- Fix issue where empty errors would incorrectly be wrapped by the CLI interceptor.
+- Update Buf module cache location to include remote.
+
+## [v0.37.0] - 2021-02-09
+
+- Add commands for the Buf Schema Registry. Visit our website to add yourself to [the waitlist](https://buf.build/waitlist).
+
+## [v0.36.0] - 2021-01-18
+
+Allows comment ignores of the form `// buf:lint:ignore ID` to be cascaded upwards for specific rules.
+
+- For  `ENUM_VALUE_PREFIX, ENUM_VALUE_UPPER_SNAKE_CASE`, both the enum value and the enum are checked.
+- For `FIELD_LOWER_SNAKE_CASE, FIELD_NO_DESCRIPTOR`, both the field and message are checked.
+- For `ONEOF_LOWER_SNAKE_CASE`, both the oneof and message are checked.
+- For `RPC_NO_CLIENT_STREAMING, RPC_NO_SERVER_STREAMING, RPC_PASCAL_CASE, RPC_REQUEST_RESPONSE_UNIQUE`, both the method and service are checked.
+- For `RPC_REQUEST_STANDARD_NAME, RPC_RESPONSE_STANDARD_NAME`, the input/output type, method, and service are checked.
+
+## [v0.35.1] - 2021-01-08
+
+- Fix error when unmarshalling plugin configuration with no options (#236)
+
+## [v0.35.0] - 2021-01-07
+
+- Allow `opt` in `buf.gen.yaml` files to be either a single string, or a list of strings. Both of the following forms are accepted, and result in `foo=bar,baz,bat`:
+
+```yaml
+version: v1beta1
