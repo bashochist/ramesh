@@ -560,3 +560,70 @@ Allows comment ignores of the form `// buf:lint:ignore ID` to be cascaded upward
 
 ```yaml
 version: v1beta1
+plugins:
+  - name: foo
+    out: out
+    opt: foo=bar,baz,bat
+```
+
+```yaml
+version: v1beta1
+plugins:
+  - name: foo
+    out: out
+    opt:
+      - foo=bar
+      - baz
+      - bat
+```
+
+## [v0.34.0] - 2021-01-04
+
+- Move `buf check lint` to `buf lint`.
+- Move `buf check breaking` to `buf breaking`.
+- Move `buf check ls-lint-checkers` to `buf config ls-lint-rules`.
+- Move `buf check ls-breaking-checkers` to `buf config ls-breaking-rules`.
+- Move `protoc-gen-buf-check-lint` to `protoc-gen-buf-lint`.
+- Move `protoc-gen-buf-check-breaking` to `protoc-gen-buf-breaking`.
+- Add `buf beta config init`.
+
+All previous commands continue to work in a backwards-compatible manner, and the previous `protoc-gen-buf-check-lint` and `protoc-gen-buf-check-breaking` binaries continue to be available at the same paths, however deprecation messages are printed.
+
+## [v0.33.0] - 2020-12-12
+
+- Add `strategy` option to `buf.gen.yaml` generation configuration. This allows selecting either plugin invocations with files on a per-directory basis, or plugin invocations with all files at once. See the [generation documentation](https://docs.buf.build/generate-usage) for more details.
+
+## [v0.32.1] - 2020-12-10
+
+- Fix issue where `SourceCodeInfo` for map fields within nested messages could be dropped.
+- Fix issue where deleted files would cause a panic when `breaking.ignore_unstable_packages = true`.
+
+## [v0.32.0] - 2020-11-24
+
+- Add symlink support for directory inputs. Symlinks will now be followed within your local directories when running `buf` commands.
+- Add the `breaking.ignore_unstable_packages` option to allow ignoring of unstable packages when running `buf check breaking`. See [the documentation](https://docs.buf.build/breaking-configuration#ignore_unstable_packages) for more details.
+- Enums that use the `allow_alias` option that add new aliases to a given number will no longer be considered breaking by `ENUM_VALUE_SAME_NAME`. See [the documentation](https://docs.buf.build/breaking-checkers#enum_value_same_name) for more details.
+
+## [v0.31.1] - 2020-11-17
+
+- Fix issue where `--experimental_allow_proto3_optional` was not set when proxying to `protoc` for the builtin plugins via `buf generate` or `buf protoc`. This flag is now set for `protoc` versions >= 3.12.
+
+## [v0.31.0] - 2020-11-16
+
+- Change the `--file` flag to `--path` and allow `--path` to take both files and directories, instead of just files with the old `--file`. This flag is used to filter the actual Protobuf files built under an input for most commands. You can now do for example `buf generate --path proto/foo` to only generate stubs for the files under `proto/foo`. Note that the `--file` flag continues to work, but prints a deprecation message.
+
+## [v0.30.1] - 2020-11-12
+
+- Relax validation of response file names from protoc plugins, so that when possible, plugins that are not compliant with the plugin specification are still usable with `buf generate`.
+
+## [v0.30.0] - 2020-11-03
+
+- Add `git://` protocol handling.
+
+## [v0.29.0] - 2020-10-30
+
+As we work towards v1.0, we are cleaning up the CLI UX. As part of this, we made the following changes:
+
+- `buf image build` has been moved to `buf build` and now accepts images as inputs.
+- `buf beta image convert` has been deleted, as `buf build` now covers this functionality.
+- The `-o` flag 
