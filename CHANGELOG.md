@@ -626,4 +626,64 @@ As we work towards v1.0, we are cleaning up the CLI UX. As part of this, we made
 
 - `buf image build` has been moved to `buf build` and now accepts images as inputs.
 - `buf beta image convert` has been deleted, as `buf build` now covers this functionality.
-- The `-o` flag 
+- The `-o` flag is no longer required for `buf build`, instead defaulting to the OS equivalent of `/dev/null`.
+- The `--source` flag on `buf build` has been deprecated in favor of passing the input as the first argument.
+- The `--source-config` flag on `buf build` has been moved to `--config`.
+- The `--input` flag on `buf check lint` has been deprecated in favor of passing the input as the first argument.
+- The `--input-config` flag on `buf check lint` has been moved to `--config`.
+- The `--input` flag on `buf check breaking` has been deprecated in favor of passing the input as the first argument.
+- The `--input-config` flag on `buf check breaking` has been moved to `--config`.
+- The `--against-input` flag on `buf check breaking` has been moved to `--against`.
+- The `--against-input-config` flag on `buf check breaking` has been moved to `--against-config`.
+- The `--input` flag on `buf generate` has been deprecated in favor of passing the input as the first argument.
+- The `--input-config` flag on `buf generate` has been moved to `--config`.
+- The `--input` flag on `buf ls-files` has been deprecated in favor of passing the input as the first argument.
+- The `--input-config` flag on `buf ls-files` has been moved to `--config`.
+
+We feel these changes make using `buf` more natural. Examples:
+
+```
+# compile the files in the current directory
+buf build
+# equivalent to the default no-arg invocation
+buf build .
+# build the repository at https://github.com/foo/bar.git
+buf build https://github.com/foo/bar.git
+# lint the files in the proto directory
+buf check lint proto
+# check the files in the current directory against the files on the master branch for breaking changes
+buf check breaking --against .git#branch=master
+# check the files in the proto directory against the files in the proto directory on the master branch
+buf check breaking proto --against .git#branch=master,subdir=proto
+```
+
+**Note that existing commands and flags continue to work.** While the deprecation messages will be printed, and we recommend migrating to the new invocations, your existing invocations have no change in functionality.
+
+## [v0.28.0] - 2020-10-21
+
+- Add `subdir` option for archive and git [Inputs](https://buf.build/docs/inputs). This allows placement of the `buf.yaml` configuration file in directories other than the base of your repository. You then can check against this subdirectory using, for example, `buf check breaking --against-input https://github.com/foo/bar.git#subdir=proto`.
+
+## [v0.27.1] - 2020-10-16
+
+- Fix minor typo in `buf help generate` documentation.
+
+## [v0.27.0] - 2020-10-16
+
+- Move `buf beta generate` out of beta to `buf generate`. This command now uses a template of configured plugins to generate stubs. See `buf help generate` for more details.
+
+## [v0.26.0] - 2020-10-13
+
+- Add jar and zip support to `buf protoc` and `buf beta generate`.
+
+## [v0.25.0] - 2020-10-09
+
+- Add the concept of configuration file version. The only currently-available version is `v1beta1`. See [buf.build/docs/faq](https://buf.build/docs/faq) for more details.
+
+## [v0.24.0] - 2020-09-21
+
+- Add fish completion to releases.
+- Update the `protoc` version for `buf protoc` to be `3.13.0`.
+
+## [v0.23.0] - 2020-09-11
+
+- Move the `experimental` parent command to `beta`. The command `buf experimental image convert` continues to work, but is deprecated in favor of `bu
