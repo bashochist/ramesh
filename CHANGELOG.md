@@ -686,4 +686,70 @@ buf check breaking proto --against .git#branch=master,subdir=proto
 
 ## [v0.23.0] - 2020-09-11
 
-- Move the `experimental` parent command to `beta`. The command `buf experimental image convert` continues to work, but is deprecated in favor of `bu
+- Move the `experimental` parent command to `beta`. The command `buf experimental image convert` continues to work, but is deprecated in favor of `buf beta image convert`.
+- Add `buf beta generate`.
+
+## [v0.22.0] - 2020-09-09
+
+- Add [insertion point](https://github.com/protocolbuffers/protobuf/blob/cdf5022ada7159f0c82888bebee026cbbf4ac697/src/google/protobuf/compiler/plugin.proto#L135) support to `buf protoc`.
+
+## [v0.21.0] - 2020-09-02
+
+- Fix issue where `optional` fields in proto3 would cause the `ONEOF_LOWER_SNAKE_CASE` lint checker to fail.
+
+## [v0.20.5] - 2020-07-24
+
+- Fix issue where parser would fail on files starting with [byte order marks](https://en.wikipedia.org/wiki/Byte_order_mark#UTF-8).
+
+## [v0.20.4] - 2020-07-21
+
+- Fix issue where custom message options that had an unset map field could cause a parser failure.
+
+## [v0.20.3] - 2020-07-18
+
+- Fix issue where parameters passed with `--.*_opt` to `buf protoc` for builtin plugins were not properly propagated.
+
+## [v0.20.2] - 2020-07-17
+
+- Fix issue where roots containing non-proto files with the same path would cause an error.
+
+## [v0.20.1] - 2020-07-14
+
+- Fix issue where Zsh completion would fail due to some flags having brackets in their description.
+- Fix issue where non-builtin protoc plugin invocations would not have errors properly propagated.
+- Fix issue where multiple `--.*_opt` flags, `--.*_opt` flags with commas, or `--.*_out` flags with options that contained commas, would not be properly added.
+
+## [v0.20.0] - 2020-07-13
+
+- Add `--by-dir` flag to `buf protoc` that parallelizes generation per directory, resulting in a 25-75% reduction in the time taken to generate stubs for medium to large file sets.
+- Properly clean up temporary files and commands on interrupts.
+- Fix issue where certain files that started with invalid Protobuf would cause the parser to crash.
+
+## [v0.19.1] - 2020-07-10
+
+- Fix issue where stderr was not being propagated for protoc plugins in CLI mode.
+
+## [v0.19.0] - 2020-07-10
+
+- Add `protoc` command. This is a substitute for `protoc` that uses Buf's internal compiler.
+- Add `ENUM_FIRST_VALUE_ZERO` lint checker to the `OTHER` category.
+- Add support for the Visual Studio error format.
+
+## [v0.18.1] - 2020-06-25
+
+- Fix issue where linking errors for custom options that had a message type were not properly reported (#93)
+
+## [v0.18.0] - 2020-06-22
+
+- Handle custom options when marshalling JSON images (#87).
+- Add `buf experimental image convert` command to convert to/from binary/JSON images (#87).
+
+## [v0.17.0] - 2020-06-17
+
+- Add git ref support to allow specifying arbitrary git references as inputs (https://github.com/bufbuild/buf/issues/48). This allows you to do i.e. `buf check lint --input https://github.com/bufbuild/buf.git#ref=fa74aa9c4161304dfa83db4abc4a0effe886d253`.
+- Add `depth` input option when specifying git inputs with `ref`. This allows the user to configure the depth at which to clone the repository when looking for the `ref`. If specifying a `ref`, this defaults to 50. Otherwise, this defaults to 1.
+- Remove requirement for git branch or tag in inputs. This allows you to do i.e. `buf check lint --input https://github.com/bufbuild/buf.git` and it will automatically choose the default branch as an input.
+
+## [v0.16.0] - 2020-06-02
+
+- Add [proto3 optional](https://github.com/protocolbuffers/protobuf/b
