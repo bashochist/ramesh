@@ -752,4 +752,73 @@ buf check breaking proto --against .git#branch=master,subdir=proto
 
 ## [v0.16.0] - 2020-06-02
 
-- Add [proto3 optional](https://github.com/protocolbuffers/protobuf/b
+- Add [proto3 optional](https://github.com/protocolbuffers/protobuf/blob/7cb5597013f0c4b978f02bce4330849f118aa853/docs/field_presence.md#how-to-enable-explicit-presence-in-proto3) support.
+
+## [v0.15.0] - 2020-05-31
+
+- Add opt-in comment-driven lint ignores via the `allow_comment_ignores` lint configuration option and `buf:lint:ignore ID` leading comment annotation (#73).
+
+## [v0.14.0] - 2020-05-30
+
+- Add `--file` flag to `buf image build` to only add specific files and their imports to outputted images. To exclude imports, use `--exclude-imports`.
+- Add `zip` as a source format. Buf can now read `zip` files, either locally or remotely, for image building, linting, and breaking change detection.
+- Add `zstd` as a compression format. Buf can now read and write Image files that are compressed using zstandard, and can read tarballs compressed with zstandard.
+- Deprecated: The formats `bingz, jsongz, targz` are now deprecated. Instead, use `format=bin,compression=gzip`, `format=json,compression=gzip`, or `format=tar,compression=gzip`. The formats `bingz, jsongz, targz` will continue to work forever and will not be broken, but will print a deprecation warning and we recommend updating. Automatic file extension parsing continues to work the same as well.
+
+## [v0.13.0] - 2020-05-17
+
+- Use the `git` binary instead of go-git for internal clones. This also enables using your system git credential management for git repositories cloned using https or ssh. See https://buf.build/docs/inputs#authentication for more details.
+
+## [v0.12.1] - 2020-05-11
+
+- Fix issue where roots were detected as overlapping if one root's name was a prefix of the other.
+
+## [v0.12.0] - 2020-05-11
+
+- Add netrc support for inputs.
+- Fix issue where filenames that contained `..` resulted in an error.
+- Internal: migrate to golang/protobuf v2.
+
+## [v0.11.0] - 2020-04-09
+
+- Add experimental flag `--experimental-git-clone` to use the `git` binary for git clones.
+
+## [v0.10.0] - 2020-04-06
+
+- Add `recurse_submodules` option for git inputs.
+  Example: `https://github.com/foo/bar.git#branch=master,recurse_submodules=true`
+
+## [v0.9.0] - 2020-03-25
+
+- Fix issue where the option value ordering on an outputted `Image` was non-deterministic.
+- Fix issue where the `SourceCodeInfo` for the Well-Known Types was not included on an outputted `Image` when requested.
+
+## [v0.8.0] - 2020-03-11
+
+- Update dependencies.
+
+## [v0.7.1] - 2020-03-05
+
+- Tie HTTP download timeout to the `--timeout` flag.
+
+## [v0.7.0] - 2020-01-31
+
+- Add `tag` option for git inputs.
+
+## [v0.6.0] - 2020-01-17
+
+- Add `git` to the Docker container for local filesystem clones.
+- Update the JSON error format to use `path` as the file path key instead of `filename`.
+
+## [v0.5.0] - 2020-01-01
+
+- Allow basic authentication for remote tarballs, git repositories, and image files served from HTTPS endpoints. See https://buf.build/docs/inputs#https for more details.
+- Allow public key authentication for remote git repositories served from SSH endpoints. See https://buf.build/docs/inputs#ssh for more details.
+
+## [v0.4.1] - 2019-12-30
+
+- Fix issue where comparing enum values for enums that have `allow_alias` set and duplicate enum values present resulted in a system error.
+
+## [v0.4.0] - 2019-12-05
+
+- Change the breaking change detector to compare enum values on number instead of name. This also results in the `ENUM_VALUE_SAME_NUMBER
