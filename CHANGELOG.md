@@ -821,4 +821,58 @@ buf check breaking proto --against .git#branch=master,subdir=proto
 
 ## [v0.4.0] - 2019-12-05
 
-- Change the breaking change detector to compare enum values on number instead of name. This also results in the `ENUM_VALUE_SAME_NUMBER
+- Change the breaking change detector to compare enum values on number instead of name. This also results in the `ENUM_VALUE_SAME_NUMBER` checker being replaced with the `ENUM_VALUE_SAME_NAME` checker, except this new checker is not in the `WIRE` category.
+
+## [v0.3.0] - 2019-11-05
+
+- Fix issue where multiple timeout errors were printed.
+- Add `buf check lint --error-format=config-ignore-yaml` to print out current lint errors in a format that can be copied into a configuration file.
+
+## [v0.2.0] - 2019-10-28
+
+- Add a Docker image for the `buf` binary.
+
+## v0.1.0 - 2019-10-18
+
+Initial beta release.
+
+[Unreleased]: https://github.com/bufbuild/buf/compare/v1.15.1...HEAD
+[v1.15.1]: https://github.com/bufbuild/buf/compare/v1.15.0...v1.15.1
+[v1.15.0]: https://github.com/bufbuild/buf/compare/v1.14.0...v1.15.0
+[v1.14.0]: https://github.com/bufbuild/buf/compare/v1.13.1...v1.14.0
+[v1.13.1]: https://github.com/bufbuild/buf/compare/v1.13.0...v1.13.1
+[v1.13.0]: https://github.com/bufbuild/buf/compare/v1.12.0...v1.13.0
+[v1.12.0]: https://github.com/bufbuild/buf/compare/v1.11.0...v1.12.0
+[v1.11.0]: https://github.com/bufbuild/buf/compare/v1.10.0...v1.11.0
+[v1.10.0]: https://github.com/bufbuild/buf/compare/v1.9.0...v1.10.0
+[v1.9.0]: https://github.com/bufbuild/buf/compare/v1.8.0...v1.9.0
+[v1.8.0]: https://github.com/bufbuild/buf/compare/v1.7.0...v1.8.0
+[v1.7.0]: https://github.com/bufbuild/buf/compare/v1.6.0...v1.7.0
+[v1.6.0]: https://github.com/bufbuild/buf/compare/v1.5.0...v1.6.0
+[v1.5.0]: https://github.com/bufbuild/buf/compare/v1.4.0...v1.5.0
+[v1.4.0]: https://github.com/bufbuild/buf/compare/v1.3.1...v1.4.0
+[v1.3.1]: https://github.com/bufbuild/buf/compare/v1.3.0...v1.3.1
+[v1.3.0]: https://github.com/bufbuild/buf/compare/v1.2.1...1.3.0
+[v1.2.1]: https://github.com/bufbuild/buf/compare/v1.2.0...v1.2.1
+[v1.2.0]: https://github.com/bufbuild/buf/compare/v1.1.1...v1.2.0
+[v1.1.1]: https://github.com/bufbuild/buf/compare/v1.1.0...v1.1.1
+[v1.1.0]: https://github.com/bufbuild/buf/compare/v1.0.0...v1.1.0
+[v1.0.0]: https://github.com/bufbuild/buf/compare/v1.0.0-rc12...v1.0.0
+[v1.0.0-rc12]: https://github.com/bufbuild/buf/compare/v1.0.0-rc11...v1.0.0-rc12
+[v1.0.0-rc11]: https://github.com/bufbuild/buf/compare/v1.0.0-rc10...v1.0.0-rc11
+[v1.0.0-rc10]: https://github.com/bufbuild/buf/compare/v1.0.0-rc9...v1.0.0-rc10
+[v1.0.0-rc9]: https://github.com/bufbuild/buf/compare/v1.0.0-rc8...v1.0.0-rc9
+[v1.0.0-rc8]: https://github.com/bufbuild/buf/compare/v1.0.0-rc7...v1.0.0-rc8
+[v1.0.0-rc7]: https://github.com/bufbuild/buf/compare/v1.0.0-rc6...v1.0.0-rc7
+[v1.0.0-rc6]: https://github.com/bufbuild/buf/compare/v1.0.0-rc5...v1.0.0-rc6
+[v1.0.0-rc5]: https://github.com/bufbuild/buf/compare/v1.0.0-rc4...v1.0.0-rc5
+[v1.0.0-rc4]: https://github.com/bufbuild/buf/compare/v1.0.0-rc3...v1.0.0-rc4
+[v1.0.0-rc3]: https://github.com/bufbuild/buf/compare/v1.0.0-rc2...v1.0.0-rc3
+[v1.0.0-rc2]: https://github.com/bufbuild/buf/compare/v1.0.0-rc1...v1.0.0-rc2
+[v1.0.0-rc1]: https://github.com/bufbuild/buf/compare/v0.56.0...v1.0.0-rc1
+[v0.56.0]: https://github.com/bufbuild/buf/compare/v0.55.0...v0.56.0
+[v0.55.0]: https://github.com/bufbuild/buf/compare/v0.54.1...v0.55.0
+[v0.54.1]: https://github.com/bufbuild/buf/compare/v0.54.0...v0.54.1
+[v0.54.0]: https://github.com/bufbuild/buf/compare/v0.53.0...v0.54.0
+[v0.53.0]: https://github.com/bufbuild/buf/compare/v0.52.0...v0.53.0
+[v0.52.0]: https://github.com/bufbuild/
