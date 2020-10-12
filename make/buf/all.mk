@@ -8,4 +8,110 @@ GO_BINS := $(GO_BINS) \
 	private/pkg/bandeps/cmd/bandeps \
 	private/pkg/git/cmd/git-ls-files-unstaged \
 	private/pkg/storage/cmd/ddiff \
-	private/pkg/st
+	private/pkg/storage/cmd/storage-go-data \
+	private/pkg/licenseheader/cmd/license-header \
+	private/pkg/spdx/cmd/spdx-go-data
+GO_TEST_BINS := $(GO_TEST_BINS) \
+	private/buf/cmd/buf/command/alpha/protoc/internal/protoc-gen-insertion-point-receiver \
+	private/buf/cmd/buf/command/alpha/protoc/internal/protoc-gen-insertion-point-writer
+DOCKER_BINS := $(DOCKER_BINS) buf
+FILE_IGNORES := $(FILE_IGNORES) \
+	.build/ \
+	.ctrlp \
+	.idea/ \
+	.vscode/ \
+	private/buf/cmd/buf/command/alpha/protoc/test.txt \
+	private/buf/cmd/buf/workspacetests/other/proto/workspacetest/cache/ \
+	private/bufpkg/buftesting/cache/ \
+	private/pkg/storage/storageos/tmp/
+LICENSE_HEADER_LICENSE_TYPE := apache
+LICENSE_HEADER_COPYRIGHT_HOLDER := Buf Technologies, Inc.
+LICENSE_HEADER_YEAR_RANGE := 2020-2023
+LICENSE_HEADER_IGNORES := \/testdata enterprise
+# Comment out to use released buf
+BUF_GO_INSTALL_PATH := ./cmd/buf
+
+BUF_LINT_INPUT := .
+BUF_BREAKING_INPUT := .
+BUF_BREAKING_AGAINST_INPUT ?= .git\#branch=main
+BUF_FORMAT_INPUT := .
+
+include make/go/bootstrap.mk
+include make/go/dep_buf.mk
+include make/go/dep_minisign.mk
+include make/go/dep_protoc.mk
+include make/go/dep_protoc_gen_go.mk
+include make/go/dep_protoc_gen_connect_go.mk
+include make/go/go.mk
+include make/go/docker.mk
+include make/go/buf.mk
+
+installtest:: $(PROTOC) $(PROTOC_GEN_GO)
+
+.PHONY: bufstyle
+bufstyle: installbufstyle
+	@echo bufstyle NON_GEN_GOPKGS
+	@bufstyle $(shell go list $(GOPKGS) | grep -v \/gen\/)
+
+postlint:: bufstyle
+
+.PHONY: bandeps
+bandeps: installbandeps
+	bandeps -f data/bandeps/bandeps.yaml
+
+postlonglint:: bandeps
+
+.PHONY: godata
+godata: installspdx-go-data installwkt-go-data $(PROTOC)
+	rm -rf private/gen/data
+	mkdir -p private/gen/data/datawkt
+	mkdir -p private/gen/data/dataspdx
+	wkt-go-data $(CACHE_INCLUDE) --package datawkt > private/gen/data/datawkt/datawkt.gen.go
+	spdx-go-data --package dataspdx > private/gen/data/dataspdx/dataspdx.gen.go
+
+prepostgenerate:: godata
+
+.PHONY: licenseheader
+licenseheader: installlicense-header installgit-ls-files-unstaged
+	@echo license-header \
+		--license-type "$(LICENSE_HEADER_LICENSE_TYPE)" \
+		--copyright-holder "$(LICENSE_HEADER_COPYRIGHT_HOLDER)" \
+		--year-range "$(LICENSE_HEADER_YEAR_RANGE)" \
+		ALL_FILES
+	@license-header \
+		--license-type "$(LICENSE_HEADER_LICENSE_TYPE)" \
+		--copyright-holder "$(LICENSE_HEADER_COPYRIGHT_HOLDER)" \
+		--year-range "$(LICENSE_HEADER_YEAR_RANGE)" \
+		$(shell git-ls-files-unstaged | grep -v $(patsubst %,-e %,$(sort $(LICENSE_HEADER_IGNORES))))
+
+licensegenerate:: licenseheader
+
+.PHONY: privateusage
+privateusage:
+	bash make/buf/scripts/privateusage.bash
+
+postprepostgenerate:: privateusage
+
+bufgeneratedeps:: \
+	$(PROTOC_GEN_GO) $(PROTOC_GEN_CONNECT_GO)
+
+.PHONY: bufgeneratecleango
+bufgeneratecleango:
+	rm -rf private/gen/proto
+
+bufgenerateclean:: bufgeneratecleango
+
+.PHONY: bufgenerateprotogo
+bufgenerateprotogo:
+	$(BUF_BIN) generate proto --template data/template/buf.go.gen.yaml
+	$(BUF_BIN) generate buf.build/grpc/grpc --type grpc.reflection.v1.ServerReflection --template data/template/buf.go.gen.yaml
+
+.PHONY: bufgenerateprotogoclient
+bufgenerateprotogoclient:
+	$(BUF_BIN) generate proto --template data/template/buf.go-client.gen.yaml
+
+bufgeneratesteps:: \
+	bufgenerateprotogo \
+	bufgenerateprotogoclient
+
+.PHONY: bufrel
