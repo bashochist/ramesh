@@ -114,4 +114,47 @@ bufgeneratesteps:: \
 	bufgenerateprotogo \
 	bufgenerateprotogoclient
 
-.PHONY: bufrel
+.PHONY: bufrelease
+bufrelease: $(MINISIGN)
+	DOCKER_IMAGE=golang:1.20-bullseye bash make/buf/scripts/release.bash
+
+# We have to manually set the Homebrew version on the Homebrew badge as there
+# is no badge on shields.io for Homebrew packages outside of homebrew-core
+
+.PHONY: updatehomebrewbadge
+updatehomebrewbadge:
+	$(SED_I) "s/badge\/homebrew-v.*-blue/badge\/homebrew-v$(shell bash make/buf/scripts/homebrewversion.bash)-blue/g" README.md
+
+.PHONY: updateversion
+updateversion:
+ifndef VERSION
+	$(error "VERSION must be set")
+endif
+	$(SED_I) "s/Version.*=.*\"[0-9]\.[0-9][0-9]*\.[0-9][0-9]*.*\"/Version = \"$(VERSION)\"/g" private/buf/bufcli/bufcli.go
+	gofmt -s -w private/buf/bufcli/bufcli.go
+
+.PHONY: updategoversion
+updategoversion: installgit-ls-files-unstaged
+ifndef GOVERSION
+	$(error "GOVERSION must be set")
+endif
+	# make sure both of these docker images exist
+	# the release of these images will lag the actual release
+	docker pull golang:$(GOVERSION)-bullseye
+	docker pull golang:$(GOVERSION)-alpine3.17
+	$(SED_I) "s/golang:1\.[0-9][0-9]*\.[0-9][0-9]*/golang:$(GOVERSION)/g" $(shell git-ls-files-unstaged | grep Dockerfile)
+	$(SED_I) "s/golang:1\.[0-9][0-9]*\.[0-9][0-9]*/golang:$(GOVERSION)/g" $(shell git-ls-files-unstaged | grep \.mk$)
+	$(SED_I) "s/go-version: 1\.[0-9][0-9]*\.[0-9][0-9]*/go-version: $(GOVERSION)/g" $(shell git-ls-files-unstaged | grep \.github\/workflows | grep -v previous.yaml)
+
+.PHONY: gofuzz
+gofuzz: $(GO_FUZZ)
+	@rm -rf $(TMP)/gofuzz
+	@mkdir -p $(TMP)/gofuzz $(TMP)/gofuzz/corpus
+	# go-fuzz-build requires github.com/dvyukov/go-fuzz be in go.mod, but we don't need that dependency otherwise.
+	# This adds go-fuzz-dep to go.mod, runs go-fuzz-build, then restores go.mod.
+	cp go.mod $(TMP)/go.mod.bak; cp go.sum $(TMP)/go.sum.bak
+	go get github.com/dvyukov/go-fuzz/go-fuzz-dep@$(GO_FUZZ_VERSION)
+	cd private/bufpkg/bufimage/bufimagebuild/bufimagebuildtesting; go-fuzz-build -o $(abspath $(TMP))/gofuzz/gofuzz.zip
+	rm go.mod go.sum; mv $(TMP)/go.mod.bak go.mod; mv $(TMP)/go.sum.bak go.sum
+	cp private/bufpkg/bufimage/bufimagebuild/bufimagebuildtesting/corpus/* $(TMP)/gofuzz/corpus
+	go-fuzz -bin $(TMP)/gofuzz/gofuzz.zip -workdir $(TMP)/gofuzz $(GO_FUZZ_EXTRA_ARGS)
