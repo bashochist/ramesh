@@ -26,4 +26,9 @@ echo \"${OUT_DIR}/bin/buf\" completion bash \> \"${OUT_DIR}/etc/bash_completion.
 "${OUT_DIR}/bin/buf" completion bash > "${OUT_DIR}/etc/bash_completion.d/buf"
 echo \"${OUT_DIR}/bin/buf\" completion fish \> \"${OUT_DIR}/share/fish/vendor_completions.d/buf.fish\"
 "${OUT_DIR}/bin/buf" completion fish > "${OUT_DIR}/share/fish/vendor_completions.d/buf.fish"
-echo \"${OUT_DIR}/bin/buf\" completion zsh \> \"${OUT_DIR}
+echo \"${OUT_DIR}/bin/buf\" completion zsh \> \"${OUT_DIR}/share/zsh/site-functions/_buf\"
+"${OUT_DIR}/bin/buf" completion zsh > "${OUT_DIR}/share/zsh/site-functions/_buf"
+echo \"${OUT_DIR}/bin/buf\" manpages \"${OUT_DIR}/share/man/man1\"
+"${OUT_DIR}/bin/buf" manpages "${OUT_DIR}/share/man/man1"
+echo cp \"LICENSE\" \"${OUT_DIR}/LICENSE\"
+cp "LICENSE" "${OUT_DIR}/LICENSE"
