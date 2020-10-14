@@ -96,4 +96,52 @@ for os in Darwin Linux Windows; do
       buf \
       protoc-gen-buf-breaking \
       protoc-gen-buf-lint; do
-   
+      CGO_ENABLED=0 GOOS=$(goos "${os}") GOARCH=$(goarch "${arch}") \
+        go build -a -ldflags "-s -w" -trimpath -buildvcs=false -o "${dir}/bin/${binary}${extension}" "${DIR}/cmd/${binary}"
+      cp "${dir}/bin/${binary}${extension}" "${binary}-${os}-${arch}${extension}"
+    done
+  done
+done
+
+for os in Darwin Linux; do
+  for arch in x86_64 arm64; do
+    if [ "${os}" == "Linux" ] && [ "${arch}" == "arm64" ]; then
+      arch="aarch64"
+    fi
+    dir="${os}/${arch}/${BASE_NAME}"
+    mkdir -p "${dir}/etc/bash_completion.d"
+    mkdir -p "${dir}/share/fish/vendor_completions.d"
+    mkdir -p "${dir}/share/zsh/site-functions"
+    mkdir -p "${dir}/share/man/man1"
+    "$(uname -s)/$(uname -m)/${BASE_NAME}/bin/buf" completion bash > "${dir}/etc/bash_completion.d/buf"
+    "$(uname -s)/$(uname -m)/${BASE_NAME}/bin/buf" completion fish > "${dir}/share/fish/vendor_completions.d/buf.fish"
+    "$(uname -s)/$(uname -m)/${BASE_NAME}/bin/buf" completion zsh > "${dir}/share/zsh/site-functions/_buf"
+    "$(uname -s)/$(uname -m)/${BASE_NAME}/bin/buf" manpages "${dir}/share/man/man1"
+    cp -R "${DIR}/LICENSE" "${dir}/LICENSE"
+  done
+done
+
+for os in Darwin Linux; do
+  for arch in x86_64 arm64; do
+    if [ "${os}" == "Linux" ] && [ "${arch}" == "arm64" ]; then
+      arch="aarch64"
+    fi
+    dir="${os}/${arch}/${BASE_NAME}"
+    tar_context_dir="$(dirname "${dir}")"
+    tar_dir="${BASE_NAME}"
+    tarball="${BASE_NAME}-${os}-${arch}.tar.gz"
+    tar -C "${tar_context_dir}" -cvzf "${tarball}" "${tar_dir}"
+  done
+done
+
+for file in $(find . -maxdepth 1 -type f | sed 's/^\.\///' | sort | uniq); do
+  sha256 "${file}" >> sha256.txt
+done
+sha256 -c sha256.txt
+
+mkdir -p assets
+for file in $(find . -maxdepth 1 -type f | sed 's/^\.\///' | sort | uniq); do
+  mv "${file}" "assets/${file}"
+done
+
+echo Upload all the files in this directory to GitHub: open "${RELEASE_DIR}/assets"
