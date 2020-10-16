@@ -34,4 +34,26 @@ endif
 	@echo make bufgenerateclean
 	@$(MAKE) bufgenerateclean
 	@echo make bufgeneratesteps
-	@$(MAKE)
+	@$(MAKE) bufgeneratesteps
+
+pregenerate:: bufgenerate
+
+ifneq ($(BUF_LINT_INPUT),)
+.PHONY: buflint
+buflint: $(BUF)
+	@echo buf lint $(BUF_LINT_INPUT)
+	@$(BUF_BIN) lint $(BUF_LINT_INPUT)
+
+postlint:: buflint
+endif
+
+ifneq ($(BUF_BREAKING_INPUT),)
+ifneq ($(BUF_BREAKING_AGAINST_INPUT),)
+.PHONY: bufbreaking
+bufbreaking: $(BUF)
+	@echo buf breaking $(BUF_BREAKING_INPUT) --against $(BUF_BREAKING_AGAINST_INPUT)
+	@$(BUF_BIN) breaking $(BUF_BREAKING_INPUT) --against $(BUF_BREAKING_AGAINST_INPUT)
+
+postlint:: bufbreaking
+endif
+endif
