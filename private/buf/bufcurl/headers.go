@@ -165,4 +165,9 @@ func addHeader(header string, dest http.Header) bool {
 	headerName := parts[0]
 	hasValue := len(parts) > 1
 	var headerVal string
-	if h
+	if hasValue {
+		headerVal = parts[1]
+	}
+	dest.Add(strings.TrimSpace(headerName), strings.TrimSpace(headerVal))
+	return hasValue
+}
