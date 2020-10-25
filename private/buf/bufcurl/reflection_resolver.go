@@ -279,4 +279,108 @@ func descriptorsInResponse(resp *reflectionv1.ServerReflectionResponse) ([]*desc
 		files := make([]*descriptorpb.FileDescriptorProto, len(response.FileDescriptorResponse.FileDescriptorProto))
 		for i, data := range response.FileDescriptorResponse.FileDescriptorProto {
 			var file descriptorpb.FileDescriptorProto
-			if err := protoencoding.NewWireUnmarshaler(nil).Unmarshal(data, &
+			if err := protoencoding.NewWireUnmarshaler(nil).Unmarshal(data, &file); err != nil {
+				return nil, err
+			}
+			files[i] = &file
+		}
+		return files, nil
+	default:
+		return nil, fmt.Errorf("server replied with unsupported response type: %T", resp.MessageResponse)
+	}
+}
+
+func (r *reflectionResolver) cacheFilesLocked(files []*descriptorpb.FileDescriptorProto) error {
+	for _, file := range files {
+		if _, ok := r.downloadedProtos[file.GetName()]; ok {
+			continue // already downloaded, don't bother overwriting
+		}
+		r.downloadedProtos[file.GetName()] = file
+	}
+	for _, file := range files {
+		if err := r.cacheFileLocked(file.GetName(), nil); err != nil {
+			return err
+		}
+	}
+	return nil
+}
+
+func (r *reflectionResolver) cacheFileLocked(name string, seen []string) error {
+	if _, err := r.cachedFiles.FindFileByPath(name); err == nil {
+		return nil // already processed this file
+	}
+	for i, alreadySeen := range seen {
+		if name == alreadySeen {
+			// we've seen this file already which means malformed
+			// file descriptor protos that have an import cycle
+			cycle := append(seen[i:], name)
+			return fmt.Errorf("downloaded files contain an import cycle: %s", strings.Join(cycle, " -> "))
+		}
+	}
+
+	file := r.downloadedProtos[name]
+	if file == nil {
+		// download missing file(s)
+		moreFiles, err := r.fileByNameLocked(name)
+		if err != nil {
+			return err
+		}
+		for _, newFile := range moreFiles {
+			r.downloadedProtos[newFile.GetName()] = newFile
+			if newFile.GetName() == name {
+				file = newFile
+			}
+		}
+		if file == nil {
+			return fmt.Errorf("requested file %q but response did not contain it", name)
+		}
+	}
+
+	// make sure imports have been downloaded and cached
+	for _, dep := range file.Dependency {
+		if err := r.cacheFileLocked(dep, append(seen, name)); err != nil {
+			return err
+		}
+	}
+
+	// now we can create and cache this file
+	fileDescriptor, err := protodesc.NewFile(file, &r.cachedFiles)
+	if err != nil {
+		return err
+	}
+	if err := r.cachedFiles.RegisterFile(fileDescriptor); err != nil {
+		return err
+	}
+	registerExtensions(&r.cachedExts, fileDescriptor)
+	r.printer.Printf("* Server reflection has resolved file %q\n", fileDescriptor.Path())
+	return nil
+}
+
+func (r *reflectionResolver) sendLocked(req *reflectionv1.ServerReflectionRequest) (*reflectionv1.ServerReflectionResponse, error) {
+	stream, isNew := r.getStreamLocked()
+	resp, err := send(stream, req)
+	if isNotImplemented(err) && !r.useV1Alpha && r.v1alphaClient != nil {
+		r.resetLocked()
+		r.useV1Alpha = true
+		stream, isNew = r.getStreamLocked()
+		resp, err = send(stream, req)
+	}
+	if err != nil && !isNew {
+		// the existing stream broke; try again with a new stream
+		r.resetLocked()
+		stream, _ = r.getStreamLocked()
+		resp, err = send(stream, req)
+	}
+	return resp, err
+}
+
+func isNotImplemented(err error) bool {
+	var connErr *connect.Error
+	ok := errors.As(err, &connErr)
+	return ok && connErr.Code() == connect.CodeUnimplemented
+}
+
+func send(stream *reflectStream, req *reflectionv1.ServerReflectionRequest) (*reflectionv1.ServerReflectionResponse, error) {
+	sendErr := stream.Send(req)
+	// even if sendErr != nil, we still call Receive because Send will typically return
+	// io.EOF and caller is expected to use Receive to get the RPC 
