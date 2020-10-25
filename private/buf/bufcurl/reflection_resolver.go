@@ -110,4 +110,95 @@ func NewServerReflectionResolver(
 	if reflectProtocol != ReflectProtocolGRPCV1Alpha {
 		v1Client = connect.NewClient[reflectionv1.ServerReflectionRequest, reflectionv1.ServerReflectionResponse](httpClient, baseURL+"/grpc.reflection.v1.ServerReflection/ServerReflectionInfo", opts...)
 	}
-	// if version is neither "
+	// if version is neither "v1" nor "v1alpha", then we have both clients and
+	// will automatically decide which one to use by trying v1 first and falling
+	// back to v1alpha on "not implemented" error
+
+	// elide the "upload finished" trace message for reflection calls
+	ctx = skippingUploadFinishedMessage(ctx)
+	// request's user-agent header(s) get overwritten by protocol, so we stash them in the
+	// context so that underlying transport can restore them
+	ctx = withUserAgent(ctx, headers)
+
+	res := &reflectionResolver{
+		ctx:              ctx,
+		v1Client:         v1Client,
+		v1alphaClient:    v1alphaClient,
+		useV1Alpha:       reflectProtocol == ReflectProtocolGRPCV1Alpha,
+		headers:          headers,
+		printer:          printer,
+		downloadedProtos: map[string]*descriptorpb.FileDescriptorProto{},
+	}
+	return res, res.Reset
+}
+
+type reflectClient = connect.Client[reflectionv1.ServerReflectionRequest, reflectionv1.ServerReflectionResponse]
+type reflectStream = connect.BidiStreamForClient[reflectionv1.ServerReflectionRequest, reflectionv1.ServerReflectionResponse]
+
+type reflectionResolver struct {
+	ctx                     context.Context
+	headers                 http.Header
+	printer                 verbose.Printer
+	v1Client, v1alphaClient *reflectClient
+
+	mu                      sync.Mutex
+	useV1Alpha              bool
+	v1Stream, v1alphaStream *reflectStream
+	downloadedProtos        map[string]*descriptorpb.FileDescriptorProto
+	cachedFiles             protoregistry.Files
+	cachedExts              protoregistry.Types
+}
+
+func (r *reflectionResolver) FindDescriptorByName(name protoreflect.FullName) (protoreflect.Descriptor, error) {
+	r.mu.Lock()
+	defer r.mu.Unlock()
+
+	d, err := r.cachedFiles.FindDescriptorByName(name)
+	if d != nil {
+		return d, nil
+	}
+	if err != protoregistry.NotFound {
+		return nil, err
+	}
+	// if not found in existing files, fetch more
+	fileDescriptorProtos, err := r.fileContainingSymbolLocked(name)
+	if err != nil {
+		// intentionally not using "%w" because, depending on the code, the bufcli
+		// app framework might incorrectly interpret it and report a bad error message.
+		return nil, fmt.Errorf("failed to resolve symbol %q: %v", name, err)
+	}
+	if err := r.cacheFilesLocked(fileDescriptorProtos); err != nil {
+		return nil, err
+	}
+	// now it should definitely be in there!
+	return r.cachedFiles.FindDescriptorByName(name)
+}
+
+func (r *reflectionResolver) FindMessageByName(message protoreflect.FullName) (protoreflect.MessageType, error) {
+	d, err := r.FindDescriptorByName(message)
+	if err != nil {
+		return nil, err
+	}
+	md, ok := d.(protoreflect.MessageDescriptor)
+	if !ok {
+		return nil, fmt.Errorf("element %s is a %s, not a message", message, DescriptorKind(d))
+	}
+	return dynamicpb.NewMessageType(md), nil
+}
+
+func (r *reflectionResolver) FindMessageByURL(url string) (protoreflect.MessageType, error) {
+	pos := strings.LastIndexByte(url, '/')
+	typeName := url[pos+1:]
+	return r.FindMessageByName(protoreflect.FullName(typeName))
+}
+
+func (r *reflectionResolver) FindExtensionByName(field protoreflect.FullName) (protoreflect.ExtensionType, error) {
+	d, err := r.FindDescriptorByName(field)
+	if err != nil {
+		return nil, err
+	}
+	fd, ok := d.(protoreflect.FieldDescriptor)
+	if !ok || !fd.IsExtension() {
+		return nil, fmt.Errorf("element %s is a %s, not an extension", field, DescriptorKind(d))
+	}
+	return dynamicpb.NewExtensionType
