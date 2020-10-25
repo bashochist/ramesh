@@ -383,4 +383,58 @@ func isNotImplemented(err error) bool {
 func send(stream *reflectStream, req *reflectionv1.ServerReflectionRequest) (*reflectionv1.ServerReflectionResponse, error) {
 	sendErr := stream.Send(req)
 	// even if sendErr != nil, we still call Receive because Send will typically return
-	// io.EOF and caller is expected to use Receive to get the RPC 
+	// io.EOF and caller is expected to use Receive to get the RPC error result.
+	resp, recvErr := stream.Receive()
+	if sendErr != nil && recvErr == nil {
+		return nil, sendErr
+	}
+	return resp, recvErr
+}
+
+func (r *reflectionResolver) getStreamLocked() (*reflectStream, bool) {
+	if r.useV1Alpha {
+		isNew := r.maybeCreateStreamLocked(r.v1alphaClient, &r.v1alphaStream)
+		return r.v1alphaStream, isNew
+	}
+	isNew := r.maybeCreateStreamLocked(r.v1Client, &r.v1Stream)
+	return r.v1Stream, isNew
+}
+
+func (r *reflectionResolver) maybeCreateStreamLocked(client *reflectClient, stream **reflectStream) bool {
+	if *stream != nil {
+		return false // already created
+	}
+	*stream = client.CallBidiStream(r.ctx)
+	for k, v := range r.headers {
+		(*stream).RequestHeader()[k] = v
+	}
+	return true
+}
+
+func (r *reflectionResolver) Reset() {
+	r.mu.Lock()
+	defer r.mu.Unlock()
+	r.resetLocked()
+}
+
+func (r *reflectionResolver) resetLocked() {
+	if r.v1Stream != nil {
+		reset(r.v1Stream)
+		r.v1Stream = nil
+	}
+	if r.v1alphaStream != nil {
+		reset(r.v1alphaStream)
+		r.v1alphaStream = nil
+	}
+}
+
+func reset(stream *reflectStream) {
+	_ = stream.CloseRequest()
+	// Try to terminate gracefully by receiving the end of stream
+	// (this call should return io.EOF). If we skip this and
+	// immediately call CloseResponse, it could result in the
+	// RPC being cancelled, which results in some nuisance
+	// "cancel" errors.
+	_, _ = stream.Receive()
+	_ = stream.CloseResponse()
+}
