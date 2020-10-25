@@ -201,4 +201,82 @@ func (r *reflectionResolver) FindExtensionByName(field protoreflect.FullName) (p
 	if !ok || !fd.IsExtension() {
 		return nil, fmt.Errorf("element %s is a %s, not an extension", field, DescriptorKind(d))
 	}
-	return dynamicpb.NewExtensionType
+	return dynamicpb.NewExtensionType(fd), nil
+}
+
+func (r *reflectionResolver) FindExtensionByNumber(message protoreflect.FullName, field protoreflect.FieldNumber) (protoreflect.ExtensionType, error) {
+	r.mu.Lock()
+	defer r.mu.Unlock()
+
+	ext, err := r.cachedExts.FindExtensionByNumber(message, field)
+	if ext != nil {
+		return ext, nil
+	}
+	if err != protoregistry.NotFound {
+		return nil, err
+	}
+	// if not found in existing files, fetch more
+	fileDescriptorProtos, err := r.fileContainingExtensionLocked(message, field)
+	if err != nil {
+		// intentionally not using "%w" because, depending on the code, the bufcli
+		// app framework might incorrectly interpret it and report a bad error message.
+		return nil, fmt.Errorf("failed to resolve extension %d for %q: %v", field, message, err)
+	}
+	if err := r.cacheFilesLocked(fileDescriptorProtos); err != nil {
+		return nil, err
+	}
+	// now it should definitely be in there!
+	return r.cachedExts.FindExtensionByNumber(message, field)
+}
+
+func (r *reflectionResolver) fileContainingSymbolLocked(name protoreflect.FullName) ([]*descriptorpb.FileDescriptorProto, error) {
+	r.printer.Printf("* Using server reflection to resolve %q\n", name)
+	resp, err := r.sendLocked(&reflectionv1.ServerReflectionRequest{
+		MessageRequest: &reflectionv1.ServerReflectionRequest_FileContainingSymbol{
+			FileContainingSymbol: string(name),
+		},
+	})
+	if err != nil {
+		return nil, err
+	}
+	return descriptorsInResponse(resp)
+}
+
+func (r *reflectionResolver) fileContainingExtensionLocked(message protoreflect.FullName, field protoreflect.FieldNumber) ([]*descriptorpb.FileDescriptorProto, error) {
+	r.printer.Printf("* Using server reflection to retrieve extension %d for %q\n", field, message)
+	resp, err := r.sendLocked(&reflectionv1.ServerReflectionRequest{
+		MessageRequest: &reflectionv1.ServerReflectionRequest_FileContainingExtension{
+			FileContainingExtension: &reflectionv1.ExtensionRequest{
+				ContainingType:  string(message),
+				ExtensionNumber: int32(field),
+			},
+		},
+	})
+	if err != nil {
+		return nil, err
+	}
+	return descriptorsInResponse(resp)
+}
+
+func (r *reflectionResolver) fileByNameLocked(name string) ([]*descriptorpb.FileDescriptorProto, error) {
+	r.printer.Printf("* Using server reflection to download file %q\n", name)
+	resp, err := r.sendLocked(&reflectionv1.ServerReflectionRequest{
+		MessageRequest: &reflectionv1.ServerReflectionRequest_FileByFilename{
+			FileByFilename: name,
+		},
+	})
+	if err != nil {
+		return nil, err
+	}
+	return descriptorsInResponse(resp)
+}
+
+func descriptorsInResponse(resp *reflectionv1.ServerReflectionResponse) ([]*descriptorpb.FileDescriptorProto, error) {
+	switch response := resp.MessageResponse.(type) {
+	case *reflectionv1.ServerReflectionResponse_ErrorResponse:
+		return nil, connect.NewWireError(connect.Code(response.ErrorResponse.ErrorCode), errors.New(response.ErrorResponse.ErrorMessage))
+	case *reflectionv1.ServerReflectionResponse_FileDescriptorResponse:
+		files := make([]*descriptorpb.FileDescriptorProto, len(response.FileDescriptorResponse.FileDescriptorProto))
+		for i, data := range response.FileDescriptorResponse.FileDescriptorProto {
+			var file descriptorpb.FileDescriptorProto
+			if err := protoencoding.NewWireUnmarshaler(nil).Unmarshal(data, &
