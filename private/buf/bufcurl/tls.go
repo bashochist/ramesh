@@ -46,4 +46,96 @@ func MakeVerboseTLSConfig(settings *TLSSettings, authority string, printer verbo
 		if state.DidResume {
 			printer.Printf("* (TLS session resumed)")
 		}
-		if st
+		if state.NegotiatedProtocol != "" {
+			printer.Printf("* ALPN, server accepted protocol %s", state.NegotiatedProtocol)
+		}
+		printer.Printf("* Server certificate:")
+		printer.Printf("*   subject: %s", state.PeerCertificates[0].Subject.String())
+		printer.Printf("*   start date: %s", state.PeerCertificates[0].NotBefore)
+		printer.Printf("*   end date: %s", state.PeerCertificates[0].NotAfter)
+		var subjectAlternatives []string
+		subjectAlternatives = append(subjectAlternatives, state.PeerCertificates[0].DNSNames...)
+		for _, ip := range state.PeerCertificates[0].IPAddresses {
+			subjectAlternatives = append(subjectAlternatives, ip.String())
+		}
+		subjectAlternatives = append(subjectAlternatives, state.PeerCertificates[0].EmailAddresses...)
+		for _, uri := range state.PeerCertificates[0].URIs {
+			subjectAlternatives = append(subjectAlternatives, uri.String())
+		}
+		printer.Printf("*   subjectAltNames: [%s]", strings.Join(subjectAlternatives, ", "))
+		printer.Printf("*   issuer: %s", state.PeerCertificates[0].Issuer.String())
+
+		// now we do verification
+		if !settings.Insecure {
+			opts := x509.VerifyOptions{
+				Roots:         conf.RootCAs,
+				CurrentTime:   time.Now(),
+				Intermediates: x509.NewCertPool(),
+			}
+			for _, cert := range state.PeerCertificates[1:] {
+				opts.Intermediates.AddCert(cert)
+			}
+			if _, err := state.PeerCertificates[0].Verify(opts); err != nil {
+				printer.Printf("* Server certificate chain could not be verified: %v", err)
+				return err
+			}
+			printer.Printf("* Server certificate chain verified")
+			if err := state.PeerCertificates[0].VerifyHostname(conf.ServerName); err != nil {
+				printer.Printf("* Server certificate is not valid for %s: %v", conf.ServerName, err)
+				return err
+			}
+			printer.Printf("* Server certificate is valid for %s", conf.ServerName)
+		}
+		return nil
+	}
+	if settings.ServerName != "" {
+		conf.ServerName = settings.ServerName
+	} else if authority != "" {
+		// strip port if present
+		host, _, err := net.SplitHostPort(authority)
+		if err == nil {
+			authority = host
+		}
+		conf.ServerName = authority
+	}
+
+	if settings.CACertFile != "" {
+		caCert, err := os.ReadFile(settings.CACertFile)
+		if err != nil {
+			return nil, ErrorHasFilename(err, settings.CACertFile)
+		}
+		conf.RootCAs = x509.NewCertPool()
+		conf.RootCAs.AppendCertsFromPEM(caCert)
+	}
+
+	if settings.KeyFile != "" && settings.CertFile != "" {
+		cert, err := os.ReadFile(settings.CertFile)
+		if err != nil {
+			return nil, ErrorHasFilename(err, settings.CertFile)
+		}
+		key, err := os.ReadFile(settings.KeyFile)
+		if err != nil {
+			return nil, ErrorHasFilename(err, settings.KeyFile)
+		}
+		certPair, err := tls.X509KeyPair(cert, key)
+		if err != nil {
+			return nil, err
+		}
+		certPair.Leaf, err = x509.ParseCertificate(certPair.Certificate[0])
+		if err != nil {
+			return nil, err
+		}
+		conf.GetClientCertificate = func(*tls.CertificateRequestInfo) (*tls.Certificate, error) {
+			printer.Printf("* Offering client cert:")
+			printer.Printf("*   subject: %s", certPair.Leaf.Subject.String())
+			printer.Printf("*   start date: %s", certPair.Leaf.NotBefore)
+			printer.Printf("*   end date: %s", certPair.Leaf.NotAfter)
+			printer.Printf("*   issuer: %s", certPair.Leaf.Issuer.String())
+			return &certPair, nil
+		}
+	}
+
+	return &conf, nil
+}
+
+func versionName(tlsVersion uint16)
