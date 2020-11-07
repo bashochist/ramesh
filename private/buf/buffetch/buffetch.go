@@ -50,4 +50,116 @@ var (
 	//
 	// This does not include deprecated formats.
 	SourceFormatsString = stringutil.SliceToString(sourceFormatsNotDeprecated)
-	// ModuleFormatsString is the s
+	// ModuleFormatsString is the string representation of all module formats.
+	//
+	// Module formats are also source formats.
+	//
+	// This does not include deprecated formats.
+	ModuleFormatsString = stringutil.SliceToString(moduleFormatsNotDeprecated)
+	// SourceOrModuleFormatsString is the string representation of all source or module formats.
+	//
+	// This does not include deprecated formats.
+	SourceOrModuleFormatsString = stringutil.SliceToString(sourceOrModuleFormatsNotDeprecated)
+	// AllFormatsString is the string representation of all formats.
+	//
+	// This does not include deprecated formats.
+	AllFormatsString = stringutil.SliceToString(allFormatsNotDeprecated)
+)
+
+// ImageEncoding is the encoding of the image.
+type ImageEncoding int
+
+// PathResolver resolves external paths to paths.
+type PathResolver interface {
+	// PathForExternalPath takes a path external to the asset and converts it to
+	// a path that is relative to the asset.
+	//
+	// The returned path will be normalized and validated.
+	//
+	// Example:
+	//   Directory: /foo/bar
+	//   ExternalPath: /foo/bar/baz/bat.proto
+	//   Path: baz/bat.proto
+	//
+	// Example:
+	//   Directory: .
+	//   ExternalPath: baz/bat.proto
+	//   Path: baz/bat.proto
+	PathForExternalPath(externalPath string) (string, error)
+}
+
+// Ref is an image file or source bucket reference.
+type Ref interface {
+	PathResolver
+
+	internalRef() internal.Ref
+}
+
+// ImageRef is an image file reference.
+type ImageRef interface {
+	Ref
+	ImageEncoding() ImageEncoding
+	IsNull() bool
+	internalFileRef() internal.FileRef
+}
+
+// SourceOrModuleRef is a source bucket or module reference.
+type SourceOrModuleRef interface {
+	Ref
+	isSourceOrModuleRef()
+}
+
+// SourceRef is a source bucket reference.
+type SourceRef interface {
+	SourceOrModuleRef
+	internalBucketRef() internal.BucketRef
+}
+
+// ModuleRef is a module reference.
+type ModuleRef interface {
+	SourceOrModuleRef
+	internalModuleRef() internal.ModuleRef
+}
+
+// ProtoFileRef is a proto file reference.
+type ProtoFileRef interface {
+	SourceRef
+	IncludePackageFiles() bool
+	internalProtoFileRef() internal.ProtoFileRef
+}
+
+// ImageRefParser is an image ref parser for Buf.
+type ImageRefParser interface {
+	// GetImageRef gets the reference for the image file.
+	GetImageRef(ctx context.Context, value string) (ImageRef, error)
+}
+
+// SourceRefParser is a source ref parser for Buf.
+type SourceRefParser interface {
+	// GetSourceRef gets the reference for the source file.
+	GetSourceRef(ctx context.Context, value string) (SourceRef, error)
+}
+
+// ModuleRefParser is a source ref parser for Buf.
+type ModuleRefParser interface {
+	// GetModuleRef gets the reference for the source file.
+	//
+	// A module is a special type of source with additional properties.
+	GetModuleRef(ctx context.Context, value string) (ModuleRef, error)
+}
+
+// SourceOrModuleRefParser is a source or module ref parser for Buf.
+type SourceOrModuleRefParser interface {
+	SourceRefParser
+	ModuleRefParser
+
+	// GetSourceOrModuleRef gets the reference for the image file or source bucket.
+	GetSourceOrModuleRef(ctx context.Context, value string) (SourceOrModuleRef, error)
+}
+
+// RefParser is a ref parser for Buf.
+type RefParser interface {
+	ImageRefParser
+	SourceOrModuleRefParser
+
+	// GetRef gets the re
