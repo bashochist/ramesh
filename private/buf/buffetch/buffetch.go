@@ -162,4 +162,103 @@ type RefParser interface {
 	ImageRefParser
 	SourceOrModuleRefParser
 
-	// GetRef gets the re
+	// GetRef gets the reference for the image file, source bucket, or module.
+	GetRef(ctx context.Context, value string) (Ref, error)
+}
+
+// NewRefParser returns a new RefParser.
+//
+// This defaults to dir or module.
+func NewRefParser(logger *zap.Logger, options ...RefParserOption) RefParser {
+	return newRefParser(logger, options...)
+}
+
+// RefParserOption is an option for NewRefParser. Ref parser options are only accepted
+// for the default RefParser constructor.
+type RefParserOption func(*refParser)
+
+// RefParserWithProtoFileRefAllowed sets the option of allowing a proto file.
+func RefParserWithProtoFileRefAllowed() RefParserOption {
+	return func(r *refParser) {
+		r.allowProtoFileRef = true
+	}
+}
+
+// NewImageRefParser returns a new RefParser for images only.
+//
+// This defaults to binary.
+func NewImageRefParser(logger *zap.Logger) ImageRefParser {
+	return newImageRefParser(logger)
+}
+
+// NewSourceRefParser returns a new RefParser for sources only.
+//
+// This defaults to dir or module.
+func NewSourceRefParser(logger *zap.Logger) SourceRefParser {
+	return newSourceRefParser(logger)
+}
+
+// NewModuleRefParser returns a new RefParser for modules only.
+func NewModuleRefParser(logger *zap.Logger) ModuleRefParser {
+	return newModuleRefParser(logger)
+}
+
+// NewSourceOrModuleRefParser returns a new RefParser for sources or modules only.
+//
+// This defaults to dir or module.
+func NewSourceOrModuleRefParser(logger *zap.Logger) SourceOrModuleRefParser {
+	return newSourceOrModuleRefParser(logger)
+}
+
+// ReadBucketCloser is a bucket returned from GetBucket.
+// We need to surface the internal.ReadBucketCloser
+// interface to other packages, so we use a type
+// declaration to do so.
+type ReadBucketCloser internal.ReadBucketCloser
+
+// ReadWriteBucketCloser is a bucket returned from GetBucket.
+// We need to surface the internal.ReadWriteBucketCloser
+// interface to other packages, so we use a type
+// declaration to do so.
+type ReadWriteBucketCloser internal.ReadWriteBucketCloser
+
+// ReadBucketCloserWithTerminateFileProvider is a ReadBucketCloser with a TerminateFileProvider.
+type ReadBucketCloserWithTerminateFileProvider internal.ReadBucketCloserWithTerminateFileProvider
+
+// ImageReader is an image reader.
+type ImageReader interface {
+	// GetImageFile gets the image file.
+	//
+	// The returned file will be uncompressed.
+	GetImageFile(
+		ctx context.Context,
+		container app.EnvStdinContainer,
+		imageRef ImageRef,
+	) (io.ReadCloser, error)
+}
+
+// SourceReader is a source reader.
+type SourceReader interface {
+	// GetSourceBucket gets the source bucket.
+	//
+	// The returned bucket will only have .proto and configuration files.
+	// The returned bucket may be upgradeable to a ReadWriteBucketCloser.
+	GetSourceBucket(
+		ctx context.Context,
+		container app.EnvStdinContainer,
+		sourceRef SourceRef,
+		options ...GetSourceBucketOption,
+	) (ReadBucketCloserWithTerminateFileProvider, error)
+}
+
+// GetSourceBucketOption is an option for GetSourceBucket.
+type GetSourceBucketOption func(*getSourceBucketOptions)
+
+// GetSourceBucketWithWorkspacesDisabled disables workspace mode.
+func GetSourceBucketWithWorkspacesDisabled() GetSourceBucketOption {
+	return func(o *getSourceBucketOptions) {
+		o.workspacesDisabled = true
+	}
+}
+
+// ModuleFetcher is
