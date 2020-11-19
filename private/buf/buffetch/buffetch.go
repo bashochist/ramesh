@@ -261,4 +261,113 @@ func GetSourceBucketWithWorkspacesDisabled() GetSourceBucketOption {
 	}
 }
 
-// ModuleFetcher is
+// ModuleFetcher is a module fetcher.
+type ModuleFetcher interface {
+	// GetModule gets the module.
+	// Unresolved ModuleRef's are automatically resolved.
+	GetModule(
+		ctx context.Context,
+		container app.EnvStdinContainer,
+		moduleRef ModuleRef,
+	) (bufmodule.Module, error)
+}
+
+// Reader is a reader for Buf.
+type Reader interface {
+	ImageReader
+	SourceReader
+	ModuleFetcher
+}
+
+// NewReader returns a new Reader.
+func NewReader(
+	logger *zap.Logger,
+	storageosProvider storageos.Provider,
+	httpClient *http.Client,
+	httpAuthenticator httpauth.Authenticator,
+	gitCloner git.Cloner,
+	moduleResolver bufmodule.ModuleResolver,
+	moduleReader bufmodule.ModuleReader,
+) Reader {
+	return newReader(
+		logger,
+		storageosProvider,
+		httpClient,
+		httpAuthenticator,
+		gitCloner,
+		moduleResolver,
+		moduleReader,
+	)
+}
+
+// NewImageReader returns a new ImageReader.
+func NewImageReader(
+	logger *zap.Logger,
+	storageosProvider storageos.Provider,
+	httpClient *http.Client,
+	httpAuthenticator httpauth.Authenticator,
+	gitCloner git.Cloner,
+) ImageReader {
+	return newImageReader(
+		logger,
+		storageosProvider,
+		httpClient,
+		httpAuthenticator,
+		gitCloner,
+	)
+}
+
+// NewSourceReader returns a new SourceReader.
+func NewSourceReader(
+	logger *zap.Logger,
+	storageosProvider storageos.Provider,
+	httpClient *http.Client,
+	httpAuthenticator httpauth.Authenticator,
+	gitCloner git.Cloner,
+) SourceReader {
+	return newSourceReader(
+		logger,
+		storageosProvider,
+		httpClient,
+		httpAuthenticator,
+		gitCloner,
+	)
+}
+
+// NewModuleFetcher returns a new ModuleFetcher.
+func NewModuleFetcher(
+	logger *zap.Logger,
+	storageosProvider storageos.Provider,
+	moduleResolver bufmodule.ModuleResolver,
+	moduleReader bufmodule.ModuleReader,
+) ModuleFetcher {
+	return newModuleFetcher(
+		logger,
+		storageosProvider,
+		moduleResolver,
+		moduleReader,
+	)
+}
+
+// Writer is a writer for Buf.
+type Writer interface {
+	// PutImageFile puts the image file.
+	PutImageFile(
+		ctx context.Context,
+		container app.EnvStdoutContainer,
+		imageRef ImageRef,
+	) (io.WriteCloser, error)
+}
+
+// NewWriter returns a new Writer.
+func NewWriter(
+	logger *zap.Logger,
+) Writer {
+	return newWriter(
+		logger,
+	)
+}
+
+type getSourceBucketOptions struct {
+	workspacesDisabled bool
+}
