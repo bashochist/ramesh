@@ -22,4 +22,100 @@ var (
 
 type archiveRef struct {
 	format          string
-	path        
+	path            string
+	fileScheme      FileScheme
+	archiveType     ArchiveType
+	compressionType CompressionType
+	stripComponents uint32
+	subDirPath      string
+}
+
+func newArchiveRef(
+	format string,
+	path string,
+	archiveType ArchiveType,
+	compressionType CompressionType,
+	stripComponents uint32,
+	subDirPath string,
+) (*archiveRef, error) {
+	if archiveType == ArchiveTypeZip && compressionType != CompressionTypeNone {
+		return nil, NewCannotSpecifyCompressionForZipError()
+	}
+	singleRef, err := newSingleRef(
+		format,
+		path,
+		compressionType,
+	)
+	if err != nil {
+		return nil, err
+	}
+	subDirPath, err = normalpath.NormalizeAndValidate(subDirPath)
+	if err != nil {
+		return nil, err
+	}
+	if subDirPath == "." {
+		subDirPath = ""
+	}
+	return newDirectArchiveRef(
+		singleRef.Format(),
+		singleRef.Path(),
+		singleRef.FileScheme(),
+		archiveType,
+		singleRef.CompressionType(),
+		stripComponents,
+		subDirPath,
+	), nil
+}
+
+func newDirectArchiveRef(
+	format string,
+	path string,
+	fileScheme FileScheme,
+	archiveType ArchiveType,
+	compressionType CompressionType,
+	stripComponents uint32,
+	subDirPath string,
+) *archiveRef {
+	return &archiveRef{
+		format:          format,
+		path:            path,
+		fileScheme:      fileScheme,
+		archiveType:     archiveType,
+		compressionType: compressionType,
+		stripComponents: stripComponents,
+		subDirPath:      subDirPath,
+	}
+}
+
+func (r *archiveRef) Format() string {
+	return r.format
+}
+
+func (r *archiveRef) Path() string {
+	return r.path
+}
+
+func (r *archiveRef) FileScheme() FileScheme {
+	return r.fileScheme
+}
+
+func (r *archiveRef) ArchiveType() ArchiveType {
+	return r.archiveType
+}
+
+func (r *archiveRef) CompressionType() CompressionType {
+	return r.compressionType
+}
+
+func (r *archiveRef) StripComponents() uint32 {
+	return r.stripComponents
+}
+
+func (r *archiveRef) SubDirPath() string {
+	return r.subDirPath
+}
+
+func (*archiveRef) ref()        {}
+func (*archiveRef) fileRef()    {}
+func (*archiveRef) bucketRef()  {}
+func (*archiveRef) archiveRef() {}
