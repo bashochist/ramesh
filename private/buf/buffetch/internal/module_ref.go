@@ -17,24 +17,23 @@ package internal
 import (
 	"strings"
 
+	"github.com/bufbuild/buf/private/bufpkg/bufmodule/bufmoduleref"
 	"github.com/bufbuild/buf/private/pkg/app"
-	"github.com/bufbuild/buf/private/pkg/filepathextended"
-	"github.com/bufbuild/buf/private/pkg/normalpath"
 )
 
 var (
-	_ ParsedDirRef = &dirRef{}
+	_ ParsedModuleRef = &moduleRef{}
 )
 
-type dirRef struct {
-	format string
-	path   string
+type moduleRef struct {
+	format          string
+	moduleReference bufmoduleref.ModuleReference
 }
 
-func newDirRef(
+func newModuleRef(
 	format string,
 	path string,
-) (*dirRef, error) {
+) (*moduleRef, error) {
 	if path == "" {
 		return nil, NewNoPathError()
 	}
@@ -47,34 +46,12 @@ func newDirRef(
 	if strings.Contains(path, "://") {
 		return nil, NewInvalidPathError(format, path)
 	}
-	path, err := filepathextended.RealClean(path)
+	moduleReference, err := bufmoduleref.ModuleReferenceForString(path)
 	if err != nil {
-		return nil, NewRealCleanPathError(path)
+		// TODO: this is dumb
+		return nil, NewInvalidPathError(format, path)
 	}
-	return newDirectDirRef(
-		format,
-		normalpath.Normalize(path),
-	), nil
+	return newDirectModuleRef(format, moduleReference), nil
 }
 
-func newDirectDirRef(
-	format string,
-	path string,
-) *dirRef {
-	return &dirRef{
-		format: format,
-		path:   path,
-	}
-}
-
-func (r *dirRef) Format() string {
-	return r.format
-}
-
-func (r *dirRef) Path() string {
-	return r.path
-}
-
-func (*dirRef) ref()       {}
-func (*dirRef) bucketRef() {}
-func (*dirRef) dirRef()    {}
+func newDirectModuleRef(fo
