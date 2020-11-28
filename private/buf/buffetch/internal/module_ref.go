@@ -54,4 +54,21 @@ func newModuleRef(
 	return newDirectModuleRef(format, moduleReference), nil
 }
 
-func newDirectModuleRef(fo
+func newDirectModuleRef(format string, moduleReference bufmoduleref.ModuleReference) *moduleRef {
+	return &moduleRef{
+		format:          format,
+		moduleReference: moduleReference,
+	}
+}
+
+func (r *moduleRef) Format() string {
+	return r.format
+}
+
+func (r *moduleRef) ModuleReference() bufmoduleref.ModuleReference {
+	return r.moduleReference
+}
+
+func (*moduleRef) ref()       {}
+func (*moduleRef) bucketRef() {}
+func (*moduleRef) moduleRef() {}
