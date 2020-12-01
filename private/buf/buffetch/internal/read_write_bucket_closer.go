@@ -19,39 +19,39 @@ import (
 	"github.com/bufbuild/buf/private/pkg/storage"
 )
 
-var _ ReadBucketCloser = &readBucketCloser{}
+var _ ReadWriteBucketCloser = &readWriteBucketCloser{}
 
-type readBucketCloser struct {
-	storage.ReadBucketCloser
+type readWriteBucketCloser struct {
+	storage.ReadWriteBucketCloser
 
 	relativeRootPath string
 	subDirPath       string
 }
 
-func newReadBucketCloser(
-	storageReadBucketCloser storage.ReadBucketCloser,
+func newReadWriteBucketCloser(
+	storageReadWriteBucketCloser storage.ReadWriteBucketCloser,
 	relativeRootPath string,
 	subDirPath string,
-) (*readBucketCloser, error) {
+) (*readWriteBucketCloser, error) {
 	normalizedSubDirPath, err := normalpath.NormalizeAndValidate(subDirPath)
 	if err != nil {
 		return nil, err
 	}
-	return &readBucketCloser{
-		ReadBucketCloser: storageReadBucketCloser,
-		relativeRootPath: normalpath.Normalize(relativeRootPath),
-		subDirPath:       normalizedSubDirPath,
+	return &readWriteBucketCloser{
+		ReadWriteBucketCloser: storageReadWriteBucketCloser,
+		relativeRootPath:      normalpath.Normalize(relativeRootPath),
+		subDirPath:            normalizedSubDirPath,
 	}, nil
 }
 
-func (r *readBucketCloser) RelativeRootPath() string {
+func (r *readWriteBucketCloser) RelativeRootPath() string {
 	return r.relativeRootPath
 }
 
-func (r *readBucketCloser) SubDirPath() string {
+func (r *readWriteBucketCloser) SubDirPath() string {
 	return r.subDirPath
 }
 
-func (r *readBucketCloser) SetSubDirPath(subDirPath string) {
+func (r *readWriteBucketCloser) SetSubDirPath(subDirPath string) {
 	r.subDirPath = subDirPath
 }
