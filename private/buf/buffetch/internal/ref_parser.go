@@ -120,4 +120,116 @@ func (a *refParser) getRawRef(value string) (*RawRef, error) {
 	}
 	if a.rawRefProcessor != nil {
 		if err := a.rawRefProcessor(rawRef); err != nil {
-			return nil, er
+			return nil, err
+		}
+	}
+	for key, value := range options {
+		switch key {
+		case "format":
+			if app.IsDevNull(path) {
+				return nil, NewFormatOverrideNotAllowedForDevNullError(app.DevNullFilePath)
+			}
+			rawRef.Format = value
+		case "compression":
+			switch value {
+			case "none":
+				rawRef.CompressionType = CompressionTypeNone
+			case "gzip":
+				rawRef.CompressionType = CompressionTypeGzip
+			case "zstd":
+				rawRef.CompressionType = CompressionTypeZstd
+			default:
+				return nil, NewCompressionUnknownError(value)
+			}
+		case "branch":
+			if rawRef.GitBranch != "" || rawRef.GitTag != "" {
+				return nil, NewCannotSpecifyGitBranchAndTagError()
+			}
+			rawRef.GitBranch = value
+		case "tag":
+			if rawRef.GitBranch != "" || rawRef.GitTag != "" {
+				return nil, NewCannotSpecifyGitBranchAndTagError()
+			}
+			rawRef.GitTag = value
+		case "ref":
+			rawRef.GitRef = value
+		case "depth":
+			depth, err := strconv.ParseUint(value, 10, 32)
+			if err != nil {
+				return nil, NewDepthParseError(value)
+			}
+			if depth == 0 {
+				return nil, NewDepthZeroError()
+			}
+			rawRef.GitDepth = uint32(depth)
+		case "recurse_submodules":
+			// TODO: need to refactor to make sure this is not set for any non-git input
+			// ie right now recurse_submodules=false will not error
+			switch value {
+			case "true":
+				rawRef.GitRecurseSubmodules = true
+			case "false":
+			default:
+				return nil, NewOptionsCouldNotParseRecurseSubmodulesError(value)
+			}
+		case "strip_components":
+			// TODO: need to refactor to make sure this is not set for any non-tarball
+			// ie right now strip_components=0 will not error
+			stripComponents, err := strconv.ParseUint(value, 10, 32)
+			if err != nil {
+				return nil, NewOptionsCouldNotParseStripComponentsError(value)
+			}
+			rawRef.ArchiveStripComponents = uint32(stripComponents)
+		case "subdir":
+			subDirPath, err := normalpath.NormalizeAndValidate(value)
+			if err != nil {
+				return nil, err
+			}
+			if subDirPath != "." {
+				rawRef.SubDirPath = subDirPath
+			}
+		case "include_package_files":
+			switch value {
+			case "true":
+				rawRef.IncludePackageFiles = true
+			case "false", "":
+				rawRef.IncludePackageFiles = false
+			default:
+				return nil, NewOptionsInvalidKeyError(key)
+			}
+		default:
+			return nil, NewOptionsInvalidKeyError(key)
+		}
+	}
+
+	if rawRef.Format == "" {
+		return nil, NewFormatCannotBeDeterminedError(value)
+	}
+
+	_, gitOK := a.gitFormatToInfo[rawRef.Format]
+	archiveFormatInfo, archiveOK := a.archiveFormatToInfo[rawRef.Format]
+	_, singleOK := a.singleFormatToInfo[rawRef.Format]
+	if gitOK {
+		if rawRef.GitRef != "" && rawRef.GitTag != "" {
+			return nil, NewCannotSpecifyTagWithRefError()
+		}
+		if rawRef.GitDepth == 0 {
+			// Default to 1
+			rawRef.GitDepth = 1
+			if rawRef.GitRef != "" {
+				// Default to 50 when using ref
+				rawRef.GitDepth = 50
+			}
+		}
+	} else {
+		if rawRef.GitBranch != "" || rawRef.GitTag != "" || rawRef.GitRef != "" || rawRef.GitRecurseSubmodules || rawRef.GitDepth > 0 {
+			return nil, NewOptionsInvalidForFormatError(rawRef.Format, value)
+		}
+	}
+	// not an archive format
+	if !archiveOK {
+		if rawRef.ArchiveStripComponents > 0 {
+			return nil, NewOptionsInvalidForFormatError(rawRef.Format, value)
+		}
+	} else {
+		if archiveFormatInfo.archiveType == Archive
