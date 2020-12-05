@@ -232,4 +232,164 @@ func (a *refParser) getRawRef(value string) (*RawRef, error) {
 			return nil, NewOptionsInvalidForFormatError(rawRef.Format, value)
 		}
 	} else {
-		if archiveFormatInfo.archiveType == Archive
+		if archiveFormatInfo.archiveType == ArchiveTypeZip && rawRef.CompressionType != 0 {
+			return nil, NewCannotSpecifyCompressionForZipError()
+		}
+	}
+	if !singleOK && !archiveOK {
+		if rawRef.CompressionType != 0 {
+			return nil, NewOptionsInvalidForFormatError(rawRef.Format, value)
+		}
+	}
+	if !archiveOK && !gitOK {
+		if rawRef.SubDirPath != "" {
+			return nil, NewOptionsInvalidForFormatError(rawRef.Format, value)
+		}
+	}
+	return rawRef, nil
+}
+
+func getSingleRef(
+	rawRef *RawRef,
+	defaultCompressionType CompressionType,
+) (ParsedSingleRef, error) {
+	compressionType := rawRef.CompressionType
+	if compressionType == 0 {
+		compressionType = defaultCompressionType
+	}
+	return newSingleRef(
+		rawRef.Format,
+		rawRef.Path,
+		compressionType,
+	)
+}
+
+func getArchiveRef(
+	rawRef *RawRef,
+	archiveType ArchiveType,
+	defaultCompressionType CompressionType,
+) (ParsedArchiveRef, error) {
+	compressionType := rawRef.CompressionType
+	if compressionType == 0 {
+		compressionType = defaultCompressionType
+	}
+	return newArchiveRef(
+		rawRef.Format,
+		rawRef.Path,
+		archiveType,
+		compressionType,
+		rawRef.ArchiveStripComponents,
+		rawRef.SubDirPath,
+	)
+}
+
+func getDirRef(
+	rawRef *RawRef,
+) (ParsedDirRef, error) {
+	return newDirRef(
+		rawRef.Format,
+		rawRef.Path,
+	)
+}
+
+func getGitRef(
+	rawRef *RawRef,
+) (ParsedGitRef, error) {
+	gitRefName, err := getGitRefName(rawRef.Path, rawRef.GitBranch, rawRef.GitTag, rawRef.GitRef)
+	if err != nil {
+		return nil, err
+	}
+	return newGitRef(
+		rawRef.Format,
+		rawRef.Path,
+		gitRefName,
+		rawRef.GitDepth,
+		rawRef.GitRecurseSubmodules,
+		rawRef.SubDirPath,
+	)
+}
+
+func getModuleRef(
+	rawRef *RawRef,
+) (ParsedModuleRef, error) {
+	return newModuleRef(
+		rawRef.Format,
+		rawRef.Path,
+	)
+}
+
+func getGitRefName(path string, branch string, tag string, ref string) (git.Name, error) {
+	if branch == "" && tag == "" && ref == "" {
+		return nil, nil
+	}
+	if branch != "" && tag != "" {
+		// already did this in getRawRef but just in case
+		return nil, NewCannotSpecifyGitBranchAndTagError()
+	}
+	if ref != "" && tag != "" {
+		// already did this in getRawRef but just in case
+		return nil, NewCannotSpecifyTagWithRefError()
+	}
+	if ref != "" && branch != "" {
+		return git.NewRefNameWithBranch(ref, branch), nil
+	}
+	if ref != "" {
+		return git.NewRefName(ref), nil
+	}
+	if branch != "" {
+		return git.NewBranchName(branch), nil
+	}
+	return git.NewTagName(tag), nil
+}
+
+func getProtoFileRef(rawRef *RawRef) ParsedProtoFileRef {
+	return newProtoFileRef(
+		rawRef.Format,
+		rawRef.Path,
+		rawRef.IncludePackageFiles,
+	)
+}
+
+// options
+
+type singleFormatInfo struct {
+	defaultCompressionType CompressionType
+}
+
+func newSingleFormatInfo() *singleFormatInfo {
+	return &singleFormatInfo{
+		defaultCompressionType: CompressionTypeNone,
+	}
+}
+
+type archiveFormatInfo struct {
+	archiveType            ArchiveType
+	defaultCompressionType CompressionType
+}
+
+func newArchiveFormatInfo(archiveType ArchiveType) *archiveFormatInfo {
+	return &archiveFormatInfo{
+		archiveType:            archiveType,
+		defaultCompressionType: CompressionTypeNone,
+	}
+}
+
+type dirFormatInfo struct{}
+
+func newDirFormatInfo() *dirFormatInfo {
+	return &dirFormatInfo{}
+}
+
+type gitFormatInfo struct{}
+
+func newGitFormatInfo() *gitFormatInfo {
+	return &gitFormatInfo{}
+}
+
+type moduleFormatInfo struct{}
+
+func newModuleFormatInfo() *moduleFormatInfo {
+	return &moduleFormatInfo{}
+}
+
+type getParsedRefOpti
