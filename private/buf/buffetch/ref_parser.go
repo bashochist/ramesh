@@ -12,25 +12,31 @@
 // See the License for the specific language governing permissions and
 // limitations under the License.
 
-package internal
+package buffetch
 
 import (
-	"sort"
+	"context"
+	"errors"
+	"fmt"
+	"os"
+	"path/filepath"
 	"strings"
+
+	"github.com/bufbuild/buf/private/buf/buffetch/internal"
+	"github.com/bufbuild/buf/private/bufpkg/bufmodule/bufmoduleref"
+	"github.com/bufbuild/buf/private/pkg/app"
+	"go.opentelemetry.io/otel"
+	"go.opentelemetry.io/otel/codes"
+	"go.opentelemetry.io/otel/trace"
+	"go.uber.org/zap"
 )
 
-func normalizeFormat(format string) string {
-	return strings.ToLower(strings.TrimSpace(format))
-}
+const (
+	loggerName = "buffetch"
+	tracerName = "bufbuild/buf"
+)
 
-func formatsToString(formats map[string]struct{}) string {
-	if len(formats) == 0 {
-		return "[]"
-	}
-	s := make([]string, 0, len(formats))
-	for format := range formats {
-		s = append(s, format)
-	}
-	sort.Strings(s)
-	return "[" + strings.Join(s, ",") + "]"
-}
+type refParser struct {
+	allowProtoFileRef bool
+	logger            *zap.Logger
+	fetchRefParser    internal.RefPa
