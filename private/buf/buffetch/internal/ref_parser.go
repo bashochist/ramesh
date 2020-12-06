@@ -392,4 +392,18 @@ func newModuleFormatInfo() *moduleFormatInfo {
 	return &moduleFormatInfo{}
 }
 
-type getParsedRefOpti
+type getParsedRefOptions struct {
+	allowedFormats map[string]struct{}
+}
+
+type protoFileFormatInfo struct{}
+
+func newProtoFileFormatInfo() *protoFileFormatInfo {
+	return &protoFileFormatInfo{}
+}
+
+func newGetParsedRefOptions() *getParsedRefOptions {
+	return &getParsedRefOptions{
+		allowedFormats: make(map[string]struct{}),
+	}
+}
