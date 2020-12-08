@@ -39,4 +39,127 @@ const (
 type refParser struct {
 	allowProtoFileRef bool
 	logger            *zap.Logger
-	fetchRefParser    internal.RefPa
+	fetchRefParser    internal.RefParser
+	tracer            trace.Tracer
+}
+
+func newRefParser(logger *zap.Logger, options ...RefParserOption) *refParser {
+	refParser := &refParser{}
+	for _, option := range options {
+		option(refParser)
+	}
+	fetchRefParserOptions := []internal.RefParserOption{
+		internal.WithRawRefProcessor(newRawRefProcessor(refParser.allowProtoFileRef)),
+		internal.WithSingleFormat(formatBin),
+		internal.WithSingleFormat(formatJSON),
+		internal.WithSingleFormat(
+			formatBingz,
+			internal.WithSingleDefaultCompressionType(
+				internal.CompressionTypeGzip,
+			),
+		),
+		internal.WithSingleFormat(
+			formatJSONGZ,
+			internal.WithSingleDefaultCompressionType(
+				internal.CompressionTypeGzip,
+			),
+		),
+		internal.WithArchiveFormat(
+			formatTar,
+			internal.ArchiveTypeTar,
+		),
+		internal.WithArchiveFormat(
+			formatTargz,
+			internal.ArchiveTypeTar,
+			internal.WithArchiveDefaultCompressionType(
+				internal.CompressionTypeGzip,
+			),
+		),
+		internal.WithArchiveFormat(
+			formatZip,
+			internal.ArchiveTypeZip,
+		),
+		internal.WithGitFormat(formatGit),
+		internal.WithDirFormat(formatDir),
+		internal.WithModuleFormat(formatMod),
+	}
+	if refParser.allowProtoFileRef {
+		fetchRefParserOptions = append(fetchRefParserOptions, internal.WithProtoFileFormat(formatProtoFile))
+	}
+	refParser.logger = logger.Named(loggerName)
+	refParser.tracer = otel.GetTracerProvider().Tracer(tracerName)
+	refParser.fetchRefParser = internal.NewRefParser(
+		logger,
+		fetchRefParserOptions...,
+	)
+	return refParser
+}
+
+func newImageRefParser(logger *zap.Logger) *refParser {
+	return &refParser{
+		logger: logger.Named(loggerName),
+		fetchRefParser: internal.NewRefParser(
+			logger,
+			internal.WithRawRefProcessor(processRawRefImage),
+			internal.WithSingleFormat(formatBin),
+			internal.WithSingleFormat(formatJSON),
+			internal.WithSingleFormat(
+				formatBingz,
+				internal.WithSingleDefaultCompressionType(
+					internal.CompressionTypeGzip,
+				),
+			),
+			internal.WithSingleFormat(
+				formatJSONGZ,
+				internal.WithSingleDefaultCompressionType(
+					internal.CompressionTypeGzip,
+				),
+			),
+		),
+		tracer: otel.GetTracerProvider().Tracer(tracerName),
+	}
+}
+
+func newSourceRefParser(logger *zap.Logger) *refParser {
+	return &refParser{
+		logger: logger.Named(loggerName),
+		fetchRefParser: internal.NewRefParser(
+			logger,
+			internal.WithRawRefProcessor(processRawRefSource),
+			internal.WithArchiveFormat(
+				formatTar,
+				internal.ArchiveTypeTar,
+			),
+			internal.WithArchiveFormat(
+				formatTargz,
+				internal.ArchiveTypeTar,
+				internal.WithArchiveDefaultCompressionType(
+					internal.CompressionTypeGzip,
+				),
+			),
+			internal.WithArchiveFormat(
+				formatZip,
+				internal.ArchiveTypeZip,
+			),
+			internal.WithGitFormat(formatGit),
+			internal.WithDirFormat(formatDir),
+		),
+		tracer: otel.GetTracerProvider().Tracer(tracerName),
+	}
+}
+
+func newModuleRefParser(logger *zap.Logger) *refParser {
+	return &refParser{
+		logger: logger.Named(loggerName),
+		fetchRefParser: internal.NewRefParser(
+			logger,
+			internal.WithRawRefProcessor(processRawRefModule),
+			internal.WithModuleFormat(formatMod),
+		),
+		tracer: otel.GetTracerProvider().Tracer(tracerName),
+	}
+}
+
+func newSourceOrModuleRefParser(logger *zap.Logger) *refParser {
+	return &refParser{
+		logger: logger.Name
