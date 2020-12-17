@@ -288,4 +288,119 @@ func (a *refParser) GetImageRef(
 	return newImageRef(parsedSingleRef, imageEncoding), nil
 }
 
-func (a *refParser) Ge
+func (a *refParser) GetSourceRef(
+	ctx context.Context,
+	value string,
+) (_ SourceRef, retErr error) {
+	ctx, span := a.tracer.Start(ctx, "get_source_ref")
+	defer span.End()
+	defer func() {
+		if retErr != nil {
+			span.RecordError(retErr)
+			span.SetStatus(codes.Error, retErr.Error())
+		}
+	}()
+	parsedRef, err := a.getParsedRef(ctx, value, sourceFormats)
+	if err != nil {
+		return nil, err
+	}
+	parsedBucketRef, ok := parsedRef.(internal.ParsedBucketRef)
+	if !ok {
+		// this should never happen
+		return nil, fmt.Errorf("invalid ParsedRef type for source: %T", parsedRef)
+	}
+	return newSourceRef(parsedBucketRef), nil
+}
+
+func (a *refParser) GetModuleRef(
+	ctx context.Context,
+	value string,
+) (_ ModuleRef, retErr error) {
+	ctx, span := a.tracer.Start(ctx, "get_source_ref")
+	defer span.End()
+	defer func() {
+		if retErr != nil {
+			span.RecordError(retErr)
+			span.SetStatus(codes.Error, retErr.Error())
+		}
+	}()
+	parsedRef, err := a.getParsedRef(ctx, value, moduleFormats)
+	if err != nil {
+		return nil, err
+	}
+	parsedModuleRef, ok := parsedRef.(internal.ParsedModuleRef)
+	if !ok {
+		// this should never happen
+		return nil, fmt.Errorf("invalid ParsedRef type for source: %T", parsedRef)
+	}
+	return newModuleRef(parsedModuleRef), nil
+}
+
+func (a *refParser) getParsedRef(
+	ctx context.Context,
+	value string,
+	allowedFormats []string,
+) (internal.ParsedRef, error) {
+	parsedRef, err := a.fetchRefParser.GetParsedRef(
+		ctx,
+		value,
+		internal.WithAllowedFormats(allowedFormats...),
+	)
+	if err != nil {
+		return nil, err
+	}
+	a.checkDeprecated(parsedRef)
+	return parsedRef, nil
+}
+
+func (a *refParser) checkDeprecated(parsedRef internal.ParsedRef) {
+	format := parsedRef.Format()
+	if replacementFormat, ok := deprecatedCompressionFormatToReplacementFormat[format]; ok {
+		a.logger.Sugar().Warnf(
+			`Format %q is deprecated. Use "format=%s,compression=gzip" instead. This will continue to work forever, but updating is recommended.`,
+			format,
+			replacementFormat,
+		)
+	}
+}
+
+func newRawRefProcessor(allowProtoFileRef bool) func(*internal.RawRef) error {
+	return func(rawRef *internal.RawRef) error {
+		// if format option is not set and path is "-", default to bin
+		var format string
+		var compressionType internal.CompressionType
+		if rawRef.Path == "-" || app.IsDevNull(rawRef.Path) || app.IsDevStdin(rawRef.Path) || app.IsDevStdout(rawRef.Path) {
+			format = formatBin
+		} else {
+			switch filepath.Ext(rawRef.Path) {
+			case ".bin":
+				format = formatBin
+			case ".json":
+				format = formatJSON
+			case ".tar":
+				format = formatTar
+			case ".zip":
+				format = formatZip
+			case ".gz":
+				compressionType = internal.CompressionTypeGzip
+				switch filepath.Ext(strings.TrimSuffix(rawRef.Path, filepath.Ext(rawRef.Path))) {
+				case ".bin":
+					format = formatBin
+				case ".json":
+					format = formatJSON
+				case ".tar":
+					format = formatTar
+				default:
+					return fmt.Errorf("path %q had .gz extension with unknown format", rawRef.Path)
+				}
+			case ".zst":
+				compressionType = internal.CompressionTypeZstd
+				switch filepath.Ext(strings.TrimSuffix(rawRef.Path, filepath.Ext(rawRef.Path))) {
+				case ".bin":
+					format = formatBin
+				case ".json":
+					format = formatJSON
+				case ".tar":
+					format = formatTar
+				default:
+					return fmt.Errorf("path %q had .zst extension with unkn
