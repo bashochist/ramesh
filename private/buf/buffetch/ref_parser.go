@@ -162,4 +162,130 @@ func newModuleRefParser(logger *zap.Logger) *refParser {
 
 func newSourceOrModuleRefParser(logger *zap.Logger) *refParser {
 	return &refParser{
-		logger: logger.Name
+		logger: logger.Named(loggerName),
+		fetchRefParser: internal.NewRefParser(
+			logger,
+			internal.WithRawRefProcessor(processRawRefSourceOrModule),
+			internal.WithArchiveFormat(
+				formatTar,
+				internal.ArchiveTypeTar,
+			),
+			internal.WithArchiveFormat(
+				formatTargz,
+				internal.ArchiveTypeTar,
+				internal.WithArchiveDefaultCompressionType(
+					internal.CompressionTypeGzip,
+				),
+			),
+			internal.WithArchiveFormat(
+				formatZip,
+				internal.ArchiveTypeZip,
+			),
+			internal.WithGitFormat(formatGit),
+			internal.WithDirFormat(formatDir),
+			internal.WithModuleFormat(formatMod),
+		),
+		tracer: otel.GetTracerProvider().Tracer(tracerName),
+	}
+}
+
+func (a *refParser) GetRef(
+	ctx context.Context,
+	value string,
+) (_ Ref, retErr error) {
+	ctx, span := a.tracer.Start(ctx, "get_ref")
+	defer span.End()
+	defer func() {
+		if retErr != nil {
+			span.RecordError(retErr)
+			span.SetStatus(codes.Error, retErr.Error())
+		}
+	}()
+	parsedRef, err := a.getParsedRef(ctx, value, allFormats)
+	if err != nil {
+		return nil, err
+	}
+	switch t := parsedRef.(type) {
+	case internal.ParsedSingleRef:
+		imageEncoding, err := parseImageEncoding(t.Format())
+		if err != nil {
+			return nil, err
+		}
+		return newImageRef(t, imageEncoding), nil
+	case internal.ParsedArchiveRef:
+		return newSourceRef(t), nil
+	case internal.ParsedDirRef:
+		return newSourceRef(t), nil
+	case internal.ParsedGitRef:
+		return newSourceRef(t), nil
+	case internal.ParsedModuleRef:
+		return newModuleRef(t), nil
+	case internal.ProtoFileRef:
+		return newProtoFileRef(t), nil
+	default:
+		return nil, fmt.Errorf("unknown ParsedRef type: %T", parsedRef)
+	}
+}
+
+func (a *refParser) GetSourceOrModuleRef(
+	ctx context.Context,
+	value string,
+) (_ SourceOrModuleRef, retErr error) {
+	ctx, span := a.tracer.Start(ctx, "get_source_or_module_ref")
+	defer span.End()
+	defer func() {
+		if retErr != nil {
+			span.RecordError(retErr)
+			span.SetStatus(codes.Error, retErr.Error())
+		}
+	}()
+	parsedRef, err := a.getParsedRef(ctx, value, sourceOrModuleFormats)
+	if err != nil {
+		return nil, err
+	}
+	switch t := parsedRef.(type) {
+	case internal.ParsedSingleRef:
+		return nil, fmt.Errorf("invalid ParsedRef type for source or module: %T", parsedRef)
+	case internal.ParsedArchiveRef:
+		return newSourceRef(t), nil
+	case internal.ParsedDirRef:
+		return newSourceRef(t), nil
+	case internal.ParsedGitRef:
+		return newSourceRef(t), nil
+	case internal.ParsedModuleRef:
+		return newModuleRef(t), nil
+	case internal.ProtoFileRef:
+		return newProtoFileRef(t), nil
+	default:
+		return nil, fmt.Errorf("unknown ParsedRef type: %T", parsedRef)
+	}
+}
+
+func (a *refParser) GetImageRef(
+	ctx context.Context,
+	value string,
+) (_ ImageRef, retErr error) {
+	ctx, span := a.tracer.Start(ctx, "get_image_ref")
+	defer span.End()
+	defer func() {
+		if retErr != nil {
+			span.RecordError(retErr)
+			span.SetStatus(codes.Error, retErr.Error())
+		}
+	}()
+	parsedRef, err := a.getParsedRef(ctx, value, imageFormats)
+	if err != nil {
+		return nil, err
+	}
+	parsedSingleRef, ok := parsedRef.(internal.ParsedSingleRef)
+	if !ok {
+		return nil, fmt.Errorf("invalid ParsedRef type for image: %T", parsedRef)
+	}
+	imageEncoding, err := parseImageEncoding(parsedSingleRef.Format())
+	if err != nil {
+		return nil, err
+	}
+	return newImageRef(parsedSingleRef, imageEncoding), nil
+}
+
+func (a *refParser) Ge
