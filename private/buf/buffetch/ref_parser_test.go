@@ -899,3 +899,184 @@ func TestGetParsedRefSuccess(t *testing.T) {
 			internal.CompressionTypeNone,
 		),
 		"https://gitlab.com/api/v4/projects/foo/packages/generic/proto/0.0.1/proto.bin?private_token=bar#format=bin",
+	)
+}
+
+func TestGetParsedRefError(t *testing.T) {
+	testGetParsedRefError(
+		t,
+		internal.NewInvalidPathError(formatDir, "-"),
+		"-#format=dir",
+	)
+	testGetParsedRefError(
+		t,
+		internal.NewInvalidPathError(formatGit, "-"),
+		"-#format=git,branch=main",
+	)
+	testGetParsedRefError(
+		t,
+		internal.NewCannotSpecifyGitBranchAndTagError(),
+		"path/to/foo#format=git,branch=foo,tag=bar",
+	)
+	testGetParsedRefError(
+		t,
+		internal.NewCannotSpecifyGitBranchAndTagError(),
+		"path/to/foo#format=git,branch=foo,tag=bar,ref=baz",
+	)
+	testGetParsedRefError(
+		t,
+		internal.NewCannotSpecifyTagWithRefError(),
+		"path/to/foo#format=git,tag=foo,ref=bar",
+	)
+	testGetParsedRefError(
+		t,
+		internal.NewDepthParseError("bar"),
+		"path/to/foo#format=git,depth=bar",
+	)
+	testGetParsedRefError(
+		t,
+		internal.NewDepthZeroError(),
+		"path/to/foo#format=git,ref=foor,depth=0",
+	)
+	testGetParsedRefError(
+		t,
+		internal.NewPathUnknownGzError("path/to/foo.gz"),
+		"path/to/foo.gz",
+	)
+	testGetParsedRefError(
+		t,
+		internal.NewPathUnknownGzError("path/to/foo.bar.gz"),
+		"path/to/foo.bar.gz",
+	)
+	testGetParsedRefError(
+		t,
+		internal.NewFormatOverrideNotAllowedForDevNullError(app.DevNullFilePath),
+		fmt.Sprintf("%s#format=bin", app.DevNullFilePath),
+	)
+	testGetParsedRefError(
+		t,
+		internal.NewFormatUnknownError("bar"),
+		"path/to/foo#format=bar",
+	)
+	testGetParsedRefError(
+		t,
+		internal.NewOptionsCouldNotParseStripComponentsError("foo"),
+		"path/to/foo.tar.gz#strip_components=foo",
+	)
+	testGetParsedRefError(
+		t,
+		internal.NewCompressionUnknownError("foo"),
+		"path/to/foo.tar.gz#compression=foo",
+	)
+	testGetParsedRefError(
+		t,
+		internal.NewOptionsInvalidKeyError("foo"),
+		"path/to/foo.tar.gz#foo=bar",
+	)
+	testGetParsedRefError(
+		t,
+		internal.NewOptionsInvalidForFormatError(formatTar, "path/to/foo.tar.gz#branch=main"),
+		"path/to/foo.tar.gz#branch=main",
+	)
+	testGetParsedRefError(
+		t,
+		internal.NewOptionsInvalidForFormatError(formatDir, "path/to/some/foo#strip_components=1"),
+		"path/to/some/foo#strip_components=1",
+	)
+	testGetParsedRefError(
+		t,
+		internal.NewOptionsInvalidForFormatError(formatDir, "path/to/some/foo#compression=none"),
+		"path/to/some/foo#compression=none",
+	)
+	testGetParsedRefError(
+		t,
+		internal.NewCannotSpecifyCompressionForZipError(),
+		"path/to/foo.zip#compression=none",
+	)
+	testGetParsedRefError(
+		t,
+		internal.NewCannotSpecifyCompressionForZipError(),
+		"path/to/foo.zip#compression=gzip",
+	)
+	testGetParsedRefError(
+		t,
+		internal.NewCannotSpecifyCompressionForZipError(),
+		"path/to/foo#format=zip,compression=none",
+	)
+	testGetParsedRefError(
+		t,
+		internal.NewCannotSpecifyCompressionForZipError(),
+		"path/to/foo#format=zip,compression=gzip",
+	)
+	testGetParsedRefError(
+		t,
+		internal.NewCannotSpecifyCompressionForZipError(),
+		"path/to/foo#format=zip,compression=gzip",
+	)
+}
+
+func testGetParsedRefSuccess(
+	t *testing.T,
+	expectedRef internal.ParsedRef,
+	value string,
+) {
+	testGetParsedRef(
+		t,
+		expectedRef,
+		nil,
+		value,
+	)
+}
+
+func testGetParsedRefError(
+	t *testing.T,
+	expectedErr error,
+	value string,
+) {
+	testGetParsedRef(
+		t,
+		nil,
+		expectedErr,
+		value,
+	)
+}
+
+func testGetParsedRef(
+	t *testing.T,
+	expectedParsedRef internal.ParsedRef,
+	expectedErr error,
+	value string,
+) {
+	t.Run(value, func(t *testing.T) {
+		t.Parallel()
+		parsedRef, err := newRefParser(zap.NewNop()).getParsedRef(
+			context.Background(),
+			value,
+			allFormats,
+		)
+		if expectedErr != nil {
+			if err == nil {
+				assert.Equal(t, nil, parsedRef, "expected error")
+			} else {
+				assert.Equal(t, expectedErr, err)
+			}
+		} else {
+			assert.NoError(t, err)
+			if err == nil {
+				assert.Equal(t, expectedParsedRef, parsedRef)
+			}
+		}
+	})
+}
+
+func testNewModuleReference(
+	t *testing.T,
+	remote string,
+	owner string,
+	repository string,
+	reference string,
+) bufmoduleref.ModuleReference {
+	moduleReference, err := bufmoduleref.NewModuleReference(remote, owner, repository, reference)
+	require.NoError(t, err)
+	return moduleReference
+}
