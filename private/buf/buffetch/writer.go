@@ -31,4 +31,18 @@ func newWriter(
 	logger *zap.Logger,
 ) *writer {
 	return &writer{
-		internalWri
+		internalWriter: internal.NewWriter(
+			logger,
+			internal.WithWriterLocal(),
+			internal.WithWriterStdio(),
+		),
+	}
+}
+
+func (w *writer) PutImageFile(
+	ctx context.Context,
+	container app.EnvStdoutContainer,
+	imageRef ImageRef,
+) (io.WriteCloser, error) {
+	return w.internalWriter.PutFile(ctx, container, imageRef.internalFileRef())
+}
