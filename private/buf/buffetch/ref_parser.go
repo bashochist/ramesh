@@ -519,4 +519,80 @@ func processRawRefSourceOrModule(rawRef *internal.RawRef) error {
 	return nil
 }
 
-func process
+func processRawRefImage(rawRef *internal.RawRef) error {
+	// if format option is not set and path is "-", default to bin
+	var format string
+	var compressionType internal.CompressionType
+	if rawRef.Path == "-" || app.IsDevNull(rawRef.Path) || app.IsDevStdin(rawRef.Path) || app.IsDevStdout(rawRef.Path) {
+		format = formatBin
+	} else {
+		switch filepath.Ext(rawRef.Path) {
+		case ".bin":
+			format = formatBin
+		case ".json":
+			format = formatJSON
+		case ".gz":
+			compressionType = internal.CompressionTypeGzip
+			switch filepath.Ext(strings.TrimSuffix(rawRef.Path, filepath.Ext(rawRef.Path))) {
+			case ".bin":
+				format = formatBin
+			case ".json":
+				format = formatJSON
+			default:
+				return fmt.Errorf("path %q had .gz extension with unknown format", rawRef.Path)
+			}
+		case ".zst":
+			compressionType = internal.CompressionTypeZstd
+			switch filepath.Ext(strings.TrimSuffix(rawRef.Path, filepath.Ext(rawRef.Path))) {
+			case ".bin":
+				format = formatBin
+			case ".json":
+				format = formatJSON
+			default:
+				return fmt.Errorf("path %q had .zst extension with unknown format", rawRef.Path)
+			}
+		default:
+			format = formatBin
+		}
+	}
+	rawRef.Format = format
+	rawRef.CompressionType = compressionType
+	return nil
+}
+
+func processRawRefModule(rawRef *internal.RawRef) error {
+	rawRef.Format = formatMod
+	return nil
+}
+
+func parseImageEncoding(format string) (ImageEncoding, error) {
+	switch format {
+	case formatBin, formatBingz:
+		return ImageEncodingBin, nil
+	case formatJSON, formatJSONGZ:
+		return ImageEncodingJSON, nil
+	default:
+		return 0, fmt.Errorf("invalid format for image: %q", format)
+	}
+}
+
+// TODO: this is a terrible heuristic, and we shouldn't be using what amounts
+// to heuristics here (technically this is a documentable rule, but still)
+func assumeModuleOrDir(path string) (string, error) {
+	if path == "" {
+		return "", errors.New("assumeModuleOrDir: no path given")
+	}
+	if _, err := bufmoduleref.ModuleReferenceForString(path); err == nil {
+		// this is possible to be a module, check if it is a directory though
+		// OK to use os.Stat instead of os.Lstat here
+		fileInfo, err := os.Stat(path)
+		if err == nil && fileInfo.IsDir() {
+			// if we have a directory, assume this is a directory
+			return formatDir, nil
+		}
+		// not a directory, assume module
+		return formatMod, nil
+	}
+	// cannot be parsed into a module, assume dir for here
+	return formatDir, nil
+}
