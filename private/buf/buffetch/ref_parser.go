@@ -403,4 +403,120 @@ func newRawRefProcessor(allowProtoFileRef bool) func(*internal.RawRef) error {
 				case ".tar":
 					format = formatTar
 				default:
-					return fmt.Errorf("path %q had .zst extension with unkn
+					return fmt.Errorf("path %q had .zst extension with unknown format", rawRef.Path)
+				}
+			case ".tgz":
+				format = formatTar
+				compressionType = internal.CompressionTypeGzip
+			case ".git":
+				format = formatGit
+				// This only applies if the option accept `ProtoFileRef` is passed in, otherwise
+				// it falls through to the `default` case.
+			case ".proto":
+				if allowProtoFileRef {
+					fileInfo, err := os.Stat(rawRef.Path)
+					if err != nil && !os.IsNotExist(err) {
+						return fmt.Errorf("path provided is not a valid proto file: %s, %w", rawRef.Path, err)
+					}
+					if fileInfo != nil && fileInfo.IsDir() {
+						return fmt.Errorf("path provided is not a valid proto file: a directory named %s already exists", rawRef.Path)
+					}
+					format = formatProtoFile
+					break
+				}
+				fallthrough
+			default:
+				var err error
+				format, err = assumeModuleOrDir(rawRef.Path)
+				if err != nil {
+					return err
+				}
+			}
+		}
+		rawRef.Format = format
+		rawRef.CompressionType = compressionType
+		return nil
+	}
+}
+
+func processRawRefSource(rawRef *internal.RawRef) error {
+	// if format option is not set and path is "-", default to bin
+	var format string
+	var compressionType internal.CompressionType
+	switch filepath.Ext(rawRef.Path) {
+	case ".tar":
+		format = formatTar
+	case ".zip":
+		format = formatZip
+	case ".gz":
+		compressionType = internal.CompressionTypeGzip
+		switch filepath.Ext(strings.TrimSuffix(rawRef.Path, filepath.Ext(rawRef.Path))) {
+		case ".tar":
+			format = formatTar
+		default:
+			return fmt.Errorf("path %q had .gz extension with unknown format", rawRef.Path)
+		}
+	case ".zst":
+		compressionType = internal.CompressionTypeZstd
+		switch filepath.Ext(strings.TrimSuffix(rawRef.Path, filepath.Ext(rawRef.Path))) {
+		case ".tar":
+			format = formatTar
+		default:
+			return fmt.Errorf("path %q had .zst extension with unknown format", rawRef.Path)
+		}
+	case ".tgz":
+		format = formatTar
+		compressionType = internal.CompressionTypeGzip
+	case ".git":
+		format = formatGit
+	default:
+		format = formatDir
+	}
+	rawRef.Format = format
+	rawRef.CompressionType = compressionType
+	return nil
+}
+
+func processRawRefSourceOrModule(rawRef *internal.RawRef) error {
+	// if format option is not set and path is "-", default to bin
+	var format string
+	var compressionType internal.CompressionType
+	switch filepath.Ext(rawRef.Path) {
+	case ".tar":
+		format = formatTar
+	case ".zip":
+		format = formatZip
+	case ".gz":
+		compressionType = internal.CompressionTypeGzip
+		switch filepath.Ext(strings.TrimSuffix(rawRef.Path, filepath.Ext(rawRef.Path))) {
+		case ".tar":
+			format = formatTar
+		default:
+			return fmt.Errorf("path %q had .gz extension with unknown format", rawRef.Path)
+		}
+	case ".zst":
+		compressionType = internal.CompressionTypeZstd
+		switch filepath.Ext(strings.TrimSuffix(rawRef.Path, filepath.Ext(rawRef.Path))) {
+		case ".tar":
+			format = formatTar
+		default:
+			return fmt.Errorf("path %q had .zst extension with unknown format", rawRef.Path)
+		}
+	case ".tgz":
+		format = formatTar
+		compressionType = internal.CompressionTypeGzip
+	case ".git":
+		format = formatGit
+	default:
+		var err error
+		format, err = assumeModuleOrDir(rawRef.Path)
+		if err != nil {
+			return err
+		}
+	}
+	rawRef.Format = format
+	rawRef.CompressionType = compressionType
+	return nil
+}
+
+func process
