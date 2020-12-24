@@ -86,4 +86,133 @@ func (f *formatter) Run() error {
 // P prints a line to the generated output.
 func (f *formatter) P(elements ...string) {
 	if len(elements) > 0 {
-		// We only want to write an inde
+		// We only want to write an indent if we're
+		// writing elements (not just a newline).
+		f.Indent(nil)
+		for _, elem := range elements {
+			f.WriteString(elem)
+		}
+	}
+	f.WriteString("\n")
+
+	if f.pendingIndent > 0 {
+		f.In()
+	} else if f.pendingIndent < 0 {
+		f.Out()
+	}
+	f.pendingIndent = 0
+}
+
+// Space adds a space to the generated output.
+func (f *formatter) Space() {
+	f.pendingSpace = true
+}
+
+// In increases the current level of indentation.
+func (f *formatter) In() {
+	f.indent++
+}
+
+// Out reduces the current level of indentation.
+func (f *formatter) Out() {
+	if f.indent <= 0 {
+		// Unreachable.
+		f.err = multierr.Append(
+			f.err,
+			errors.New("internal error: attempted to decrement indentation at zero"),
+		)
+		return
+	}
+	f.indent--
+}
+
+// Indent writes the number of spaces associated
+// with the current level of indentation.
+func (f *formatter) Indent(nextNode ast.Node) {
+	// only indent at beginning of line
+	if f.lastWritten != '\n' {
+		return
+	}
+	indent := f.indent
+	if rn, ok := nextNode.(*ast.RuneNode); ok && indent > 0 {
+		if strings.ContainsRune("}])>", rn.Rune) {
+			indent--
+		}
+	}
+	f.WriteString(strings.Repeat("  ", indent))
+}
+
+// WriteString writes the given element to the generated output.
+func (f *formatter) WriteString(elem string) {
+	if f.pendingSpace {
+		f.pendingSpace = false
+		first, _ := utf8.DecodeRuneInString(elem)
+
+		// We don't want "dangling spaces" before certain characters:
+		// newlines, commas, and semicolons. Also, when writing
+		// elements inline, we don't want spaces before close parens
+		// and braces. Similarly, we don't want extra/doubled spaces
+		// or dangling spaces after certain characters when printing
+		// inline, like open parens/braces. So only print the space
+		// if the previous and next character don't match above
+		// conditions.
+
+		prevBlockList := "\x00 \t\n"
+		nextBlockList := "\n;,"
+		if f.inline {
+			prevBlockList = "\x00 \t\n<[{("
+			nextBlockList = "\n;,)]}>"
+		}
+
+		if !strings.ContainsRune(prevBlockList, f.lastWritten) &&
+			!strings.ContainsRune(nextBlockList, first) {
+			if _, err := f.writer.Write([]byte{' '}); err != nil {
+				f.err = multierr.Append(f.err, err)
+				return
+			}
+		}
+	}
+	if len(elem) == 0 {
+		return
+	}
+	f.lastWritten, _ = utf8.DecodeLastRuneInString(elem)
+	if _, err := f.writer.Write([]byte(elem)); err != nil {
+		f.err = multierr.Append(f.err, err)
+	}
+}
+
+// SetPreviousNode sets the previously written node. This should
+// be called in all of the comment writing functions.
+func (f *formatter) SetPreviousNode(node ast.Node) {
+	f.previousNode = node
+}
+
+// writeFile writes the file node.
+func (f *formatter) writeFile() {
+	f.writeFileHeader()
+	f.writeFileTypes()
+	if f.fileNode.EOF != nil {
+		info := f.fileNode.NodeInfo(f.fileNode.EOF)
+		f.writeMultilineComments(info.LeadingComments())
+	}
+	if f.lastWritten != 0 && f.lastWritten != '\n' {
+		// If anything was written, we always conclude with
+		// a newline.
+		f.P()
+	}
+}
+
+// writeFileHeader writes the header of a .proto file. This includes the syntax,
+// package, imports, and options (in that order). The imports and options are
+// sorted. All other file elements are handled by f.writeFileTypes.
+//
+// For example,
+//
+//	syntax = "proto3";
+//
+//	package acme.v1.weather;
+//
+//	import "acme/payment/v1/payment.proto";
+//	import "google/type/datetime.proto";
+//
+//	option cc_enable_a
