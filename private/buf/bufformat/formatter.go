@@ -215,4 +215,109 @@ func (f *formatter) writeFile() {
 //	import "acme/payment/v1/payment.proto";
 //	import "google/type/datetime.proto";
 //
-//	option cc_enable_a
+//	option cc_enable_arenas = true;
+//	option optimize_for = SPEED;
+func (f *formatter) writeFileHeader() {
+	var (
+		packageNode *ast.PackageNode
+		importNodes []*ast.ImportNode
+		optionNodes []*ast.OptionNode
+	)
+	for _, fileElement := range f.fileNode.Decls {
+		switch node := fileElement.(type) {
+		case *ast.PackageNode:
+			packageNode = node
+		case *ast.ImportNode:
+			importNodes = append(importNodes, node)
+		case *ast.OptionNode:
+			optionNodes = append(optionNodes, node)
+		default:
+			continue
+		}
+	}
+	if f.fileNode.Syntax == nil && packageNode == nil && importNodes == nil && optionNodes == nil {
+		// There aren't any header values, so we can return early.
+		return
+	}
+	if syntaxNode := f.fileNode.Syntax; syntaxNode != nil {
+		f.writeSyntax(syntaxNode)
+	}
+	if packageNode != nil {
+		f.writePackage(packageNode)
+	}
+	sort.Slice(importNodes, func(i, j int) bool {
+		return importNodes[i].Name.AsString() < importNodes[j].Name.AsString()
+	})
+	for i, importNode := range importNodes {
+		if i == 0 && f.previousNode != nil && !f.leadingCommentsContainBlankLine(importNode) {
+			f.P()
+		}
+		f.writeImport(importNode, i > 0)
+	}
+	sort.Slice(optionNodes, func(i, j int) bool {
+		// The default options (e.g. cc_enable_arenas) should always
+		// be sorted above custom options (which are identified by a
+		// leading '(').
+		left := stringForOptionName(optionNodes[i].Name)
+		right := stringForOptionName(optionNodes[j].Name)
+		if strings.HasPrefix(left, "(") && !strings.HasPrefix(right, "(") {
+			// Prefer the default option on the right.
+			return false
+		}
+		if !strings.HasPrefix(left, "(") && strings.HasPrefix(right, "(") {
+			// Prefer the default option on the left.
+			return true
+		}
+		// Both options are custom, so we defer to the standard sorting.
+		return left < right
+	})
+	for i, optionNode := range optionNodes {
+		if i == 0 && f.previousNode != nil && !f.leadingCommentsContainBlankLine(optionNode) {
+			f.P()
+		}
+		f.writeFileOption(optionNode, i > 0)
+	}
+}
+
+// writeFileTypes writes the types defined in a .proto file. This includes the messages, enums,
+// services, etc. All other elements are ignored since they are handled by f.writeFileHeader.
+func (f *formatter) writeFileTypes() {
+	for i, fileElement := range f.fileNode.Decls {
+		switch node := fileElement.(type) {
+		case *ast.PackageNode, *ast.OptionNode, *ast.ImportNode, *ast.EmptyDeclNode:
+			// These elements have already been written by f.writeFileHeader.
+			continue
+		default:
+			info := f.fileNode.NodeInfo(node)
+			wantNewline := f.previousNode != nil && (i == 0 || info.LeadingComments().Len() > 0)
+			if wantNewline && !f.leadingCommentsContainBlankLine(node) {
+				f.P()
+			}
+			f.writeNode(node)
+		}
+	}
+}
+
+// writeSyntax writes the syntax.
+//
+// For example,
+//
+//	syntax = "proto3";
+func (f *formatter) writeSyntax(syntaxNode *ast.SyntaxNode) {
+	f.writeStart(syntaxNode.Keyword)
+	f.Space()
+	f.writeInline(syntaxNode.Equals)
+	f.Space()
+	f.writeInline(syntaxNode.Syntax)
+	f.writeLineEnd(syntaxNode.Semicolon)
+}
+
+// writePackage writes the package.
+//
+// For example,
+//
+//	package acme.weather.v1;
+func (f *formatter) writePackage(packageNode *ast.PackageNode) {
+	f.writeStart(packageNode.Keyword)
+	f.Space()
+	f.writeInline(packageNode.Nam
