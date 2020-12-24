@@ -320,4 +320,119 @@ func (f *formatter) writeSyntax(syntaxNode *ast.SyntaxNode) {
 func (f *formatter) writePackage(packageNode *ast.PackageNode) {
 	f.writeStart(packageNode.Keyword)
 	f.Space()
-	f.writeInline(packageNode.Nam
+	f.writeInline(packageNode.Name)
+	f.writeLineEnd(packageNode.Semicolon)
+}
+
+// writeImport writes an import statement.
+//
+// For example,
+//
+//	import "google/protobuf/descriptor.proto";
+func (f *formatter) writeImport(importNode *ast.ImportNode, forceCompact bool) {
+	f.writeStartMaybeCompact(importNode.Keyword, forceCompact)
+	f.Space()
+	// We don't want to write the "public" and "weak" nodes
+	// if they aren't defined. One could be set, but never both.
+	switch {
+	case importNode.Public != nil:
+		f.writeInline(importNode.Public)
+		f.Space()
+	case importNode.Weak != nil:
+		f.writeInline(importNode.Weak)
+		f.Space()
+	}
+	f.writeInline(importNode.Name)
+	f.writeLineEnd(importNode.Semicolon)
+}
+
+// writeFileOption writes a file option. This function is slightly
+// different than f.writeOption because file options are sorted at
+// the top of the file, and leading comments are adjusted accordingly.
+func (f *formatter) writeFileOption(optionNode *ast.OptionNode, forceCompact bool) {
+	f.writeStartMaybeCompact(optionNode.Keyword, forceCompact)
+	f.Space()
+	f.writeNode(optionNode.Name)
+	f.Space()
+	f.writeInline(optionNode.Equals)
+	if node, ok := optionNode.Val.(*ast.CompoundStringLiteralNode); ok {
+		// Compound string literals are written across multiple lines
+		// immediately after the '=', so we don't need a trailing
+		// space in the option prefix.
+		f.writeCompoundStringLiteralIndentEndInline(node)
+		f.writeLineEnd(optionNode.Semicolon)
+		return
+	}
+	f.Space()
+	f.writeInline(optionNode.Val)
+	f.writeLineEnd(optionNode.Semicolon)
+}
+
+// writeOption writes an option.
+//
+// For example,
+//
+//	option go_package = "github.com/foo/bar";
+func (f *formatter) writeOption(optionNode *ast.OptionNode) {
+	f.writeOptionPrefix(optionNode)
+	if optionNode.Semicolon != nil {
+		if node, ok := optionNode.Val.(*ast.CompoundStringLiteralNode); ok {
+			// Compound string literals are written across multiple lines
+			// immediately after the '=', so we don't need a trailing
+			// space in the option prefix.
+			f.writeCompoundStringLiteralIndentEndInline(node)
+			f.writeLineEnd(optionNode.Semicolon)
+			return
+		}
+		f.writeInline(optionNode.Val)
+		f.writeLineEnd(optionNode.Semicolon)
+		return
+	}
+
+	if node, ok := optionNode.Val.(*ast.CompoundStringLiteralNode); ok {
+		f.writeCompoundStringLiteralIndent(node)
+		return
+	}
+	f.writeInline(optionNode.Val)
+}
+
+// writeLastCompactOption writes a compact option but preserves its the
+// trailing end comments. This is only used for the last compact option
+// since it's the only time a trailing ',' will be omitted.
+//
+// For example,
+//
+//	[
+//	  deprecated = true,
+//	  json_name = "something" // Trailing comment on the last element.
+//	]
+func (f *formatter) writeLastCompactOption(optionNode *ast.OptionNode) {
+	f.writeOptionPrefix(optionNode)
+	f.writeLineEnd(optionNode.Val)
+}
+
+// writeOptionValue writes the option prefix, which makes up all of the
+// option's definition, excluding the final token(s).
+//
+// For example,
+//
+//	deprecated =
+func (f *formatter) writeOptionPrefix(optionNode *ast.OptionNode) {
+	if optionNode.Keyword != nil {
+		// Compact options don't have the keyword.
+		f.writeStart(optionNode.Keyword)
+		f.Space()
+		f.writeNode(optionNode.Name)
+	} else {
+		f.writeStart(optionNode.Name)
+	}
+	f.Space()
+	f.writeInline(optionNode.Equals)
+	f.Space()
+}
+
+// writeOptionName writes an option name.
+//
+// For example,
+//
+//	go
