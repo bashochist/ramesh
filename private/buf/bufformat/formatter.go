@@ -435,4 +435,139 @@ func (f *formatter) writeOptionPrefix(optionNode *ast.OptionNode) {
 //
 // For example,
 //
-//	go
+//	go_package
+//	(custom.thing)
+//	(custom.thing).bridge.(another.thing)
+func (f *formatter) writeOptionName(optionNameNode *ast.OptionNameNode) {
+	for i := 0; i < len(optionNameNode.Parts); i++ {
+		if f.inCompactOptions && i == 0 {
+			// The leading comments of the first token (either open rune or the
+			// name) will have already been written, so we need to handle this
+			// case specially.
+			fieldReferenceNode := optionNameNode.Parts[0]
+			if fieldReferenceNode.Open != nil {
+				f.writeNode(fieldReferenceNode.Open)
+				if info := f.fileNode.NodeInfo(fieldReferenceNode.Open); info.TrailingComments().Len() > 0 {
+					f.writeInlineComments(info.TrailingComments())
+				}
+				f.writeInline(fieldReferenceNode.Name)
+			} else {
+				f.writeNode(fieldReferenceNode.Name)
+				if info := f.fileNode.NodeInfo(fieldReferenceNode.Name); info.TrailingComments().Len() > 0 {
+					f.writeInlineComments(info.TrailingComments())
+				}
+			}
+			if fieldReferenceNode.Close != nil {
+				f.writeInline(fieldReferenceNode.Close)
+			}
+			continue
+		}
+		if i > 0 {
+			// The length of this slice must be exactly len(Parts)-1.
+			f.writeInline(optionNameNode.Dots[i-1])
+		}
+		f.writeNode(optionNameNode.Parts[i])
+	}
+}
+
+// writeMessage writes the message node.
+//
+// For example,
+//
+//	message Foo {
+//	  option deprecated = true;
+//	  reserved 50 to 100;
+//	  extensions 150 to 200;
+//
+//	  message Bar {
+//	    string name = 1;
+//	  }
+//	  enum Baz {
+//	    BAZ_UNSPECIFIED = 0;
+//	  }
+//	  extend Bar {
+//	    string value = 2;
+//	  }
+//
+//	  Bar bar = 1;
+//	  Baz baz = 2;
+//	}
+func (f *formatter) writeMessage(messageNode *ast.MessageNode) {
+	var elementWriterFunc func()
+	if len(messageNode.Decls) != 0 {
+		elementWriterFunc = func() {
+			for _, decl := range messageNode.Decls {
+				f.writeNode(decl)
+			}
+		}
+	}
+	f.writeStart(messageNode.Keyword)
+	f.Space()
+	f.writeInline(messageNode.Name)
+	f.Space()
+	f.writeCompositeTypeBody(
+		messageNode.OpenBrace,
+		messageNode.CloseBrace,
+		elementWriterFunc,
+	)
+}
+
+// writeMessageLiteral writes a message literal.
+//
+// For example,
+//
+//	{
+//	  foo: 1
+//	  foo: 2
+//	  foo: 3
+//	  bar: <
+//	    name:"abc"
+//	    id:123
+//	  >
+//	}
+func (f *formatter) writeMessageLiteral(messageLiteralNode *ast.MessageLiteralNode) {
+	if f.maybeWriteCompactMessageLiteral(messageLiteralNode, false) {
+		return
+	}
+	var elementWriterFunc func()
+	if len(messageLiteralNode.Elements) > 0 {
+		elementWriterFunc = func() {
+			f.writeMessageLiteralElements(messageLiteralNode)
+		}
+	}
+	f.writeCompositeValueBody(
+		messageLiteralNode.Open,
+		messageLiteralNode.Close,
+		elementWriterFunc,
+	)
+}
+
+// writeMessageLiteral writes a message literal suitable for
+// an element in an array literal.
+func (f *formatter) writeMessageLiteralForArray(
+	messageLiteralNode *ast.MessageLiteralNode,
+	lastElement bool,
+) {
+	if f.maybeWriteCompactMessageLiteral(messageLiteralNode, true) {
+		return
+	}
+	var elementWriterFunc func()
+	if len(messageLiteralNode.Elements) > 0 {
+		elementWriterFunc = func() {
+			f.writeMessageLiteralElements(messageLiteralNode)
+		}
+	}
+	closeWriter := f.writeBodyEndInline
+	if lastElement {
+		closeWriter = f.writeBodyEnd
+	}
+	f.writeBody(
+		messageLiteralNode.Open,
+		messageLiteralNode.Close,
+		elementWriterFunc,
+		f.writeOpenBracePrefixForArray,
+		closeWriter,
+	)
+}
+
+func (f *formatter) mayb
