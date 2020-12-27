@@ -570,4 +570,107 @@ func (f *formatter) writeMessageLiteralForArray(
 	)
 }
 
-func (f *formatter) mayb
+func (f *formatter) maybeWriteCompactMessageLiteral(
+	messageLiteralNode *ast.MessageLiteralNode,
+	inArrayLiteral bool,
+) bool {
+	if len(messageLiteralNode.Elements) == 0 || len(messageLiteralNode.Elements) > 1 ||
+		f.hasInteriorComments(messageLiteralNode.Children()...) ||
+		messageLiteralHasNestedMessageOrArray(messageLiteralNode) {
+		return false
+	}
+	// messages with a single scalar field and no comments can be
+	// printed all on one line
+	if inArrayLiteral {
+		f.Indent(messageLiteralNode.Open)
+	}
+	f.writeInline(messageLiteralNode.Open)
+	fieldNode := messageLiteralNode.Elements[0]
+	f.writeInline(fieldNode.Name)
+	if fieldNode.Sep != nil {
+		f.writeInline(fieldNode.Sep)
+	}
+	f.Space()
+	f.writeInline(fieldNode.Val)
+	f.writeInline(messageLiteralNode.Close)
+	return true
+}
+
+func messageLiteralHasNestedMessageOrArray(messageLiteralNode *ast.MessageLiteralNode) bool {
+	for _, elem := range messageLiteralNode.Elements {
+		switch elem.Val.(type) {
+		case *ast.ArrayLiteralNode, *ast.MessageLiteralNode:
+			return true
+		}
+	}
+	return false
+}
+
+func arrayLiteralHasNestedMessageOrArray(arrayLiteralNode *ast.ArrayLiteralNode) bool {
+	for _, elem := range arrayLiteralNode.Elements {
+		switch elem.(type) {
+		case *ast.ArrayLiteralNode, *ast.MessageLiteralNode:
+			return true
+		}
+	}
+	return false
+}
+
+// writeMessageLiteralElements writes the message literal's elements.
+//
+// For example,
+//
+//	foo: 1
+//	foo: 2
+func (f *formatter) writeMessageLiteralElements(messageLiteralNode *ast.MessageLiteralNode) {
+	for i := 0; i < len(messageLiteralNode.Elements); i++ {
+		if sep := messageLiteralNode.Seps[i]; sep != nil {
+			f.writeMessageFieldWithSeparator(messageLiteralNode.Elements[i])
+			f.writeLineEnd(messageLiteralNode.Seps[i])
+			continue
+		}
+		f.writeNode(messageLiteralNode.Elements[i])
+	}
+}
+
+// writeMessageField writes the message field node, and concludes the
+// line without leaving room for a trailing separator in the parent
+// message literal.
+func (f *formatter) writeMessageField(messageFieldNode *ast.MessageFieldNode) {
+	f.writeMessageFieldPrefix(messageFieldNode)
+	if compoundStringLiteral, ok := messageFieldNode.Val.(*ast.CompoundStringLiteralNode); ok {
+		f.writeCompoundStringLiteralIndent(compoundStringLiteral)
+		return
+	}
+	f.writeLineEnd(messageFieldNode.Val)
+}
+
+// writeMessageFieldWithSeparator writes the message field node,
+// but leaves room for a trailing separator in the parent message
+// literal.
+func (f *formatter) writeMessageFieldWithSeparator(messageFieldNode *ast.MessageFieldNode) {
+	f.writeMessageFieldPrefix(messageFieldNode)
+	if compoundStringLiteral, ok := messageFieldNode.Val.(*ast.CompoundStringLiteralNode); ok {
+		f.writeCompoundStringLiteralIndentEndInline(compoundStringLiteral)
+		return
+	}
+	f.writeInline(messageFieldNode.Val)
+}
+
+// writeMessageFieldPrefix writes the message field node as a single line.
+//
+// For example,
+//
+//	foo:"bar"
+func (f *formatter) writeMessageFieldPrefix(messageFieldNode *ast.MessageFieldNode) {
+	// The comments need to be written as a multiline comment above
+	// the message field name.
+	//
+	// Note that this is different than how field reference nodes are
+	// normally formatted in-line (i.e. as option name components).
+	fieldReferenceNode := messageFieldNode.Name
+	if fieldReferenceNode.Open != nil {
+		f.writeStart(fieldReferenceNode.Open)
+		f.writeInline(fieldReferenceNode.Name)
+	} else {
+		f.writeSt
