@@ -673,4 +673,133 @@ func (f *formatter) writeMessageFieldPrefix(messageFieldNode *ast.MessageFieldNo
 		f.writeStart(fieldReferenceNode.Open)
 		f.writeInline(fieldReferenceNode.Name)
 	} else {
-		f.writeSt
+		f.writeStart(fieldReferenceNode.Name)
+	}
+	if fieldReferenceNode.Close != nil {
+		f.writeInline(fieldReferenceNode.Close)
+	}
+	if messageFieldNode.Sep != nil {
+		f.writeInline(messageFieldNode.Sep)
+	}
+	f.Space()
+}
+
+// writeEnum writes the enum node.
+//
+// For example,
+//
+//	enum Foo {
+//	  option deprecated = true;
+//	  reserved 1 to 5;
+//
+//	  FOO_UNSPECIFIED = 0;
+//	}
+func (f *formatter) writeEnum(enumNode *ast.EnumNode) {
+	var elementWriterFunc func()
+	if len(enumNode.Decls) > 0 {
+		elementWriterFunc = func() {
+			for _, decl := range enumNode.Decls {
+				f.writeNode(decl)
+			}
+		}
+	}
+	f.writeStart(enumNode.Keyword)
+	f.Space()
+	f.writeInline(enumNode.Name)
+	f.Space()
+	f.writeCompositeTypeBody(
+		enumNode.OpenBrace,
+		enumNode.CloseBrace,
+		elementWriterFunc,
+	)
+}
+
+// writeEnumValue writes the enum value as a single line. If the enum has
+// compact options, it will be written across multiple lines.
+//
+// For example,
+//
+//	FOO_UNSPECIFIED = 1 [
+//	  deprecated = true
+//	];
+func (f *formatter) writeEnumValue(enumValueNode *ast.EnumValueNode) {
+	f.writeStart(enumValueNode.Name)
+	f.Space()
+	f.writeInline(enumValueNode.Equals)
+	f.Space()
+	f.writeInline(enumValueNode.Number)
+	if enumValueNode.Options != nil {
+		f.Space()
+		f.writeNode(enumValueNode.Options)
+	}
+	f.writeLineEnd(enumValueNode.Semicolon)
+}
+
+// writeField writes the field node as a single line. If the field has
+// compact options, it will be written across multiple lines.
+//
+// For example,
+//
+//	repeated string name = 1 [
+//	  deprecated = true,
+//	  json_name = "name"
+//	];
+func (f *formatter) writeField(fieldNode *ast.FieldNode) {
+	// We need to handle the comments for the field label specially since
+	// a label might not be defined, but it has the leading comments attached
+	// to it.
+	if fieldNode.Label.KeywordNode != nil {
+		f.writeStart(fieldNode.Label)
+		f.Space()
+		f.writeInline(fieldNode.FldType)
+	} else {
+		// If a label was not written, the multiline comments will be
+		// attached to the type.
+		if compoundIdentNode, ok := fieldNode.FldType.(*ast.CompoundIdentNode); ok {
+			f.writeCompountIdentForFieldName(compoundIdentNode)
+		} else {
+			f.writeStart(fieldNode.FldType)
+		}
+	}
+	f.Space()
+	f.writeInline(fieldNode.Name)
+	f.Space()
+	f.writeInline(fieldNode.Equals)
+	f.Space()
+	f.writeInline(fieldNode.Tag)
+	if fieldNode.Options != nil {
+		f.Space()
+		f.writeNode(fieldNode.Options)
+	}
+	f.writeLineEnd(fieldNode.Semicolon)
+}
+
+// writeMapField writes a map field (e.g. 'map<string, string> pairs = 1;').
+func (f *formatter) writeMapField(mapFieldNode *ast.MapFieldNode) {
+	f.writeNode(mapFieldNode.MapType)
+	f.Space()
+	f.writeInline(mapFieldNode.Name)
+	f.Space()
+	f.writeInline(mapFieldNode.Equals)
+	f.Space()
+	f.writeInline(mapFieldNode.Tag)
+	if mapFieldNode.Options != nil {
+		f.Space()
+		f.writeNode(mapFieldNode.Options)
+	}
+	f.writeLineEnd(mapFieldNode.Semicolon)
+}
+
+// writeMapType writes a map type (e.g. 'map<string, string>').
+func (f *formatter) writeMapType(mapTypeNode *ast.MapTypeNode) {
+	f.writeStart(mapTypeNode.Keyword)
+	f.writeInline(mapTypeNode.OpenAngle)
+	f.writeInline(mapTypeNode.KeyType)
+	f.writeInline(mapTypeNode.Comma)
+	f.Space()
+	f.writeInline(mapTypeNode.ValueType)
+	f.writeInline(mapTypeNode.CloseAngle)
+}
+
+// writeFieldReference writes a field reference (e.g. '(foo.bar)').
+func (f 
