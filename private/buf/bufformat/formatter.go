@@ -802,4 +802,157 @@ func (f *formatter) writeMapType(mapTypeNode *ast.MapTypeNode) {
 }
 
 // writeFieldReference writes a field reference (e.g. '(foo.bar)').
-func (f 
+func (f *formatter) writeFieldReference(fieldReferenceNode *ast.FieldReferenceNode) {
+	if fieldReferenceNode.Open != nil {
+		f.writeInline(fieldReferenceNode.Open)
+	}
+	f.writeInline(fieldReferenceNode.Name)
+	if fieldReferenceNode.Close != nil {
+		f.writeInline(fieldReferenceNode.Close)
+	}
+}
+
+// writeExtend writes the extend node.
+//
+// For example,
+//
+//	extend google.protobuf.FieldOptions {
+//	  bool redacted = 33333;
+//	}
+func (f *formatter) writeExtend(extendNode *ast.ExtendNode) {
+	var elementWriterFunc func()
+	if len(extendNode.Decls) > 0 {
+		elementWriterFunc = func() {
+			for _, decl := range extendNode.Decls {
+				f.writeNode(decl)
+			}
+		}
+	}
+	f.writeStart(extendNode.Keyword)
+	f.Space()
+	f.writeInline(extendNode.Extendee)
+	f.Space()
+	f.writeCompositeTypeBody(
+		extendNode.OpenBrace,
+		extendNode.CloseBrace,
+		elementWriterFunc,
+	)
+}
+
+// writeService writes the service node.
+//
+// For example,
+//
+//	service FooService {
+//	  option deprecated = true;
+//
+//	  rpc Foo(FooRequest) returns (FooResponse) {};
+func (f *formatter) writeService(serviceNode *ast.ServiceNode) {
+	var elementWriterFunc func()
+	if len(serviceNode.Decls) > 0 {
+		elementWriterFunc = func() {
+			for _, decl := range serviceNode.Decls {
+				f.writeNode(decl)
+			}
+		}
+	}
+	f.writeStart(serviceNode.Keyword)
+	f.Space()
+	f.writeInline(serviceNode.Name)
+	f.Space()
+	f.writeCompositeTypeBody(
+		serviceNode.OpenBrace,
+		serviceNode.CloseBrace,
+		elementWriterFunc,
+	)
+}
+
+// writeRPC writes the RPC node. RPCs are formatted in
+// the following order:
+//
+// For example,
+//
+//	rpc Foo(FooRequest) returns (FooResponse) {
+//	  option deprecated = true;
+//	};
+func (f *formatter) writeRPC(rpcNode *ast.RPCNode) {
+	var elementWriterFunc func()
+	if len(rpcNode.Decls) > 0 {
+		elementWriterFunc = func() {
+			for _, decl := range rpcNode.Decls {
+				f.writeNode(decl)
+			}
+		}
+	}
+	f.writeStart(rpcNode.Keyword)
+	f.Space()
+	f.writeInline(rpcNode.Name)
+	f.writeInline(rpcNode.Input)
+	f.Space()
+	f.writeInline(rpcNode.Returns)
+	f.Space()
+	f.writeInline(rpcNode.Output)
+	if rpcNode.OpenBrace == nil {
+		// This RPC doesn't have any elements, so we prefer the
+		// ';' form.
+		//
+		//  rpc Ping(PingRequest) returns (PingResponse);
+		//
+		f.writeLineEnd(rpcNode.Semicolon)
+		return
+	}
+	f.Space()
+	f.writeCompositeTypeBody(
+		rpcNode.OpenBrace,
+		rpcNode.CloseBrace,
+		elementWriterFunc,
+	)
+}
+
+// writeRPCType writes the RPC type node (e.g. (stream foo.Bar)).
+func (f *formatter) writeRPCType(rpcTypeNode *ast.RPCTypeNode) {
+	f.writeInline(rpcTypeNode.OpenParen)
+	if rpcTypeNode.Stream != nil {
+		f.writeInline(rpcTypeNode.Stream)
+		f.Space()
+	}
+	f.writeInline(rpcTypeNode.MessageType)
+	f.writeInline(rpcTypeNode.CloseParen)
+}
+
+// writeOneOf writes the oneof node.
+//
+// For example,
+//
+//	oneof foo {
+//	  option deprecated = true;
+//
+//	  string name = 1;
+//	  int number = 2;
+//	}
+func (f *formatter) writeOneOf(oneOfNode *ast.OneOfNode) {
+	var elementWriterFunc func()
+	if len(oneOfNode.Decls) > 0 {
+		elementWriterFunc = func() {
+			for _, decl := range oneOfNode.Decls {
+				f.writeNode(decl)
+			}
+		}
+	}
+	f.writeStart(oneOfNode.Keyword)
+	f.Space()
+	f.writeInline(oneOfNode.Name)
+	f.Space()
+	f.writeCompositeTypeBody(
+		oneOfNode.OpenBrace,
+		oneOfNode.CloseBrace,
+		elementWriterFunc,
+	)
+}
+
+// writeGroup writes the group node.
+//
+// For example,
+//
+//	optional group Key = 4 [
+//	  deprec
