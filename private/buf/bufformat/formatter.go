@@ -955,4 +955,131 @@ func (f *formatter) writeOneOf(oneOfNode *ast.OneOfNode) {
 // For example,
 //
 //	optional group Key = 4 [
-//	  deprec
+//	  deprecated = true,
+//	  json_name = "key"
+//	] {
+//	  optional uint64 id = 1;
+//	  optional string name = 2;
+//	}
+func (f *formatter) writeGroup(groupNode *ast.GroupNode) {
+	var elementWriterFunc func()
+	if len(groupNode.Decls) > 0 {
+		elementWriterFunc = func() {
+			for _, decl := range groupNode.Decls {
+				f.writeNode(decl)
+			}
+		}
+	}
+	// We need to handle the comments for the group label specially since
+	// a label might not be defined, but it has the leading comments attached
+	// to it.
+	if groupNode.Label.KeywordNode != nil {
+		f.writeStart(groupNode.Label)
+		f.Space()
+		f.writeInline(groupNode.Keyword)
+	} else {
+		// If a label was not written, the multiline comments will be
+		// attached to the keyword.
+		f.writeStart(groupNode.Keyword)
+	}
+	f.Space()
+	f.writeInline(groupNode.Name)
+	f.Space()
+	f.writeInline(groupNode.Equals)
+	f.Space()
+	f.writeInline(groupNode.Tag)
+	if groupNode.Options != nil {
+		f.Space()
+		f.writeNode(groupNode.Options)
+	}
+	f.Space()
+	f.writeCompositeTypeBody(
+		groupNode.OpenBrace,
+		groupNode.CloseBrace,
+		elementWriterFunc,
+	)
+}
+
+// writeExtensionRange writes the extension range node.
+//
+// For example,
+//
+//	extensions 5-10, 100 to max [
+//	  deprecated = true
+//	];
+func (f *formatter) writeExtensionRange(extensionRangeNode *ast.ExtensionRangeNode) {
+	f.writeStart(extensionRangeNode.Keyword)
+	f.Space()
+	for i := 0; i < len(extensionRangeNode.Ranges); i++ {
+		if i > 0 {
+			// The length of this slice must be exactly len(Ranges)-1.
+			f.writeInline(extensionRangeNode.Commas[i-1])
+			f.Space()
+		}
+		f.writeNode(extensionRangeNode.Ranges[i])
+	}
+	if extensionRangeNode.Options != nil {
+		f.Space()
+		f.writeNode(extensionRangeNode.Options)
+	}
+	f.writeLineEnd(extensionRangeNode.Semicolon)
+}
+
+// writeReserved writes a reserved node.
+//
+// For example,
+//
+//	reserved 5-10, 100 to max;
+func (f *formatter) writeReserved(reservedNode *ast.ReservedNode) {
+	f.writeStart(reservedNode.Keyword)
+	// Either names or ranges will be set, but never both.
+	elements := make([]ast.Node, 0, len(reservedNode.Names)+len(reservedNode.Ranges))
+	switch {
+	case reservedNode.Names != nil:
+		for _, nameNode := range reservedNode.Names {
+			elements = append(elements, nameNode)
+		}
+	case reservedNode.Ranges != nil:
+		for _, rangeNode := range reservedNode.Ranges {
+			elements = append(elements, rangeNode)
+		}
+	}
+	f.Space()
+	for i := 0; i < len(elements); i++ {
+		if i > 0 {
+			// The length of this slice must be exactly len({Names,Ranges})-1.
+			f.writeInline(reservedNode.Commas[i-1])
+			f.Space()
+		}
+		f.writeInline(elements[i])
+	}
+	f.writeLineEnd(reservedNode.Semicolon)
+}
+
+// writeRange writes the given range node (e.g. '1 to max').
+func (f *formatter) writeRange(rangeNode *ast.RangeNode) {
+	f.writeInline(rangeNode.StartVal)
+	if rangeNode.To != nil {
+		f.Space()
+		f.writeInline(rangeNode.To)
+	}
+	// Either EndVal or Max will be set, but never both.
+	switch {
+	case rangeNode.EndVal != nil:
+		f.Space()
+		f.writeInline(rangeNode.EndVal)
+	case rangeNode.Max != nil:
+		f.Space()
+		f.writeInline(rangeNode.Max)
+	}
+}
+
+// writeCompactOptions writes a compact options node.
+//
+// For example,
+//
+//	[
+//	  deprecated = true,
+//	  json_name = "something"
+//	]
+func (f *formatter) writeCompactOptions(compactOptionsNode *ast.CompactOptio
