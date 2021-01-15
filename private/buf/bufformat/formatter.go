@@ -1185,4 +1185,108 @@ func (f *formatter) writeArrayLiteral(arrayLiteralNode *ast.ArrayLiteralNode) {
 				if compositeNode, ok := arrayLiteralNode.Elements[i].(ast.CompositeNode); ok {
 					f.writeCompositeValueForArrayLiteral(compositeNode, lastElement)
 					if !lastElement {
-						
+						f.writeLineEnd(arrayLiteralNode.Commas[i])
+					}
+					continue
+				}
+				if lastElement {
+					// The last element won't have a trailing comma.
+					f.writeLineElement(arrayLiteralNode.Elements[i])
+					return
+				}
+				f.writeStart(arrayLiteralNode.Elements[i])
+				f.writeLineEnd(arrayLiteralNode.Commas[i])
+			}
+		}
+	}
+	f.writeCompositeValueBody(
+		arrayLiteralNode.OpenBracket,
+		arrayLiteralNode.CloseBracket,
+		elementWriterFunc,
+	)
+}
+
+// writeCompositeForArrayLiteral writes the composite node in a way that's suitable
+// for array literals. In general, signed integers and compound strings should have their
+// comments written in-line because they are one of many components in a single line.
+//
+// However, each of these composite types occupy a single line in an array literal,
+// so they need their comments to be formatted like a standalone node.
+//
+// For example,
+//
+//	option (value) = /* In-line comment for '-42' */ -42;
+//
+//	option (thing) = {
+//	  values: [
+//	    // Leading comment on -42.
+//	    -42, // Trailing comment on -42.
+//	  ]
+//	}
+//
+// The lastElement boolean is used to signal whether or not the composite value
+// should be written as the last element (i.e. it doesn't have a trailing comma).
+func (f *formatter) writeCompositeValueForArrayLiteral(
+	compositeNode ast.CompositeNode,
+	lastElement bool,
+) {
+	switch node := compositeNode.(type) {
+	case *ast.CompoundStringLiteralNode:
+		f.writeCompoundStringLiteralForArray(node, lastElement)
+	case *ast.PositiveUintLiteralNode:
+		f.writePositiveUintLiteralForArray(node, lastElement)
+	case *ast.NegativeIntLiteralNode:
+		f.writeNegativeIntLiteralForArray(node, lastElement)
+	case *ast.SignedFloatLiteralNode:
+		f.writeSignedFloatLiteralForArray(node, lastElement)
+	case *ast.MessageLiteralNode:
+		f.writeMessageLiteralForArray(node, lastElement)
+	default:
+		f.err = multierr.Append(f.err, fmt.Errorf("unexpected array value node %T", node))
+	}
+}
+
+// writeCompositeTypeBody writes the body of a composite type, e.g. message, enum, extend, oneof, etc.
+func (f *formatter) writeCompositeTypeBody(
+	openBrace *ast.RuneNode,
+	closeBrace *ast.RuneNode,
+	elementWriterFunc func(),
+) {
+	f.writeBody(
+		openBrace,
+		closeBrace,
+		elementWriterFunc,
+		f.writeOpenBracePrefix,
+		f.writeBodyEnd,
+	)
+}
+
+// writeCompositeValueBody writes the body of a composite value, e.g. compact options,
+// array literal, etc. We need to handle the ']' different than composite types because
+// there could be more tokens following the final ']'.
+func (f *formatter) writeCompositeValueBody(
+	openBrace *ast.RuneNode,
+	closeBrace *ast.RuneNode,
+	elementWriterFunc func(),
+) {
+	f.writeBody(
+		openBrace,
+		closeBrace,
+		elementWriterFunc,
+		f.writeOpenBracePrefix,
+		f.writeBodyEndInline,
+	)
+}
+
+// writeBody writes the body of a type or value, e.g. message, enum, compact options, etc.
+// The elementWriterFunc is used to write the declarations within the composite type (e.g.
+// fields in a message). The openBraceWriterFunc and closeBraceWriterFunc functions are used
+// to customize how the '{' and '} nodes are written, respectively.
+func (f *formatter) writeBody(
+	openBrace *ast.RuneNode,
+	closeBrace *ast.RuneNode,
+	elementWriterFunc func(),
+	openBraceWriterFunc func(ast.Node),
+	closeBraceWriterFunc func(ast.Node, bool),
+) {
+	if elementWriterFunc == nil && !f.hasInteri
