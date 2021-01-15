@@ -1082,4 +1082,107 @@ func (f *formatter) writeRange(rangeNode *ast.RangeNode) {
 //	  deprecated = true,
 //	  json_name = "something"
 //	]
-func (f *formatter) writeCompactOptions(compactOptionsNode *ast.CompactOptio
+func (f *formatter) writeCompactOptions(compactOptionsNode *ast.CompactOptionsNode) {
+	f.inCompactOptions = true
+	defer func() {
+		f.inCompactOptions = false
+	}()
+	if len(compactOptionsNode.Options) == 1 &&
+		!f.hasInteriorComments(compactOptionsNode.OpenBracket, compactOptionsNode.Options[0].Name) {
+		// If there's only a single compact scalar option without comments, we can write it
+		// in-line. For example:
+		//
+		//  [deprecated = true]
+		//
+		// However, this does not include the case when the '[' has trailing comments,
+		// or the option name has leading comments. In those cases, we write the option
+		// across multiple lines. For example:
+		//
+		//  [
+		//    // This type is deprecated.
+		//    deprecated = true
+		//  ]
+		//
+		optionNode := compactOptionsNode.Options[0]
+		f.writeInline(compactOptionsNode.OpenBracket)
+		f.writeInline(optionNode.Name)
+		f.Space()
+		f.writeInline(optionNode.Equals)
+		if node, ok := optionNode.Val.(*ast.CompoundStringLiteralNode); ok {
+			// If there's only a single compact option, the value needs to
+			// write its comments (if any) in a way that preserves the closing ']'.
+			f.writeCompoundStringLiteralNoIndentEndInline(node)
+			f.writeInline(compactOptionsNode.CloseBracket)
+			return
+		}
+		f.Space()
+		f.writeInline(optionNode.Val)
+		f.writeInline(compactOptionsNode.CloseBracket)
+		return
+	}
+	var elementWriterFunc func()
+	if len(compactOptionsNode.Options) > 0 {
+		elementWriterFunc = func() {
+			for i, opt := range compactOptionsNode.Options {
+				if i == len(compactOptionsNode.Options)-1 {
+					// The last element won't have a trailing comma.
+					f.writeLastCompactOption(opt)
+					return
+				}
+				f.writeNode(opt)
+				f.writeLineEnd(compactOptionsNode.Commas[i])
+			}
+		}
+	}
+	f.writeCompositeValueBody(
+		compactOptionsNode.OpenBracket,
+		compactOptionsNode.CloseBracket,
+		elementWriterFunc,
+	)
+}
+
+func (f *formatter) hasInteriorComments(nodes ...ast.Node) bool {
+	for i, n := range nodes {
+		// interior comments mean we ignore leading comments on first
+		// token and trailing comments on the last one
+		info := f.fileNode.NodeInfo(n)
+		if i > 0 && info.LeadingComments().Len() > 0 {
+			return true
+		}
+		if i < len(nodes)-1 && info.TrailingComments().Len() > 0 {
+			return true
+		}
+	}
+	return false
+}
+
+// writeArrayLiteral writes an array literal across multiple lines.
+//
+// For example,
+//
+//	[
+//	  "foo",
+//	  "bar"
+//	]
+func (f *formatter) writeArrayLiteral(arrayLiteralNode *ast.ArrayLiteralNode) {
+	if len(arrayLiteralNode.Elements) == 1 &&
+		!f.hasInteriorComments(arrayLiteralNode.Children()...) &&
+		!arrayLiteralHasNestedMessageOrArray(arrayLiteralNode) {
+		// arrays with a single scalar value and no comments can be
+		// printed all on one line
+		valueNode := arrayLiteralNode.Elements[0]
+		f.writeInline(arrayLiteralNode.OpenBracket)
+		f.writeInline(valueNode)
+		f.writeInline(arrayLiteralNode.CloseBracket)
+		return
+	}
+
+	var elementWriterFunc func()
+	if len(arrayLiteralNode.Elements) > 0 {
+		elementWriterFunc = func() {
+			for i := 0; i < len(arrayLiteralNode.Elements); i++ {
+				lastElement := i == len(arrayLiteralNode.Elements)-1
+				if compositeNode, ok := arrayLiteralNode.Elements[i].(ast.CompositeNode); ok {
+					f.writeCompositeValueForArrayLiteral(compositeNode, lastElement)
+					if !lastElement {
+						
