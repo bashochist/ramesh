@@ -1407,4 +1407,96 @@ func (f *formatter) writeCompoundStringLiteral(
 	if needsIndent {
 		f.In()
 	}
-	for i, child := range
+	for i, child := range compoundStringLiteralNode.Children() {
+		if hasTrailingPunctuation && i == len(compoundStringLiteralNode.Children())-1 {
+			// inline because there may be a subsequent comma or punctuation from enclosing element
+			f.writeStart(child)
+			break
+		}
+		f.writeLineElement(child)
+	}
+	if needsIndent {
+		f.Out()
+	}
+}
+
+func (f *formatter) writeCompoundStringLiteralIndent(
+	compoundStringLiteralNode *ast.CompoundStringLiteralNode,
+) {
+	f.writeCompoundStringLiteral(compoundStringLiteralNode, true, false)
+}
+
+func (f *formatter) writeCompoundStringLiteralIndentEndInline(
+	compoundStringLiteralNode *ast.CompoundStringLiteralNode,
+) {
+	f.writeCompoundStringLiteral(compoundStringLiteralNode, true, true)
+}
+
+func (f *formatter) writeCompoundStringLiteralNoIndentEndInline(
+	compoundStringLiteralNode *ast.CompoundStringLiteralNode,
+) {
+	f.writeCompoundStringLiteral(compoundStringLiteralNode, false, true)
+}
+
+// writeCompoundStringLiteralForArray writes a compound string literal value,
+// but writes its comments suitable for an element in an array literal.
+//
+// The lastElement boolean is used to signal whether or not the value should
+// be written as the last element (i.e. it doesn't have a trailing comma).
+func (f *formatter) writeCompoundStringLiteralForArray(
+	compoundStringLiteralNode *ast.CompoundStringLiteralNode,
+	lastElement bool,
+) {
+	for i, child := range compoundStringLiteralNode.Children() {
+		if !lastElement && i == len(compoundStringLiteralNode.Children())-1 {
+			f.writeStart(child)
+			return
+		}
+		f.writeLineElement(child)
+	}
+}
+
+// writeFloatLiteral writes a float literal value (e.g. '42.2').
+func (f *formatter) writeFloatLiteral(floatLiteralNode *ast.FloatLiteralNode) {
+	f.writeRaw(floatLiteralNode)
+}
+
+// writeSignedFloatLiteral writes a signed float literal value (e.g. '-42.2').
+func (f *formatter) writeSignedFloatLiteral(signedFloatLiteralNode *ast.SignedFloatLiteralNode) {
+	f.writeInline(signedFloatLiteralNode.Sign)
+	f.writeInline(signedFloatLiteralNode.Float)
+}
+
+// writeSignedFloatLiteralForArray writes a signed float literal value, but writes
+// its comments suitable for an element in an array literal.
+//
+// The lastElement boolean is used to signal whether or not the value should
+// be written as the last element (i.e. it doesn't have a trailing comma).
+func (f *formatter) writeSignedFloatLiteralForArray(
+	signedFloatLiteralNode *ast.SignedFloatLiteralNode,
+	lastElement bool,
+) {
+	f.writeStart(signedFloatLiteralNode.Sign)
+	if lastElement {
+		f.writeLineEnd(signedFloatLiteralNode.Float)
+		return
+	}
+	f.writeInline(signedFloatLiteralNode.Float)
+}
+
+// writeSpecialFloatLiteral writes a special float literal value (e.g. "nan" or "inf").
+func (f *formatter) writeSpecialFloatLiteral(specialFloatLiteralNode *ast.SpecialFloatLiteralNode) {
+	f.WriteString(specialFloatLiteralNode.KeywordNode.Val)
+}
+
+// writeStringLiteral writes a string literal value (e.g. "foo").
+// Note that the raw string is written as-is so that it preserves
+// the quote style used in the original source.
+func (f *formatter) writeStringLiteral(stringLiteralNode *ast.StringLiteralNode) {
+	f.writeRaw(stringLiteralNode)
+}
+
+// writeUintLiteral writes a uint literal (e.g. '42').
+func (f *formatter) writeUintLiteral(uintLiteralNode *ast.UintLiteralNode) {
+	f.writeRaw(uintLiteralNode)
+}
