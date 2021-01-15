@@ -1289,4 +1289,122 @@ func (f *formatter) writeBody(
 	openBraceWriterFunc func(ast.Node),
 	closeBraceWriterFunc func(ast.Node, bool),
 ) {
-	if elementWriterFunc == nil && !f.hasInteri
+	if elementWriterFunc == nil && !f.hasInteriorComments(openBrace, closeBrace) {
+		// completely empty body
+		f.writeInline(openBrace)
+		closeBraceWriterFunc(closeBrace, true)
+		return
+	}
+
+	openBraceWriterFunc(openBrace)
+	if elementWriterFunc != nil {
+		elementWriterFunc()
+	}
+	closeBraceWriterFunc(closeBrace, false)
+}
+
+// writeOpenBracePrefix writes the open brace with its leading comments in-line.
+// This is used for nearly every use case of f.writeBody, excluding the instances
+// in array literals.
+func (f *formatter) writeOpenBracePrefix(openBrace ast.Node) {
+	defer f.SetPreviousNode(openBrace)
+	info := f.fileNode.NodeInfo(openBrace)
+	if info.LeadingComments().Len() > 0 {
+		f.writeInlineComments(info.LeadingComments())
+		if info.LeadingWhitespace() != "" {
+			f.Space()
+		}
+	}
+	f.writeNode(openBrace)
+	if info.TrailingComments().Len() > 0 {
+		f.writeTrailingEndComments(info.TrailingComments())
+	} else {
+		f.P()
+	}
+}
+
+// writeOpenBracePrefixForArray writes the open brace with its leading comments
+// on multiple lines. This is only used for message literals in arrays.
+func (f *formatter) writeOpenBracePrefixForArray(openBrace ast.Node) {
+	defer f.SetPreviousNode(openBrace)
+	info := f.fileNode.NodeInfo(openBrace)
+	if info.LeadingComments().Len() > 0 {
+		f.writeMultilineComments(info.LeadingComments())
+	}
+	f.Indent(openBrace)
+	f.writeNode(openBrace)
+	if info.TrailingComments().Len() > 0 {
+		f.writeTrailingEndComments(info.TrailingComments())
+	} else {
+		f.P()
+	}
+}
+
+// writeCompoundIdent writes a compound identifier (e.g. '.com.foo.Bar').
+func (f *formatter) writeCompoundIdent(compoundIdentNode *ast.CompoundIdentNode) {
+	if compoundIdentNode.LeadingDot != nil {
+		f.writeInline(compoundIdentNode.LeadingDot)
+	}
+	for i := 0; i < len(compoundIdentNode.Components); i++ {
+		if i > 0 {
+			// The length of this slice must be exactly len(Components)-1.
+			f.writeInline(compoundIdentNode.Dots[i-1])
+		}
+		f.writeInline(compoundIdentNode.Components[i])
+	}
+}
+
+// writeCompountIdentForFieldName writes a compound identifier, but handles comments
+// specially for field names.
+//
+// For example,
+//
+//	message Foo {
+//	  // These are comments attached to bar.
+//	  bar.v1.Bar bar = 1;
+//	}
+func (f *formatter) writeCompountIdentForFieldName(compoundIdentNode *ast.CompoundIdentNode) {
+	if compoundIdentNode.LeadingDot != nil {
+		f.writeStart(compoundIdentNode.LeadingDot)
+	}
+	for i := 0; i < len(compoundIdentNode.Components); i++ {
+		if i == 0 && compoundIdentNode.LeadingDot == nil {
+			f.writeStart(compoundIdentNode.Components[i])
+			continue
+		}
+		if i > 0 {
+			// The length of this slice must be exactly len(Components)-1.
+			f.writeInline(compoundIdentNode.Dots[i-1])
+		}
+		f.writeInline(compoundIdentNode.Components[i])
+	}
+}
+
+// writeFieldLabel writes the field label node.
+//
+// For example,
+//
+//	optional
+//	repeated
+//	required
+func (f *formatter) writeFieldLabel(fieldLabel ast.FieldLabel) {
+	f.WriteString(fieldLabel.Val)
+}
+
+// writeCompoundStringLiteral writes a compound string literal value.
+//
+// For example,
+//
+//	"one,"
+//	"two,"
+//	"three"
+func (f *formatter) writeCompoundStringLiteral(
+	compoundStringLiteralNode *ast.CompoundStringLiteralNode,
+	needsIndent bool,
+	hasTrailingPunctuation bool,
+) {
+	f.P()
+	if needsIndent {
+		f.In()
+	}
+	for i, child := range
