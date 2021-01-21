@@ -1500,3 +1500,98 @@ func (f *formatter) writeStringLiteral(stringLiteralNode *ast.StringLiteralNode)
 func (f *formatter) writeUintLiteral(uintLiteralNode *ast.UintLiteralNode) {
 	f.writeRaw(uintLiteralNode)
 }
+
+// writeNegativeIntLiteral writes a negative int literal (e.g. '-42').
+func (f *formatter) writeNegativeIntLiteral(negativeIntLiteralNode *ast.NegativeIntLiteralNode) {
+	f.writeInline(negativeIntLiteralNode.Minus)
+	f.writeInline(negativeIntLiteralNode.Uint)
+}
+
+func (f *formatter) writeRaw(n ast.Node) {
+	info := f.fileNode.NodeInfo(n)
+	f.WriteString(info.RawText())
+}
+
+// writeNegativeIntLiteralForArray writes a negative int literal value, but writes
+// its comments suitable for an element in an array literal.
+//
+// The lastElement boolean is used to signal whether or not the value should
+// be written as the last element (i.e. it doesn't have a trailing comma).
+func (f *formatter) writeNegativeIntLiteralForArray(
+	negativeIntLiteralNode *ast.NegativeIntLiteralNode,
+	lastElement bool,
+) {
+	f.writeStart(negativeIntLiteralNode.Minus)
+	if lastElement {
+		f.writeLineEnd(negativeIntLiteralNode.Uint)
+		return
+	}
+	f.writeInline(negativeIntLiteralNode.Uint)
+}
+
+// writePositiveUintLiteral writes a positive uint literal (e.g. '+42').
+func (f *formatter) writePositiveUintLiteral(positiveIntLiteralNode *ast.PositiveUintLiteralNode) {
+	f.writeInline(positiveIntLiteralNode.Plus)
+	f.writeInline(positiveIntLiteralNode.Uint)
+}
+
+// writePositiveUintLiteralForArray writes a positive uint literal value, but writes
+// its comments suitable for an element in an array literal.
+//
+// The lastElement boolean is used to signal whether or not the value should
+// be written as the last element (i.e. it doesn't have a trailing comma).
+func (f *formatter) writePositiveUintLiteralForArray(
+	positiveIntLiteralNode *ast.PositiveUintLiteralNode,
+	lastElement bool,
+) {
+	f.writeStart(positiveIntLiteralNode.Plus)
+	if lastElement {
+		f.writeLineEnd(positiveIntLiteralNode.Uint)
+		return
+	}
+	f.writeInline(positiveIntLiteralNode.Uint)
+}
+
+// writeIdent writes an identifier (e.g. 'foo').
+func (f *formatter) writeIdent(identNode *ast.IdentNode) {
+	f.WriteString(identNode.Val)
+}
+
+// writeKeyword writes a keyword (e.g. 'syntax').
+func (f *formatter) writeKeyword(keywordNode *ast.KeywordNode) {
+	f.WriteString(keywordNode.Val)
+}
+
+// writeRune writes a rune (e.g. '=').
+func (f *formatter) writeRune(runeNode *ast.RuneNode) {
+	if strings.ContainsRune("{[(<", runeNode.Rune) {
+		f.pendingIndent++
+	} else if strings.ContainsRune("}])>", runeNode.Rune) {
+		f.pendingIndent--
+	}
+	f.WriteString(string(runeNode.Rune))
+}
+
+// writeNode writes the node by dispatching to a function tailored to its concrete type.
+//
+// Comments are handled in each respective write function so that it can determine whether
+// to write the comments in-line or not.
+func (f *formatter) writeNode(node ast.Node) {
+	switch element := node.(type) {
+	case *ast.ArrayLiteralNode:
+		f.writeArrayLiteral(element)
+	case *ast.CompactOptionsNode:
+		f.writeCompactOptions(element)
+	case *ast.CompoundIdentNode:
+		f.writeCompoundIdent(element)
+	case *ast.CompoundStringLiteralNode:
+		f.writeCompoundStringLiteralIndent(element)
+	case *ast.EnumNode:
+		f.writeEnum(element)
+	case *ast.EnumValueNode:
+		f.writeEnumValue(element)
+	case *ast.ExtendNode:
+		f.writeExtend(element)
+	case *ast.ExtensionRangeNode:
+		f.writeExtensionRange(element)
+	case as
