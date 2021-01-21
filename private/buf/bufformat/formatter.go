@@ -1820,4 +1820,116 @@ func (f *formatter) writeBodyEnd(node ast.Node, leadingEndline bool) {
 		}
 	} else {
 		f.writeMultilineComments(info.LeadingComments())
-		
+		f.Indent(node)
+	}
+	f.writeNode(node)
+	f.writeTrailingEndComments(info.TrailingComments())
+}
+
+func (f *formatter) writeLineElement(node ast.Node) {
+	f.writeBodyEnd(node, false)
+}
+
+// writeBodyEndInline writes the node as the end of a body.
+// Leading comments are written above the token across
+// multiple lines, whereas the trailing comments are
+// written in-line and adapt their comment style if they
+// exist.
+//
+// Body end nodes are always indented according to the
+// formatter's current level of indentation (e.g. nested
+// messages).
+//
+// This is useful for writing a node that concludes either
+// compact options or an array literal.
+//
+// This is behaviorally similar to f.writeStart, but it ignores
+// the preceding newline logic because these body ends should
+// always be compact.
+//
+// For example,
+//
+//	message Foo {
+//	  string bar = 1 [
+//	    deprecated = true
+//
+//	    // Leading comment on ']'.
+//	  ] /* Trailing comment on ']' */ ;
+//	}
+func (f *formatter) writeBodyEndInline(node ast.Node, leadingInline bool) {
+	if _, ok := node.(ast.CompositeNode); ok {
+		// We only want to write comments for terminal nodes.
+		// Otherwise comments accessible from CompositeNodes
+		// will be written twice.
+		f.writeNode(node)
+		return
+	}
+	defer f.SetPreviousNode(node)
+	info := f.fileNode.NodeInfo(node)
+	if leadingInline {
+		if info.LeadingComments().Len() > 0 {
+			f.writeInlineComments(info.LeadingComments())
+			if info.LeadingWhitespace() != "" {
+				f.Space()
+			}
+		}
+	} else {
+		f.writeMultilineComments(info.LeadingComments())
+		f.Indent(node)
+	}
+	f.writeNode(node)
+	if info.TrailingComments().Len() > 0 {
+		f.writeInlineComments(info.TrailingComments())
+	}
+}
+
+// writeLineEnd writes the node so that it ends a line.
+//
+// This is useful for writing individual nodes like ';' and other
+// tokens that conclude the end of a single line. In this case, we
+// don't want to transform the trailing comment's from '//' to C-style
+// because it's not necessary.
+//
+// For example,
+//
+//	// This is a leading comment on the syntax keyword.
+//	syntax = " proto3" /* This is a leading comment on the ';'; // This is a trailing comment on the ';'.
+func (f *formatter) writeLineEnd(node ast.Node) {
+	if _, ok := node.(ast.CompositeNode); ok {
+		// We only want to write comments for terminal nodes.
+		// Otherwise comments accessible from CompositeNodes
+		// will be written twice.
+		f.writeNode(node)
+		if f.lastWritten != '\n' {
+			f.P()
+		}
+		return
+	}
+	defer f.SetPreviousNode(node)
+	info := f.fileNode.NodeInfo(node)
+	if info.LeadingComments().Len() > 0 {
+		f.writeInlineComments(info.LeadingComments())
+		if info.LeadingWhitespace() != "" {
+			f.Space()
+		}
+	}
+	f.writeNode(node)
+	f.Space()
+	f.writeTrailingEndComments(info.TrailingComments())
+}
+
+// writeMultilineComments writes the given comments as a newline-delimited block.
+// This is useful for both the beginning of a type (e.g. message, field, etc), as
+// well as the trailing comments attached to the beginning of a body block (e.g.
+// '{', '[', '<', etc).
+//
+// For example,
+//
+//	// This is a comment spread across
+//	// multiple lines.
+//	message Foo {}
+func (f *formatter) writeMultilineComments(comments ast.Comments) {
+	f.writeMultilineCommentsMaybeCompact(comments, false)
+}
+
+func (f *formatter) writeMultilineCommentsMaybeCompact(comments ast.Comments, forceCompact boo
