@@ -1594,4 +1594,114 @@ func (f *formatter) writeNode(node ast.Node) {
 		f.writeExtend(element)
 	case *ast.ExtensionRangeNode:
 		f.writeExtensionRange(element)
-	case as
+	case ast.FieldLabel:
+		f.writeFieldLabel(element)
+	case *ast.FieldNode:
+		f.writeField(element)
+	case *ast.FieldReferenceNode:
+		f.writeFieldReference(element)
+	case *ast.FloatLiteralNode:
+		f.writeFloatLiteral(element)
+	case *ast.GroupNode:
+		f.writeGroup(element)
+	case *ast.IdentNode:
+		f.writeIdent(element)
+	case *ast.ImportNode:
+		f.writeImport(element, false)
+	case *ast.KeywordNode:
+		f.writeKeyword(element)
+	case *ast.MapFieldNode:
+		f.writeMapField(element)
+	case *ast.MapTypeNode:
+		f.writeMapType(element)
+	case *ast.MessageNode:
+		f.writeMessage(element)
+	case *ast.MessageFieldNode:
+		f.writeMessageField(element)
+	case *ast.MessageLiteralNode:
+		f.writeMessageLiteral(element)
+	case *ast.NegativeIntLiteralNode:
+		f.writeNegativeIntLiteral(element)
+	case *ast.OneOfNode:
+		f.writeOneOf(element)
+	case *ast.OptionNode:
+		f.writeOption(element)
+	case *ast.OptionNameNode:
+		f.writeOptionName(element)
+	case *ast.PackageNode:
+		f.writePackage(element)
+	case *ast.PositiveUintLiteralNode:
+		f.writePositiveUintLiteral(element)
+	case *ast.RangeNode:
+		f.writeRange(element)
+	case *ast.ReservedNode:
+		f.writeReserved(element)
+	case *ast.RPCNode:
+		f.writeRPC(element)
+	case *ast.RPCTypeNode:
+		f.writeRPCType(element)
+	case *ast.RuneNode:
+		f.writeRune(element)
+	case *ast.ServiceNode:
+		f.writeService(element)
+	case *ast.SignedFloatLiteralNode:
+		f.writeSignedFloatLiteral(element)
+	case *ast.SpecialFloatLiteralNode:
+		f.writeSpecialFloatLiteral(element)
+	case *ast.StringLiteralNode:
+		f.writeStringLiteral(element)
+	case *ast.SyntaxNode:
+		f.writeSyntax(element)
+	case *ast.UintLiteralNode:
+		f.writeUintLiteral(element)
+	case *ast.EmptyDeclNode:
+		// Nothing to do here.
+	default:
+		f.err = multierr.Append(f.err, fmt.Errorf("unexpected node: %T", node))
+	}
+}
+
+// writeStart writes the node across as the start of a line.
+// Start nodes have their leading comments written across
+// multiple lines, but their trailing comments must be written
+// in-line to preserve the line structure.
+//
+// For example,
+//
+//	// Leading comment on 'message'.
+//	// Spread across multiple lines.
+//	message /* This is a trailing comment on 'message' */ Foo {}
+//
+// Newlines are preserved, so that any logical grouping of elements
+// is maintained in the formatted result.
+//
+// For example,
+//
+//	// Type represents a set of different types.
+//	enum Type {
+//	  // Unspecified is the naming convention for default enum values.
+//	  TYPE_UNSPECIFIED = 0;
+//
+//	  // The following elements are the real values.
+//	  TYPE_ONE = 1;
+//	  TYPE_TWO = 2;
+//	}
+//
+// Start nodes are always indented according to the formatter's
+// current level of indentation (e.g. nested messages, fields, etc).
+//
+// Note that this is one of the most complex component of the formatter - it
+// controls how each node should be separated from one another and preserves
+// newlines in the original source.
+func (f *formatter) writeStart(node ast.Node) {
+	f.writeStartMaybeCompact(node, false)
+}
+
+func (f *formatter) writeStartMaybeCompact(node ast.Node, forceCompact bool) {
+	defer f.SetPreviousNode(node)
+	info := f.fileNode.NodeInfo(node)
+	var (
+		nodeNewlineCount = newlineCount(info.LeadingWhitespace())
+		compact          = forceCompact || isOpenBrace(f.previousNode)
+	)
+	if length :=
