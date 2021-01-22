@@ -1932,4 +1932,109 @@ func (f *formatter) writeMultilineComments(comments ast.Comments) {
 	f.writeMultilineCommentsMaybeCompact(comments, false)
 }
 
-func (f *formatter) writeMultilineCommentsMaybeCompact(comments ast.Comments, forceCompact boo
+func (f *formatter) writeMultilineCommentsMaybeCompact(comments ast.Comments, forceCompact bool) {
+	compact := forceCompact || isOpenBrace(f.previousNode)
+	for i := 0; i < comments.Len(); i++ {
+		comment := comments.Index(i)
+		if !compact && newlineCount(comment.LeadingWhitespace()) > 1 {
+			// Newlines between blocks of comments should be preserved.
+			//
+			// For example,
+			//
+			//  // This is a license header
+			//  // spread across multiple lines.
+			//
+			//  // Package pet.v1 defines a PetStore API.
+			//  package pet.v1;
+			//
+			f.P()
+		}
+		compact = false
+		f.writeComment(comment.RawText())
+		f.WriteString("\n")
+	}
+}
+
+// writeInlineComments writes the given comments in-line. Standard comments are
+// transformed to C-style comments so that we can safely write the comment in-line.
+//
+// Nearly all of these comments will already be C-style comments. The only cases we're
+// preventing are when the type is defined across multiple lines.
+//
+// For example, given the following:
+//
+//	extend . google. // in-line comment
+//	 protobuf .
+//	  ExtensionRangeOptions {
+//	   optional string label = 20000;
+//	  }
+//
+// The formatted result is shown below:
+//
+//	extend .google.protobuf./* in-line comment */ExtensionRangeOptions {
+//	  optional string label = 20000;
+//	}
+func (f *formatter) writeInlineComments(comments ast.Comments) {
+	for i := 0; i < comments.Len(); i++ {
+		if i > 0 || comments.Index(i).LeadingWhitespace() != "" || f.lastWritten == ';' || f.lastWritten == '}' {
+			f.Space()
+		}
+		text := comments.Index(i).RawText()
+		if strings.HasPrefix(text, "//") {
+			text = strings.TrimSpace(strings.TrimPrefix(text, "//"))
+			text = "/* " + text + " */"
+		} else {
+			// no multi-line comments
+			lines := strings.Split(text, "\n")
+			for i := range lines {
+				lines[i] = strings.TrimSpace(lines[i])
+			}
+			text = strings.Join(lines, " ")
+		}
+		f.WriteString(text)
+	}
+}
+
+// writeTrailingEndComments writes the given comments at the end of a line and
+// preserves the comment style. This is useful or writing comments attached to
+// things like ';' and other tokens that conclude a type definition on a single
+// line.
+//
+// If there is a newline between this trailing comment and the previous node, the
+// comments are written immediately underneath the node on a newline.
+//
+// For example,
+//
+//	enum Type {
+//	  TYPE_UNSPECIFIED = 0;
+//	}
+//	// This comment is attached to the '}'
+//	// So is this one.
+func (f *formatter) writeTrailingEndComments(comments ast.Comments) {
+	for i := 0; i < comments.Len(); i++ {
+		comment := comments.Index(i)
+		if i > 0 || comment.LeadingWhitespace() != "" {
+			f.Space()
+		}
+		f.writeComment(comment.RawText())
+	}
+	f.P()
+}
+
+func (f *formatter) writeComment(comment string) {
+	if strings.HasPrefix(comment, "/*") && newlineCount(comment) > 0 {
+		lines := strings.Split(comment, "\n")
+		// find minimum indent, so we can make all other lines relative to that
+		minIndent := -1 // sentinel that means unset
+		// start at 1 because line at index zero starts with "/*", not whitespace
+		var prefix string
+		for i := 1; i < len(lines); i++ {
+			indent, ok := computeIndent(lines[i])
+			if ok && (minIndent == -1 || indent < minIndent) {
+				minIndent = indent
+			}
+			if i > 1 && len(prefix) == 0 {
+				// no shared prefix
+				continue
+			}
+			line := strings.
