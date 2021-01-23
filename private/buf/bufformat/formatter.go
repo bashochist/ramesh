@@ -2037,4 +2037,146 @@ func (f *formatter) writeComment(comment string) {
 				// no shared prefix
 				continue
 			}
-			line := strings.
+			line := strings.TrimSpace(lines[i])
+			if line == "*/" {
+				continue
+			}
+			var linePrefix string
+			if len(line) > 0 && isCommentPrefix(line[0]) {
+				linePrefix = line[:1]
+			}
+			if i == 1 {
+				prefix = linePrefix
+			} else if linePrefix != prefix {
+				// they do not share prefix
+				prefix = ""
+			}
+		}
+		if minIndent < 0 {
+			// This shouldn't be necessary.
+			// But we do it just in case, to avoid possible panic
+			minIndent = 0
+		}
+		for i, line := range lines {
+			trimmedLine := strings.TrimSpace(line)
+			if trimmedLine == "" || trimmedLine == "*/" || len(prefix) > 0 {
+				line = trimmedLine
+			} else {
+				// we only trim space from the right; for the left,
+				// we unindent based on indentation found above.
+				line = unindent(line, minIndent)
+				line = strings.TrimRightFunc(line, unicode.IsSpace)
+			}
+			// If we have a block comment with no prefix, we'll format
+			// like so:
+
+			/*
+			   This is a multi-line comment example.
+			   It has no comment prefix on each line.
+			*/
+
+			// But if there IS a prefix, "|" for example, we'll left-align
+			// the prefix symbol under the asterisk of the comment start
+			// like this:
+
+			/*
+			 | This comment has a prefix before each line.
+			 | Usually the prefix is asterisk, but it's a
+			 | pipe in this example.
+			*/
+
+			// Finally, if the comment prefix is an asterisk, we'll left-align
+			// the comment end so its asterisk also aligns, like so:
+
+			/*
+			 * This comment has a prefix before each line.
+			 * Usually the prefix is asterisk, which is the
+			 * case in this example.
+			 */
+
+			if i > 0 && line != "*/" {
+				if len(prefix) == 0 {
+					line = "   " + line
+				} else {
+					line = " " + line
+				}
+			}
+			if line == "*/" && prefix == "*" {
+				// align the comment end with the other asterisks
+				line = " " + line
+			}
+
+			if i != len(lines)-1 {
+				f.P(line)
+			} else {
+				// for last line, we don't use P because we don't
+				// want to print a trailing newline
+				f.Indent(nil)
+				f.WriteString(line)
+			}
+		}
+	} else {
+		f.Indent(nil)
+		f.WriteString(strings.TrimSpace(comment))
+	}
+}
+
+func isCommentPrefix(ch byte) bool {
+	r := rune(ch)
+	// A multi-line comment prefix is *usually* an asterisk, like in the following
+	/*
+	 * Foo
+	 * Bar
+	 * Baz
+	 */
+	// But we'll allow other prefixes. But if it's a letter or number, it's not a prefix.
+	return !unicode.IsLetter(r) && !unicode.IsNumber(r)
+}
+
+func unindent(s string, unindent int) string {
+	pos := 0
+	for i, r := range s {
+		if pos == unindent {
+			return s[i:]
+		}
+		if pos > unindent {
+			// removing tab-stop unindented too far, so we
+			// add back some spaces to compensate
+			return strings.Repeat(" ", pos-unindent) + s[i:]
+		}
+
+		switch r {
+		case ' ':
+			pos++
+		case '\t':
+			// jump to next tab stop
+			pos += 8 - (pos % 8)
+		default:
+			return s[i:]
+		}
+	}
+	// nothing but whitespace...
+	return ""
+}
+
+func computeIndent(s string) (int, bool) {
+	if strings.TrimSpace(s) == "*/" {
+		return 0, false
+	}
+	indent := 0
+	for _, r := range s {
+		switch r {
+		case ' ':
+			indent++
+		case '\t':
+			// jump to next tab stop
+			indent += 8 - (indent % 8)
+		default:
+			return indent, true
+		}
+	}
+	// if we get here, line is nothing but whitespace
+	return 0, false
+}
+
+func (f *formatter) leadingCommentsContainBlankLine(n ast.No
