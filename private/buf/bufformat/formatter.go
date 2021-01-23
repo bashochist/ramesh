@@ -2179,4 +2179,65 @@ func computeIndent(s string) (int, bool) {
 	return 0, false
 }
 
-func (f *formatter) leadingCommentsContainBlankLine(n ast.No
+func (f *formatter) leadingCommentsContainBlankLine(n ast.Node) bool {
+	info := f.fileNode.NodeInfo(n)
+	comments := info.LeadingComments()
+	for i := 0; i < comments.Len(); i++ {
+		if newlineCount(comments.Index(i).LeadingWhitespace()) > 1 {
+			return true
+		}
+	}
+	return newlineCount(info.LeadingWhitespace()) > 1
+}
+
+// stringForOptionName returns the string representation of the given option name node.
+// This is used for sorting file-level options.
+func stringForOptionName(optionNameNode *ast.OptionNameNode) string {
+	var result string
+	for j, part := range optionNameNode.Parts {
+		if j > 0 {
+			// Add a dot between each of the parts.
+			result += "."
+		}
+		result += stringForFieldReference(part)
+	}
+	return result
+}
+
+// stringForFieldReference returns the string representation of the given field reference.
+// This is used for sorting file-level options.
+func stringForFieldReference(fieldReference *ast.FieldReferenceNode) string {
+	var result string
+	if fieldReference.Open != nil {
+		result += "("
+	}
+	result += string(fieldReference.Name.AsIdentifier())
+	if fieldReference.Close != nil {
+		result += ")"
+	}
+	return result
+}
+
+// isOpenBrace returns true if the given node represents one of the
+// possible open brace tokens, namely '{', '[', or '<'.
+func isOpenBrace(node ast.Node) bool {
+	if node == nil {
+		return false
+	}
+	runeNode, ok := node.(*ast.RuneNode)
+	if !ok {
+		return false
+	}
+	return runeNode.Rune == '{' || runeNode.Rune == '[' || runeNode.Rune == '<'
+}
+
+// newlineCount returns the number of newlines in the given value.
+// This is useful for determining whether or not we should preserve
+// the newline between nodes.
+//
+// The newlines don't need to be adjacent to each other - all of the
+// tokens between them are other whitespace characters, so we can
+// safely ignore them.
+func newlineCount(value string) int {
+	return strings.Count(value, "\n")
+}
