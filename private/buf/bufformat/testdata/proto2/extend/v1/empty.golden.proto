@@ -1,0 +1,8 @@
+message Foo {
+  extensions 2, 3;
+
+  optional string name = 1;
+}
+
+extend Foo {
+  /

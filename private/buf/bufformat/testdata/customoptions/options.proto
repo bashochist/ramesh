@@ -1,8 +1,9 @@
+
 syntax = "proto3";
 
-package custom;
-
 import "google/protobuf/descriptor.proto";
+
+package custom;
 
 // Thing is a thing.
 message Thing {
@@ -70,7 +71,6 @@ extend google.protobuf.EnumValueOptions {
   bool enum_value_option = 80015;
   Thing enum_value_thing_option = 80016;
 }
-
 // this is a comment before service options
 extend google.protobuf.ServiceOptions {
   bool service_option = 80012;
