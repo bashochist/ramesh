@@ -1,0 +1,9 @@
+syntax = "proto2";
+
+   import "custom.proto";
+
+message Foo    { 
+       // Leading comment on deprecated.
+       option deprecated = false;
+          option /* Comment before the custom option name */ (custom.message_thing_option).foo = /* Comment on the bar value of the option */ 1;
+    option /* Comment before the custom option name */ (custom.message_thing_option)/* Comment between the name and the field */.bar 
