@@ -58,4 +58,16 @@ message Test {
       message NestedNestedNested {
         option (rept) = {
           foo: "hoo"
-          [Test.Nested._NestedNes
+          [Test.Nested._NestedNested._garblez]: "spoo"
+        };
+
+        optional Test Test = 1;
+      }
+    }
+  }
+}
+
+extend google.protobuf.MessageOptions {
+  repeated Test rept = 20002;
+  optional Test.Nested._NestedNested.EEE eee = 20010;
+}

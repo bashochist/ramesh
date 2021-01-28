@@ -1,0 +1,9 @@
+// top-level comment 1
+
+// top-level comment 2
+
+syntax = "proto3"; // syntax-level-inline comment
+
+// between-syntax-and-package comment
+
+package all.v1; // packag
