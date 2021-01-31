@@ -1,0 +1,11 @@
+syntax = "proto3";
+
+import "custom.proto";
+
+message Foo {
+  string name = 1 [
+    (custom.float_field_option) = /* Before */ 42.2 /* After */, // Trailing
+    (custom.double_field_option) = /* Before */ 42.2424 /* After */, // Trailing
+    (custom.int32_field_option) = /* Before */ 32 /* After */, // Trailing
+    (custom.int64_field_option) = /* Before */ 64 /* After */, // Trailing
+    (custom.uint32_field_option)
