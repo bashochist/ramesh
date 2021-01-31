@@ -150,4 +150,69 @@ message One {
 message Two {
   int64 two_one = 1;
 
-  reserved 2 to 10, 1000 to 110
+  reserved 2 to 10, 1000 to 1100;
+  reserved "foo";
+  reserved "bar", "baz";
+}
+
+enum EnumWithAlias {
+  // enum-body comment
+
+  ENUM_WITH_ALIAS_UNSPECIFIED = 0;
+  ENUM_WITH_ALIAS_FIRST = 1;
+  ENUM_WITH_ALIAS_SECOND = 2;
+  ENUM_WITH_ALIAS_THIRD = 3;
+  ENUM_WITH_ALIAS_OTHER_THIRD = 3;
+  option allow_alias = true;
+} // trailing enum comment
+
+// Empty is an empty message.
+message Empty {}
+
+// Pre-enum comment
+
+// OtherEnum is another enum.
+enum OtherEnum {
+  option (custom.enum_option) = 1;
+  // enum comment
+  OTHER_ENUM_UNSPECIFIED = 0 [
+    (custom.enum_value_option) = true,
+    (custom.enum_value_thing_option) = {
+      foo: 1,
+      bar: 2,
+      recursive: {
+        foo: 3,
+        recursive: {bar: 2}
+      }
+    }
+  ]; // enum-option-inline comment
+  // enum comment 2
+  OTHER_ENUM_FIRST = 1; // enum-option-inline comment 2
+  // comment28
+  OTHER_ENUM_SECOND = 2; // enum-option-inline comment 3
+}
+
+// Pre-service comment
+
+// ExampleService is the example service.
+service ExampleService {
+  option (custom.service_option) = true; // service-option-inline comment
+  option (custom.service_thing_option) = {foo: 1}; // service-option-inline comment 2
+  // rpc-leading comment
+  rpc Example(One) returns (Two) {
+    option (custom.method_option) = true;
+    option (custom.method_thing_option) = {
+      foo: 1,
+      bar: 2,
+      recursive: {
+        foo: 3,
+        recursive: {bar: 2}
+      }
+    }; // service-option-inline comment 2
+  } // rpc-inline comment
+
+  // service-body comment
+
+  // rpc-leading comment 2
+  rpc Foo(Empty) returns (One); // rpc-inline comment 2
+}
