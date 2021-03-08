@@ -288,3 +288,267 @@ func (m *v1beta1Migrator) maybeMigrateConfig(dirPath string) (bool, error) {
 	}
 	return true, nil
 }
+
+// writeV1Config atomically replaces the old configuration file by first writing
+// the new config to a temporary file and then moving it to the old config file path.
+// If we fail to marshal or write, the old config file is not touched.
+func (m *v1beta1Migrator) writeV1Config(
+	configPath string,
+	config bufconfig.ExternalConfigV1,
+	originalRootName string,
+	originalModuleName string,
+) (retErr error) {
+	v1ConfigData, err := encoding.MarshalYAML(&config)
+	if err != nil {
+		return fmt.Errorf("failed to marshal new config: %w", err)
+	}
+	header := fmt.Sprintf(bufModHeaderWithName, m.commandName, originalRootName, originalModuleName)
+	if originalModuleName == "" {
+		header = fmt.Sprintf(bufModHeaderWithoutName, m.commandName, originalRootName)
+	}
+	v1ConfigData = append([]byte(header), v1ConfigData...)
+	if err := os.MkdirAll(filepath.Dir(configPath), 0755); err != nil {
+		// This happens if the user has a root specified that doesn't have a corresponding
+		// directory on the filesystem.
+		return fmt.Errorf("failed to create new directories for writing config: %w", err)
+	}
+	return os.WriteFile(configPath, v1ConfigData, 0600)
+}
+
+func (m *v1beta1Migrator) maybeMigrateGenTemplate(dirPath string) (bool, error) {
+	oldConfigPath := filepath.Join(dirPath, bufgen.ExternalConfigFilePath)
+	oldConfigBytes, err := os.ReadFile(oldConfigPath)
+	if err != nil {
+		if errors.Is(err, os.ErrNotExist) {
+			// OK, no old config file
+			return false, nil
+		}
+		return false, fmt.Errorf("failed to read file: %w", err)
+	}
+	var versionedConfig bufgen.ExternalConfigVersion
+	if err := encoding.UnmarshalYAMLNonStrict(oldConfigBytes, &versionedConfig); err != nil {
+		return false, fmt.Errorf(
+			"failed to read %s version: %w",
+			oldConfigPath,
+			err,
+		)
+	}
+	switch versionedConfig.Version {
+	case bufgen.V1Version:
+		// OK, file was already v1
+		return false, nil
+	case bufgen.V1Beta1Version, "":
+		// Continue to migrate
+	default:
+		return false, fmt.Errorf("unknown config file version: %s", versionedConfig.Version)
+	}
+	var v1beta1GenTemplate bufgen.ExternalConfigV1Beta1
+	if err := encoding.UnmarshalYAMLStrict(oldConfigBytes, &v1beta1GenTemplate); err != nil {
+		return false, fmt.Errorf(
+			"failed to unmarshal %s as %s version v1beta1: %w",
+			oldConfigPath,
+			bufgen.ExternalConfigFilePath,
+			err,
+		)
+	}
+	v1GenTemplate := bufgen.ExternalConfigV1{
+		Version: bufgen.V1Version,
+		Managed: bufgen.ExternalManagedConfigV1{
+			Enabled:           v1beta1GenTemplate.Managed,
+			CcEnableArenas:    v1beta1GenTemplate.Options.CcEnableArenas,
+			JavaMultipleFiles: v1beta1GenTemplate.Options.JavaMultipleFiles,
+			OptimizeFor:       bufgen.ExternalOptimizeForConfigV1{Default: v1beta1GenTemplate.Options.OptimizeFor},
+		},
+	}
+	for _, plugin := range v1beta1GenTemplate.Plugins {
+		pluginConfig := bufgen.ExternalPluginConfigV1{
+			Name:     plugin.Name,
+			Out:      plugin.Out,
+			Opt:      plugin.Opt,
+			Strategy: plugin.Strategy,
+		}
+		if plugin.Path != "" {
+			pluginConfig.Path = plugin.Path
+		}
+		v1GenTemplate.Plugins = append(v1GenTemplate.Plugins, pluginConfig)
+	}
+	newConfigPath := filepath.Join(dirPath, bufgen.ExternalConfigFilePath)
+	if err := m.writeV1GenTemplate(newConfigPath, v1GenTemplate); err != nil {
+		return false, err
+	}
+	return true, nil
+}
+
+// writeV1GenTemplate atomically replaces the old configuration file by first writing
+// the new config to a temporary file and then moving it to the old config file path.
+// If we fail to marshal or write, the old config file is not touched.
+func (m *v1beta1Migrator) writeV1GenTemplate(
+	configPath string,
+	config bufgen.ExternalConfigV1,
+) (retErr error) {
+	v1ConfigData, err := encoding.MarshalYAML(&config)
+	if err != nil {
+		return fmt.Errorf("failed to marshal new config: %w", err)
+	}
+	header := fmt.Sprintf(bufGenHeader, m.commandName)
+	v1ConfigData = append([]byte(header), v1ConfigData...)
+	return os.WriteFile(configPath, v1ConfigData, 0600)
+}
+
+func (m *v1beta1Migrator) maybeMigrateLockFile(dirPath string) (bool, error) {
+	oldConfigPath := filepath.Join(dirPath, buflock.ExternalConfigFilePath)
+	oldConfigBytes, err := os.ReadFile(oldConfigPath)
+	if err != nil {
+		if errors.Is(err, os.ErrNotExist) {
+			// OK, no old config file
+			return false, nil
+		}
+		return false, fmt.Errorf("failed to read file: %w", err)
+	}
+	var versionedConfig buflock.ExternalConfigVersion
+	if err := encoding.UnmarshalYAMLNonStrict(oldConfigBytes, &versionedConfig); err != nil {
+		return false, fmt.Errorf(
+			"failed to read %s version: %w",
+			oldConfigPath,
+			err,
+		)
+	}
+	switch versionedConfig.Version {
+	case buflock.V1Version:
+		// OK, file was already v1
+		return false, nil
+	case buflock.V1Beta1Version, "":
+		// Continue to migrate
+	default:
+		return false, fmt.Errorf("unknown lock file version: %s", versionedConfig.Version)
+	}
+	var v1beta1LockFile buflock.ExternalConfigV1Beta1
+	if err := encoding.UnmarshalYAMLStrict(oldConfigBytes, &v1beta1LockFile); err != nil {
+		return false, fmt.Errorf(
+			"failed to unmarshal %s as %s version v1beta1: %w",
+			oldConfigPath,
+			buflock.ExternalConfigFilePath,
+			err,
+		)
+	}
+	v1LockFile := buflock.ExternalConfigV1{
+		Version: buflock.V1Version,
+	}
+	for _, dependency := range v1beta1LockFile.Deps {
+		v1LockFile.Deps = append(v1LockFile.Deps, buflock.ExternalConfigDependencyV1(dependency))
+	}
+	newConfigPath := filepath.Join(dirPath, buflock.ExternalConfigFilePath)
+	if err := m.writeV1LockFile(newConfigPath, v1LockFile); err != nil {
+		return false, err
+	}
+	return true, nil
+}
+
+// writeV1LockFile atomically replaces the old lock file by first writing
+// the new lock file to a temporary file and then moving it to the old lock file path.
+// If we fail to marshal or write, the old lock file is not touched.
+func (m *v1beta1Migrator) writeV1LockFile(
+	configPath string,
+	config buflock.ExternalConfigV1,
+) (retErr error) {
+	v1ConfigData, err := encoding.MarshalYAML(&config)
+	if err != nil {
+		return fmt.Errorf("failed to marshal new lock file: %w", err)
+	}
+	v1ConfigData = append([]byte(buflock.Header), v1ConfigData...)
+	return os.WriteFile(configPath, v1ConfigData, 0600)
+}
+
+func maybeReadLockFile(oldLockFilePath string) (buflock.ExternalConfigV1, bool, error) {
+	lockFileBytes, err := os.ReadFile(oldLockFilePath)
+	if err != nil {
+		if errors.Is(err, os.ErrNotExist) {
+			// OK, no old lock file
+			return buflock.ExternalConfigV1{}, false, nil
+		}
+
+		return buflock.ExternalConfigV1{}, false, fmt.Errorf("failed to read lock file path: %w", err)
+	}
+	var versionedConfig buflock.ExternalConfigVersion
+	if err := encoding.UnmarshalYAMLNonStrict(lockFileBytes, &versionedConfig); err != nil {
+		return buflock.ExternalConfigV1{}, false, fmt.Errorf(
+			"failed to read %s version: %w",
+			oldLockFilePath,
+			err,
+		)
+	}
+	switch versionedConfig.Version {
+	case "", buflock.V1Beta1Version:
+		var externalConfig buflock.ExternalConfigV1Beta1
+		if err := encoding.UnmarshalYAMLStrict(lockFileBytes, &externalConfig); err != nil {
+			return buflock.ExternalConfigV1{}, false, fmt.Errorf(
+				"failed to unmarshal lock file at %s: %w",
+				buflock.V1Beta1Version,
+				err,
+			)
+		}
+		externalLockFileV1 := buflock.ExternalConfigV1{
+			Version: buflock.V1Version,
+		}
+		for _, dependency := range externalConfig.Deps {
+			externalLockFileV1.Deps = append(externalLockFileV1.Deps, buflock.ExternalConfigDependencyV1(dependency))
+		}
+		return externalLockFileV1, true, nil
+	case buflock.V1Version:
+		externalLockFileV1 := buflock.ExternalConfigV1{}
+		if err := encoding.UnmarshalYAMLStrict(lockFileBytes, &externalLockFileV1); err != nil {
+			return buflock.ExternalConfigV1{}, false, fmt.Errorf("failed to unmarshal lock file at %s: %w", buflock.V1Version, err)
+		}
+		return externalLockFileV1, true, nil
+	default:
+		return buflock.ExternalConfigV1{}, false, fmt.Errorf("unknown lock file version: %s", versionedConfig.Version)
+	}
+}
+
+func convertIgnoreSlice(paths []string, dirPath string, root string, pathToProcessed map[string]bool) ([]string, error) {
+	var ignoresForRoot []string
+	for _, ignoredFile := range paths {
+		if _, ok := pathToProcessed[ignoredFile]; !ok {
+			pathToProcessed[ignoredFile] = false
+		}
+		filePath := filepath.Join(dirPath, root, ignoredFile)
+		if _, err := os.Stat(filePath); err != nil {
+			if errors.Is(err, os.ErrNotExist) {
+				continue
+			}
+			return nil, fmt.Errorf("failed to check for presence of file %s: %w", filePath, err)
+		}
+		pathToProcessed[ignoredFile] = true
+		ignoresForRoot = append(ignoresForRoot, ignoredFile)
+	}
+	sort.Strings(ignoresForRoot)
+	return ignoresForRoot, nil
+}
+
+func convertIgnoreMap(ruleToIgnores map[string][]string, dirPath string, root string, pathToProcessed map[string]bool) (map[string][]string, error) {
+	var ruleToIgnoresForRoot map[string][]string
+	for rule, ignores := range ruleToIgnores {
+		for _, ignoredFile := range ignores {
+			if _, ok := pathToProcessed[ignoredFile]; !ok {
+				pathToProcessed[ignoredFile] = false
+			}
+			filePath := filepath.Join(dirPath, root, ignoredFile)
+			if _, err := os.Stat(filePath); err != nil {
+				if errors.Is(err, os.ErrNotExist) {
+					continue
+				}
+				return nil, fmt.Errorf("failed to check for presence of file %s: %w", filePath, err)
+			}
+			if ruleToIgnoresForRoot == nil {
+				ruleToIgnoresForRoot = make(map[string][]string)
+			}
+			pathToProcessed[ignoredFile] = true
+			ruleToIgnoresForRoot[rule] = append(
+				ruleToIgnoresForRoot[rule],
+				ignoredFile,
+			)
+		}
+		sort.Strings(ruleToIgnoresForRoot[rule])
+	}
+	return ruleToIgnoresForRoot, nil
+}
