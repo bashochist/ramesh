@@ -36,4 +36,68 @@ func newTemplatePrinter(writer io.Writer) *templatePrinter {
 func (t *templatePrinter) PrintTemplate(ctx context.Context, format Format, template *registryv1alpha1.Template) error {
 	switch format {
 	case FormatText:
-		return t.printTe
+		return t.printTemplatesText(ctx, template)
+	case FormatJSON:
+		return json.NewEncoder(t.writer).Encode(
+			registryTemplateToOutputTemplate(template),
+		)
+	default:
+		return fmt.Errorf("unknown format: %v", format)
+	}
+}
+
+func (t *templatePrinter) PrintTemplates(ctx context.Context, format Format, nextPageToken string, templates ...*registryv1alpha1.Template) error {
+	switch format {
+	case FormatText:
+		return t.printTemplatesText(ctx, templates...)
+	case FormatJSON:
+		outputTemplates := make([]outputTemplate, 0, len(templates))
+		for _, template := range templates {
+			outputTemplates = append(outputTemplates, registryTemplateToOutputTemplate(template))
+		}
+		return json.NewEncoder(t.writer).Encode(paginationWrapper{
+			NextPage: nextPageToken,
+			Results:  outputTemplates,
+		})
+	default:
+		return fmt.Errorf("unknown format: %v", format)
+	}
+}
+
+func (t *templatePrinter) printTemplatesText(ctx context.Context, templates ...*registryv1alpha1.Template) error {
+	if len(templates) == 0 {
+		return nil
+	}
+	return WithTabWriter(
+		t.writer,
+		[]string{
+			"Owner",
+			"Name",
+		},
+		func(tabWriter TabWriter) error {
+			for _, template := range templates {
+				if err := tabWriter.Write(
+					template.Owner,
+					template.Name,
+				); err != nil {
+					return err
+				}
+			}
+			return nil
+		},
+	)
+}
+
+type outputTemplate struct {
+	Name       string `json:"name,omitempty"`
+	Owner      string `json:"owner,omitempty"`
+	Visibility string `json:"visibility,omitempty"`
+}
+
+func registryTemplateToOutputTemplate(template *registryv1alpha1.Template) outputTemplate {
+	return outputTemplate{
+		Name:       template.Name,
+		Owner:      template.Owner,
+		Visibility: template.Visibility.String(),
+	}
+}
