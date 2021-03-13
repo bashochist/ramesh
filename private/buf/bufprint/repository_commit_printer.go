@@ -74,3 +74,30 @@ func (p *repositoryCommitPrinter) printRepositoryCommitsText(outputRepositoryCom
 		p.writer,
 		[]string{
 			"Commit",
+		},
+		func(tabWriter TabWriter) error {
+			for _, outputRepositoryCommit := range outputRepositoryCommits {
+				if err := tabWriter.Write(
+					outputRepositoryCommit.Commit,
+				); err != nil {
+					return err
+				}
+			}
+			return nil
+		},
+	)
+}
+
+type outputRepositoryCommit struct {
+	ID     string                `json:"id,omitempty"`
+	Commit string                `json:"commit,omitempty"`
+	Tags   []outputRepositoryTag `json:"tags,omitempty"`
+}
+
+func registryCommitToOutputCommit(repositoryCommit *registryv1alpha1.RepositoryCommit) outputRepositoryCommit {
+	return outputRepositoryCommit{
+		ID:     repositoryCommit.Id,
+		Commit: repositoryCommit.Name,
+		Tags:   registryTagsToOutputTags(repositoryCommit.Tags),
+	}
+}
