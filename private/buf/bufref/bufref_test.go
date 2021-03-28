@@ -63,4 +63,24 @@ func TestGetRawPathAndOptionsError(t *testing.T) {
 	)
 	testGetRawPathAndOptionsError(
 		t,
-		newOptionsInvalidError(
+		newOptionsInvalidError("format=bin,=bar"),
+		"path/to/foo#format=bin,=bar",
+	)
+	testGetRawPathAndOptionsError(
+		t,
+		newOptionsDuplicateKeyError("strip_components"),
+		"path/to/foo.tar#strip_components=0,strip_components=1",
+	)
+}
+
+func testGetRawPathAndOptionsError(
+	t *testing.T,
+	expectedErr error,
+	value string,
+) {
+	t.Run(value, func(t *testing.T) {
+		t.Parallel()
+		_, _, err := GetRawPathAndOptions(value)
+		assert.EqualError(t, err, expectedErr.Error())
+	})
+}
