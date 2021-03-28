@@ -58,4 +58,116 @@ type ImageConfigReader interface {
 	) ([]ImageConfig, []bufanalysis.FileAnnotation, error)
 }
 
-// NewImageC
+// NewImageConfigReader returns a new ImageConfigReader.
+func NewImageConfigReader(
+	logger *zap.Logger,
+	storageosProvider storageos.Provider,
+	fetchReader buffetch.Reader,
+	moduleBucketBuilder bufmodulebuild.ModuleBucketBuilder,
+	moduleFileSetBuilder bufmodulebuild.ModuleFileSetBuilder,
+	imageBuilder bufimagebuild.Builder,
+) ImageConfigReader {
+	return newImageConfigReader(
+		logger,
+		storageosProvider,
+		fetchReader,
+		moduleBucketBuilder,
+		moduleFileSetBuilder,
+		imageBuilder,
+	)
+}
+
+// ModuleConfig is an module and configuration.
+type ModuleConfig interface {
+	Module() bufmodule.Module
+	Config() *bufconfig.Config
+	Workspace() bufmodule.Workspace
+}
+
+// ModuleConfigReader is a ModuleConfig reader.
+type ModuleConfigReader interface {
+	// GetModuleConfigs gets the ModuleConfig for the fetch value.
+	//
+	// If externalDirOrFilePaths is empty, this builds all files under Buf control.
+	//
+	// Note that as opposed to ModuleReader, this will return a Module for either
+	// a source or module reference, not just a module reference.
+	GetModuleConfigs(
+		ctx context.Context,
+		container app.EnvStdinContainer,
+		sourceOrModuleRef buffetch.SourceOrModuleRef,
+		configOverride string,
+		externalDirOrFilePaths []string,
+		externalExcludeDirOrFilePaths []string,
+		externalDirOrFilePathsAllowNotExist bool,
+	) ([]ModuleConfig, error)
+}
+
+// NewModuleConfigReader returns a new ModuleConfigReader
+func NewModuleConfigReader(
+	logger *zap.Logger,
+	storageosProvider storageos.Provider,
+	fetchReader buffetch.Reader,
+	moduleBucketBuilder bufmodulebuild.ModuleBucketBuilder,
+) ModuleConfigReader {
+	return newModuleConfigReader(
+		logger,
+		storageosProvider,
+		fetchReader,
+		moduleBucketBuilder,
+	)
+}
+
+// FileLister lists files.
+type FileLister interface {
+	// ListFiles lists the files.
+	//
+	// If includeImports is set, the ref is built, which can result in FileAnnotations.
+	// There is no defined returned sorting order. If you need the FileInfos to
+	// be sorted, do so with bufmoduleref.SortFileInfos or bufmoduleref.SortFileInfosByExternalPath.
+	ListFiles(
+		ctx context.Context,
+		container app.EnvStdinContainer,
+		ref buffetch.Ref,
+		configOverride string,
+		includeImports bool,
+	) ([]bufmoduleref.FileInfo, []bufanalysis.FileAnnotation, error)
+}
+
+// NewFileLister returns a new FileLister.
+func NewFileLister(
+	logger *zap.Logger,
+	storageosProvider storageos.Provider,
+	fetchReader buffetch.Reader,
+	moduleBucketBuilder bufmodulebuild.ModuleBucketBuilder,
+	moduleFileSetBuilder bufmodulebuild.ModuleFileSetBuilder,
+	imageBuilder bufimagebuild.Builder,
+) FileLister {
+	return newFileLister(
+		logger,
+		storageosProvider,
+		fetchReader,
+		moduleBucketBuilder,
+		moduleFileSetBuilder,
+		imageBuilder,
+	)
+}
+
+// ImageReader is an image reader.
+type ImageReader interface {
+	// GetImage reads the image from the value.
+	GetImage(
+		ctx context.Context,
+		container app.EnvStdinContainer,
+		imageRef buffetch.ImageRef,
+		externalDirOrFilePaths []string,
+		externalExcludeDirOrFilePaths []string,
+		externalDirOrFilePathsAllowNotExist bool,
+		excludeSourceCodeInfo bool,
+	) (bufimage.Image, error)
+}
+
+// NewImageReader returns a new ImageReader.
+func NewImageReader(
+	logger *zap.Logger,
+	fetchR
