@@ -170,4 +170,84 @@ type ImageReader interface {
 // NewImageReader returns a new ImageReader.
 func NewImageReader(
 	logger *zap.Logger,
-	fetchR
+	fetchReader buffetch.ImageReader,
+) ImageReader {
+	return newImageReader(
+		logger,
+		fetchReader,
+	)
+}
+
+// ImageWriter is an image writer.
+type ImageWriter interface {
+	// PutImage writes the image to the value.
+	//
+	// The file must be an image format.
+	// This is a no-np if value is the equivalent of /dev/null.
+	PutImage(
+		ctx context.Context,
+		container app.EnvStdoutContainer,
+		imageRef buffetch.ImageRef,
+		image bufimage.Image,
+		asFileDescriptorSet bool,
+		excludeImports bool,
+	) error
+}
+
+// NewImageWriter returns a new ImageWriter.
+func NewImageWriter(
+	logger *zap.Logger,
+	fetchWriter buffetch.Writer,
+) ImageWriter {
+	return newImageWriter(
+		logger,
+		fetchWriter,
+	)
+}
+
+// ProtoEncodingReader is a reader that reads a protobuf message in different encoding.
+type ProtoEncodingReader interface {
+	// GetMessage reads the message by the messageRef.
+	//
+	// Currently, this support bin and JSON format.
+	GetMessage(
+		ctx context.Context,
+		container app.EnvStdinContainer,
+		image bufimage.Image,
+		typeName string,
+		messageRef bufconvert.MessageEncodingRef,
+	) (proto.Message, error)
+}
+
+// NewProtoEncodingReader returns a new ProtoEncodingReader.
+func NewProtoEncodingReader(
+	logger *zap.Logger,
+) ProtoEncodingReader {
+	return newProtoEncodingReader(
+		logger,
+	)
+}
+
+// ProtoEncodingWriter is a writer that writes a protobuf message in different encoding.
+type ProtoEncodingWriter interface {
+	// PutMessage writes the message to the path, which can be
+	// a path in file system, or stdout represented by "-".
+	//
+	// Currently, this support bin and JSON format.
+	PutMessage(
+		ctx context.Context,
+		container app.EnvStdoutContainer,
+		image bufimage.Image,
+		message proto.Message,
+		messageRef bufconvert.MessageEncodingRef,
+	) error
+}
+
+// NewProtoEncodingWriter returns a new ProtoEncodingWriter.
+func NewProtoEncodingWriter(
+	logger *zap.Logger,
+) ProtoEncodingWriter {
+	return newProtoEncodingWriter(
+		logger,
+	)
+}
