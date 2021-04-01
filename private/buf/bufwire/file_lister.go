@@ -36,4 +36,131 @@ import (
 type fileLister struct {
 	logger              *zap.Logger
 	fetchReader         buffetch.Reader
-	
+	moduleBucketBuilder bufmodulebuild.ModuleBucketBuilder
+	imageBuilder        bufimagebuild.Builder
+	// imageReaders require ImageRefs, we only use this in the withoutImports flow
+	// the imageConfigReader is used when we need to build an image
+	imageReader       *imageReader
+	imageConfigReader *imageConfigReader
+}
+
+func newFileLister(
+	logger *zap.Logger,
+	storageosProvider storageos.Provider,
+	fetchReader buffetch.Reader,
+	moduleBucketBuilder bufmodulebuild.ModuleBucketBuilder,
+	moduleFileSetBuilder bufmodulebuild.ModuleFileSetBuilder,
+	imageBuilder bufimagebuild.Builder,
+) *fileLister {
+	return &fileLister{
+		logger:              logger.Named("bufwire"),
+		fetchReader:         fetchReader,
+		moduleBucketBuilder: moduleBucketBuilder,
+		imageBuilder:        imageBuilder,
+		imageReader: newImageReader(
+			logger,
+			fetchReader,
+		),
+		imageConfigReader: newImageConfigReader(
+			logger,
+			storageosProvider,
+			fetchReader,
+			moduleBucketBuilder,
+			moduleFileSetBuilder,
+			imageBuilder,
+		),
+	}
+}
+
+func (e *fileLister) ListFiles(
+	ctx context.Context,
+	container app.EnvStdinContainer,
+	ref buffetch.Ref,
+	configOverride string,
+	includeImports bool,
+) ([]bufmoduleref.FileInfo, []bufanalysis.FileAnnotation, error) {
+	if includeImports {
+		// To get imports, we need to build an image so we keep this flow separate and
+		// re-use the logic in imageConfigReader.
+		return e.listFilesWithImports(
+			ctx,
+			container,
+			ref,
+			configOverride,
+		)
+	}
+	// We don't need to build in the withoutImports flow, so we just completely separate the logic
+	// to make sure the common case is as quick as it can be.
+	return e.listFilesWithoutImports(
+		ctx,
+		container,
+		ref,
+		configOverride,
+	)
+}
+
+func (e *fileLister) listFilesWithImports(
+	ctx context.Context,
+	container app.EnvStdinContainer,
+	ref buffetch.Ref,
+	configOverride string,
+) ([]bufmoduleref.FileInfo, []bufanalysis.FileAnnotation, error) {
+	imageConfigs, fileAnnotations, err := e.imageConfigReader.GetImageConfigs(
+		ctx,
+		container,
+		ref,
+		configOverride,
+		nil,
+		nil,
+		false,
+		true,
+	)
+	if err != nil {
+		return nil, nil, err
+	}
+	if len(fileAnnotations) > 0 {
+		return nil, fileAnnotations, nil
+	}
+	images := make([]bufimage.Image, len(imageConfigs))
+	for i, imageConfig := range imageConfigs {
+		images[i] = imageConfig.Image()
+	}
+	image, err := bufimage.MergeImages(images...)
+	if err != nil {
+		return nil, nil, err
+	}
+	imageFiles := image.Files()
+	fileInfos := make([]bufmoduleref.FileInfo, len(imageFiles))
+	for i, imageFile := range imageFiles {
+		fileInfos[i] = imageFile
+	}
+	return fileInfos, nil, nil
+}
+
+func (e *fileLister) listFilesWithoutImports(
+	ctx context.Context,
+	container app.EnvStdinContainer,
+	ref buffetch.Ref,
+	configOverride string,
+) (_ []bufmoduleref.FileInfo, _ []bufanalysis.FileAnnotation, retErr error) {
+	switch t := ref.(type) {
+	case buffetch.ProtoFileRef:
+		imageConfigs, fileAnnotations, err := e.imageConfigReader.GetImageConfigs(
+			ctx,
+			container,
+			ref,
+			configOverride,
+			nil,
+			nil,
+			false,
+			true,
+		)
+		if err != nil {
+			return nil, nil, err
+		}
+		if len(fileAnnotations) > 0 {
+			return nil, fileAnnotations, nil
+		}
+		var fileInfos []bufmoduleref.FileInfo
+		// There should only be a single imageConfig compiled based on the proto file reference
+		// and 
