@@ -163,4 +163,108 @@ func (e *fileLister) listFilesWithoutImports(
 		}
 		var fileInfos []bufmoduleref.FileInfo
 		// There should only be a single imageConfig compiled based on the proto file reference
-		// and 
+		// and the `include_package_files` option if set. These are handled by the imageConfigReader,
+		// we only need to collect the fileInfos here.
+		for _, imageConfig := range imageConfigs {
+			for _, imageFile := range imageConfig.Image().Files() {
+				if !imageFile.IsImport() {
+					fileInfos = append(fileInfos, imageFile)
+				}
+			}
+		}
+		return fileInfos, nil, nil
+	case buffetch.ImageRef:
+		// if we have an image, list the files in the image
+		image, err := e.imageReader.GetImage(
+			ctx,
+			container,
+			t,
+			nil,
+			nil,
+			false,
+			true,
+		)
+		if err != nil {
+			return nil, nil, err
+		}
+		var fileInfos []bufmoduleref.FileInfo
+		for _, file := range image.Files() {
+			if !file.IsImport() {
+				fileInfos = append(fileInfos, file)
+			}
+		}
+		return fileInfos, nil, nil
+	case buffetch.SourceRef:
+		readBucketCloser, err := e.fetchReader.GetSourceBucket(ctx, container, t)
+		if err != nil {
+			return nil, nil, err
+		}
+		defer func() {
+			retErr = multierr.Append(retErr, readBucketCloser.Close())
+		}()
+		existingConfigFilePath, err := bufwork.ExistingConfigFilePath(ctx, readBucketCloser)
+		if err != nil {
+			return nil, nil, err
+		}
+		if subDirPath := readBucketCloser.SubDirPath(); existingConfigFilePath == "" || subDirPath != "." {
+			fileInfos, err := e.sourceFileInfosForDirectory(ctx, readBucketCloser, subDirPath, configOverride)
+			if err != nil {
+				return nil, nil, err
+			}
+			return fileInfos, nil, nil
+		}
+		workspaceConfig, err := bufwork.GetConfigForBucket(ctx, readBucketCloser, readBucketCloser.RelativeRootPath())
+		if err != nil {
+			return nil, nil, err
+		}
+		var allSourceFileInfos []bufmoduleref.FileInfo
+		for _, directory := range workspaceConfig.Directories {
+			sourceFileInfos, err := e.sourceFileInfosForDirectory(ctx, readBucketCloser, directory, configOverride)
+			if err != nil {
+				return nil, nil, err
+			}
+			allSourceFileInfos = append(allSourceFileInfos, sourceFileInfos...)
+		}
+		return allSourceFileInfos, nil, nil
+	case buffetch.ModuleRef:
+		module, err := e.fetchReader.GetModule(ctx, container, t)
+		if err != nil {
+			return nil, nil, err
+		}
+		fileInfos, err := module.SourceFileInfos(ctx)
+		if err != nil {
+			return nil, nil, err
+		}
+		return fileInfos, nil, nil
+	default:
+		return nil, nil, fmt.Errorf("invalid ref: %T", ref)
+	}
+}
+
+// sourceFileInfosForDirectory returns the source file infos
+// for the module defined in the given diretory of the read bucket.
+func (e *fileLister) sourceFileInfosForDirectory(
+	ctx context.Context,
+	readBucket storage.ReadBucket,
+	directory string,
+	configOverride string,
+) ([]bufmoduleref.FileInfo, error) {
+	mappedReadBucket := storage.MapReadBucket(readBucket, storage.MapOnPrefix(directory))
+	config, err := bufconfig.ReadConfigOS(
+		ctx,
+		mappedReadBucket,
+		bufconfig.ReadConfigOSWithOverride(configOverride),
+	)
+	if err != nil {
+		return nil, err
+	}
+	module, err := bufmodulebuild.BuildForBucket(
+		ctx,
+		mappedReadBucket,
+		config.Build,
+	)
+	if err != nil {
+		return nil, err
+	}
+	return module.SourceFileInfos(ctx)
+}
