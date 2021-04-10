@@ -195,3 +195,119 @@ func (i *imageConfigReader) getSourceOrModuleImageConfigs(
 	}
 	return imageConfigs, nil, nil
 }
+
+func (i *imageConfigReader) getImageImageConfig(
+	ctx context.Context,
+	container app.EnvStdinContainer,
+	imageRef buffetch.ImageRef,
+	configOverride string,
+	externalDirOrFilePaths []string,
+	externalExcludeDirOrFilePaths []string,
+	externalDirOrFilePathsAllowNotExist bool,
+	excludeSourceCodeInfo bool,
+) (_ ImageConfig, retErr error) {
+	image, err := i.imageReader.GetImage(
+		ctx,
+		container,
+		imageRef,
+		externalDirOrFilePaths,
+		externalExcludeDirOrFilePaths,
+		externalDirOrFilePathsAllowNotExist,
+		excludeSourceCodeInfo,
+	)
+	if err != nil {
+		return nil, err
+	}
+	readWriteBucket, err := i.storageosProvider.NewReadWriteBucket(
+		".",
+		storageos.ReadWriteBucketWithSymlinksIfSupported(),
+	)
+	if err != nil {
+		return nil, err
+	}
+	config, err := bufconfig.ReadConfigOS(
+		ctx,
+		readWriteBucket,
+		bufconfig.ReadConfigOSWithOverride(configOverride),
+	)
+	if err != nil {
+		return nil, err
+	}
+	return newImageConfig(image, config), nil
+}
+
+func (i *imageConfigReader) buildModule(
+	ctx context.Context,
+	config *bufconfig.Config,
+	moduleFileSet bufmodule.ModuleFileSet,
+	excludeSourceCodeInfo bool,
+) (ImageConfig, []bufanalysis.FileAnnotation, error) {
+	ctx, span := otel.GetTracerProvider().Tracer("bufbuild/buf").Start(ctx, "build_module")
+	defer span.End()
+	var options []bufimagebuild.BuildOption
+	if excludeSourceCodeInfo {
+		options = append(options, bufimagebuild.WithExcludeSourceCodeInfo())
+	}
+	image, fileAnnotations, err := i.imageBuilder.Build(
+		ctx,
+		moduleFileSet,
+		options...,
+	)
+	if err != nil {
+		span.RecordError(err)
+		span.SetStatus(codes.Error, err.Error())
+		return nil, nil, err
+	}
+	if len(fileAnnotations) > 0 {
+		return nil, fileAnnotations, nil
+	}
+	return newImageConfig(image, config), nil, nil
+}
+
+// filterImageConfigs takes in image configs and filters them based on the proto file ref.
+// First, we get the package, path, and config for the file ref. And then we merge the images
+// across the ImageConfigs, then filter them based on the paths for the package.
+//
+// The image merge is needed because if the `include_package_files=true` option is set, we
+// need to gather all the files for the package, including files spread out across workspace
+// directories, which would result in multiple image configs.
+func filterImageConfigs(imageConfigs []ImageConfig, protoFileRef buffetch.ProtoFileRef) ([]ImageConfig, error) {
+	var pkg string
+	var path string
+	var config *bufconfig.Config
+	var images []bufimage.Image
+	for _, imageConfig := range imageConfigs {
+		for _, imageFile := range imageConfig.Image().Files() {
+			// TODO: Ideally, we have the path returned from PathForExternalPath, however for a protoFileRef,
+			// PathForExternalPath returns only ".", <nil> when matched on the exact path of the proto file
+			// provided as the ref. This is expected since `PathForExternalPath` is meant to return the relative
+			// path based on the reference, which in this case will always be a specific file.
+			if _, err := protoFileRef.PathForExternalPath(imageFile.ExternalPath()); err == nil {
+				pkg = imageFile.Proto().GetPackage()
+				path = imageFile.Path()
+				config = imageConfig.Config()
+				break
+			}
+		}
+		images = append(images, imageConfig.Image())
+	}
+	image, err := bufimage.MergeImages(images...)
+	if err != nil {
+		return nil, err
+	}
+	var paths []string
+	if protoFileRef.IncludePackageFiles() {
+		for _, imageFile := range image.Files() {
+			if imageFile.Proto().GetPackage() == pkg {
+				paths = append(paths, imageFile.Path())
+			}
+		}
+	} else {
+		paths = []string{path}
+	}
+	prunedImage, err := bufimage.ImageWithOnlyPaths(image, paths, nil)
+	if err != nil {
+		return nil, err
+	}
+	return []ImageConfig{newImageConfig(prunedImage, config)}, nil
+}
