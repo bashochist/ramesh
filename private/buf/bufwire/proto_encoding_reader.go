@@ -75,4 +75,35 @@ func (p *protoEncodingReader) GetMessage(
 	switch messageRef.MessageEncoding() {
 	case bufconvert.MessageEncodingBin:
 		unmarshaler = protoencoding.NewWireUnmarshaler(resolver)
-	case bufco
+	case bufconvert.MessageEncodingJSON:
+		unmarshaler = protoencoding.NewJSONUnmarshaler(resolver)
+	default:
+		return nil, errors.New("unknown message encoding type")
+	}
+	readCloser := io.NopCloser(container.Stdin())
+	if messageRef.Path() != "-" {
+		var err error
+		readCloser, err = os.Open(messageRef.Path())
+		if err != nil {
+			return nil, err
+		}
+	}
+	defer func() {
+		retErr = multierr.Append(retErr, readCloser.Close())
+	}()
+	data, err := io.ReadAll(readCloser)
+	if err != nil {
+		return nil, err
+	}
+	if len(data) == 0 {
+		return nil, errors.New("size of input message must not be zero")
+	}
+	message, err := bufreflect.NewMessage(ctx, image, typeName)
+	if err != nil {
+		return nil, err
+	}
+	if err := unmarshaler.Unmarshal(data, message); err != nil {
+		return nil, fmt.Errorf("unable to unmarshal the message: %v", err)
+	}
+	return message, nil
+}
