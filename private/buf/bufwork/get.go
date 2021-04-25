@@ -119,3 +119,27 @@ func getConfigForDataInternal(
 	}
 	var externalConfigV1 ExternalConfigV1
 	if err := unmarshalStrict(data, &externalConfigV1); err != nil {
+		return nil, err
+	}
+	return newConfigV1(externalConfigV1, workspaceID)
+}
+
+func validateExternalConfigVersion(externalConfigVersion externalConfigVersion, id string) error {
+	switch externalConfigVersion.Version {
+	case "":
+		return fmt.Errorf(
+			`%s has no version set. Please add "version: %s"`,
+			id,
+			V1Version,
+		)
+	case V1Version:
+		return nil
+	default:
+		return fmt.Errorf(
+			`%s has an invalid "version: %s" set. Please add "version: %s"`,
+			id,
+			externalConfigVersion.Version,
+			V1Version,
+		)
+	}
+}
