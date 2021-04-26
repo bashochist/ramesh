@@ -2117,3 +2117,373 @@ func TestFormatExitCode(t *testing.T) {
 		"format",
 		filepath.Join("testdata", "format", "diff"),
 		"-d",
+		"--exit-code",
+	)
+	assert.NotEmpty(t, stdout.String())
+}
+
+// Tests if the image produced by the formatted result is
+// equivalent to the original result.
+func TestFormatEquivalence(t *testing.T) {
+	tempDir := t.TempDir()
+	testRunStdout(
+		t,
+		nil,
+		0,
+		``,
+		"build",
+		filepath.Join("testdata", "format", "complex"),
+		"-o",
+		filepath.Join(tempDir, "image.bin"),
+		"--exclude-source-info",
+	)
+	testRunStdout(
+		t,
+		nil,
+		0,
+		``,
+		"format",
+		filepath.Join("testdata", "format", "complex"),
+		"-o",
+		filepath.Join(tempDir, "formatted"),
+	)
+	testRunStdout(
+		t,
+		nil,
+		0,
+		``,
+		"build",
+		filepath.Join(tempDir, "formatted"),
+		"-o",
+		filepath.Join(tempDir, "formatted.bin"),
+		"--exclude-source-info",
+	)
+	originalImageData, err := os.ReadFile(filepath.Join(tempDir, "image.bin"))
+	require.NoError(t, err)
+	formattedImageData, err := os.ReadFile(filepath.Join(tempDir, "formatted.bin"))
+	require.NoError(t, err)
+	require.Equal(t, originalImageData, formattedImageData)
+}
+
+func TestFormatInvalidFlagCombination(t *testing.T) {
+	tempDir := t.TempDir()
+	testRunStdoutStderr(
+		t,
+		nil,
+		1,
+		"",
+		`Failure: --output cannot be used with --write`,
+		"format",
+		filepath.Join("testdata", "format", "diff"),
+		"-w",
+		"-o",
+		filepath.Join(tempDir, "formatted"),
+	)
+}
+
+func TestFormatInvalidWriteWithModuleReference(t *testing.T) {
+	testRunStdoutStderr(
+		t,
+		nil,
+		1,
+		"",
+		`Failure: --write cannot be used with module reference inputs`,
+		"format",
+		"buf.build/acme/weather",
+		"-w",
+	)
+}
+
+func TestFormatInvalidIncludePackageFiles(t *testing.T) {
+	testRunStdoutStderr(
+		t,
+		nil,
+		1,
+		"",
+		`Failure: this command does not support including package files`,
+		"format",
+		filepath.Join("testdata", "format", "simple", "simple.proto#include_package_files=true"),
+	)
+}
+
+func TestFormatInvalidInputDoesNotCreateDirectory(t *testing.T) {
+	tempDir := t.TempDir()
+	testRunStdoutStderr(
+		t,
+		nil,
+		1,
+		"",
+		filepath.FromSlash(`Failure: testdata/format/invalid/invalid.proto:4:12: syntax error: unexpected '.', expecting '{'`),
+		"format",
+		filepath.Join("testdata", "format", "invalid"),
+		"-o",
+		filepath.Join(tempDir, "formatted", "invalid"), // Directory output.
+	)
+	_, err := os.Stat(filepath.Join(tempDir, "formatted", "invalid"))
+	assert.True(t, os.IsNotExist(err))
+	testRunStdoutStderr(
+		t,
+		nil,
+		1,
+		"",
+		filepath.FromSlash(`Failure: testdata/format/invalid/invalid.proto:4:12: syntax error: unexpected '.', expecting '{'`),
+		"format",
+		filepath.Join("testdata", "format", "invalid"),
+		"-o",
+		filepath.Join(tempDir, "formatted", "invalid", "invalid.proto"), // Single file output.
+	)
+	_, err = os.Stat(filepath.Join(tempDir, "formatted", "invalid"))
+	assert.True(t, os.IsNotExist(err))
+}
+
+func TestConvertRoundTrip(t *testing.T) {
+	tempDir := t.TempDir()
+	testRunStdout(
+		t,
+		nil,
+		0,
+		``,
+		"build",
+		filepath.Join("testdata", "success"),
+		"-o",
+		filepath.Join(tempDir, "image.bin"),
+	)
+	t.Run("stdin and stdout", func(t *testing.T) {
+		stdin := bytes.NewBuffer([]byte(`{"one":"55"}`))
+		encodedMessage := bytes.NewBuffer(nil)
+		decodedMessage := bytes.NewBuffer(nil)
+		testRun(
+			t,
+			0,
+			stdin,
+			encodedMessage,
+			"convert",
+			filepath.Join(tempDir, "image.bin"),
+			"--type",
+			"buf.Foo",
+			"--from",
+			"-#format=json",
+		)
+		testRun(
+			t,
+			0,
+			encodedMessage,
+			decodedMessage,
+			"convert",
+			filepath.Join(tempDir, "image.bin"),
+			"--type",
+			"buf.Foo",
+		)
+		assert.JSONEq(t, `{"one":"55"}`, decodedMessage.String())
+	})
+	t.Run("stdin and stdout with type specified", func(t *testing.T) {
+		stdin := bytes.NewBuffer([]byte(`{"one":"55"}`))
+		encodedMessage := bytes.NewBuffer(nil)
+		decodedMessage := bytes.NewBuffer(nil)
+		testRun(
+			t,
+			0,
+			stdin,
+			encodedMessage,
+			"convert",
+			filepath.Join(tempDir, "image.bin"),
+			"--type",
+			"buf.Foo",
+			"--from",
+			"-#format=json",
+			"--to",
+			"-#format=bin",
+		)
+		testRun(
+			t,
+			0,
+			encodedMessage,
+			decodedMessage,
+			"convert",
+			filepath.Join(tempDir, "image.bin"),
+			"--type",
+			"buf.Foo",
+			"--from",
+			"-#format=bin",
+			"--to",
+			"-#format=json",
+		)
+		assert.JSONEq(t, `{"one":"55"}`, decodedMessage.String())
+	})
+	t.Run("file output and input", func(t *testing.T) {
+		stdin := bytes.NewBuffer([]byte(`{"one":"55"}`))
+		decodedMessage := bytes.NewBuffer(nil)
+		testRun(
+			t,
+			0,
+			stdin,
+			nil,
+			"convert",
+			filepath.Join(tempDir, "image.bin"),
+			"--type",
+			"buf.Foo",
+			"--from",
+			"-#format=json",
+			"--to",
+			filepath.Join(tempDir, "decoded_message.bin"),
+		)
+		testRun(
+			t,
+			0,
+			nil,
+			decodedMessage,
+			"convert",
+			filepath.Join(tempDir, "image.bin"),
+			"--type",
+			"buf.Foo",
+			"--from",
+			filepath.Join(tempDir, "decoded_message.bin"),
+		)
+		assert.JSONEq(t, `{"one":"55"}`, decodedMessage.String())
+	})
+}
+
+func testMigrateV1Beta1Diff(
+	t *testing.T,
+	storageosProvider storageos.Provider,
+	runner command.Runner,
+	scenario string,
+	expectedStderr string,
+) {
+	// Copy test setup to temporary directory to avoid writing to filesystem
+	inputBucket, err := storageosProvider.NewReadWriteBucket(filepath.Join("testdata", "migrate-v1beta1", "success", scenario, "input"))
+	require.NoError(t, err)
+	tempDir, readWriteBucket := internaltesting.CopyReadBucketToTempDir(context.Background(), t, storageosProvider, inputBucket)
+
+	testRunStdoutStderr(
+		t,
+		nil,
+		0,
+		"",
+		expectedStderr,
+		"beta",
+		"migrate-v1beta1",
+		tempDir,
+	)
+
+	expectedOutputBucket, err := storageosProvider.NewReadWriteBucket(filepath.Join("testdata", "migrate-v1beta1", "success", scenario, "output"))
+	require.NoError(t, err)
+
+	diff, err := storage.DiffBytes(context.Background(), runner, expectedOutputBucket, readWriteBucket)
+	require.NoError(t, err)
+	require.Empty(t, string(diff))
+}
+
+func testMigrateV1Beta1Failure(t *testing.T, storageosProvider storageos.Provider, scenario string, expectedStderr string) {
+	// Copy test setup to temporary directory to avoid writing to filesystem
+	inputBucket, err := storageosProvider.NewReadWriteBucket(filepath.Join("testdata", "migrate-v1beta1", "failure", scenario))
+	require.NoError(t, err)
+	tempDir, _ := internaltesting.CopyReadBucketToTempDir(context.Background(), t, storageosProvider, inputBucket)
+
+	testRunStdoutStderr(
+		t,
+		nil,
+		1,
+		"",
+		expectedStderr,
+		"beta",
+		"migrate-v1beta1",
+		tempDir,
+	)
+}
+
+func testModInit(t *testing.T, expectedData string, document bool, name string, deps ...string) {
+	tempDir := t.TempDir()
+	baseArgs := []string{"mod", "init"}
+	args := append(baseArgs, "-o", tempDir)
+	if document {
+		args = append(args, "--doc")
+	}
+	if name != "" {
+		args = append(args, "--name", name)
+	}
+	testRun(t, 0, nil, nil, args...)
+	data, err := os.ReadFile(filepath.Join(tempDir, bufconfig.ExternalConfigV1FilePath))
+	require.NoError(t, err)
+	require.Equal(t, expectedData, string(data))
+}
+
+func testRunStdout(t *testing.T, stdin io.Reader, expectedExitCode int, expectedStdout string, args ...string) {
+	appcmdtesting.RunCommandExitCodeStdout(
+		t,
+		func(use string) *appcmd.Command { return NewRootCommand(use) },
+		expectedExitCode,
+		expectedStdout,
+		internaltesting.NewEnvFunc(t),
+		stdin,
+		args...,
+	)
+}
+
+func testRunStdoutStderr(t *testing.T, stdin io.Reader, expectedExitCode int, expectedStdout string, expectedStderr string, args ...string) {
+	appcmdtesting.RunCommandExitCodeStdoutStderr(
+		t,
+		func(use string) *appcmd.Command { return NewRootCommand(use) },
+		expectedExitCode,
+		expectedStdout,
+		expectedStderr,
+		internaltesting.NewEnvFunc(t),
+		stdin,
+		// we do not want warnings to be part of our stderr test calculation
+		append(
+			args,
+			"--no-warn",
+		)...,
+	)
+}
+
+func testRunStdoutProfile(t *testing.T, stdin io.Reader, expectedExitCode int, expectedStdout string, args ...string) {
+	tempDirPath := t.TempDir()
+	testRunStdout(
+		t,
+		stdin,
+		0,
+		``,
+		append(
+			args,
+			"--profile",
+			fmt.Sprintf("--profile-path=%s", tempDirPath),
+			"--profile-loops=1",
+			"--profile-type=cpu",
+		)...,
+	)
+}
+
+func testRunStdoutFile(t *testing.T, stdin io.Reader, expectedExitCode int, wantFile string, args ...string) {
+	wantReader, err := os.Open(wantFile)
+	require.NoError(t, err)
+	wantBytes, err := io.ReadAll(wantReader)
+	require.NoError(t, err)
+	testRunStdout(
+		t,
+		stdin,
+		expectedExitCode,
+		string(wantBytes),
+		args...,
+	)
+}
+
+func testRun(
+	t *testing.T,
+	expectedExitCode int,
+	stdin io.Reader,
+	stdout io.Writer,
+	args ...string,
+) {
+	stderr := bytes.NewBuffer(nil)
+	appcmdtesting.RunCommandExitCode(
+		t,
+		func(use string) *appcmd.Command { return NewRootCommand(use) },
+		expectedExitCode,
+		internaltesting.NewEnvFunc(t),
+		stdin,
+		stdout,
+		stderr,
+		args...,
+	)
+}
