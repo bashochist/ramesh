@@ -33,23 +33,20 @@ func handle(
 	responseWriter appproto.ResponseBuilder,
 	request *pluginpb.CodeGeneratorRequest,
 ) error {
-	return responseWriter.AddFile(
+	if err := responseWriter.AddFile(
 		&pluginpb.CodeGeneratorResponse_File{
-			Name: proto.String("test.txt"),
+			Name:           proto.String("test.txt"),
+			InsertionPoint: proto.String("example"),
 			Content: proto.String(`
-		// The following line represents an insertion point named 'example'.
-		// We include a few indentation to verify the whitespace is preserved
-		// in the inserted content.
-		//
-		//     @@protoc_insertion_point(example)
-		//
-		// The 'other' insertion point is also included so that we verify
-		// multiple insertion points can be written in a single invocation.
-		//
-		//   @@protoc_insertion_point(other)
-		//
-		// Note that all text should be added above the insertion points.
+			// Include this comment on the 'example' insertion point.
+			  // This is another example where whitespaces are preserved.
+			  // And this demonstrates a newline literal (\n).
+			// And don't forget the windows newline literal (\r\n).
 		`),
 		},
-	)
-}
+	); err != nil {
+		return err
+	}
+	if err := responseWriter.AddFile(
+		&pluginpb.CodeGeneratorResponse_File{
+	
