@@ -12,10 +12,14 @@
 // See the License for the specific language governing permissions and
 // limitations under the License.
 
-//go:build aix || darwin || dragonfly || freebsd || (js && wasm) || linux || netbsd || openbsd || solaris
-// +build aix darwin dragonfly freebsd js,wasm linux netbsd openbsd solaris
+//go:build windows
+// +build windows
 
 package protoc
+
+import (
+	"path/filepath"
+)
 
 // isOutNotAFullPath checks if we need to consider the path to be a full path.
 //
@@ -32,5 +36,5 @@ package protoc
 // protoc uses : in both unix and windows to separate the opt and out, but in windows,
 // if a full path is given, then we don't want it interpreted as something we should split.
 func isOutNotAFullPath(path string) bool {
-	return true
+	return !filepath.IsAbs(path)
 }
