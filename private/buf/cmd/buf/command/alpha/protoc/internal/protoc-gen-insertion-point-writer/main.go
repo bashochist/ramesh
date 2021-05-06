@@ -49,4 +49,14 @@ func handle(
 	}
 	if err := responseWriter.AddFile(
 		&pluginpb.CodeGeneratorResponse_File{
-	
+			Name:           proto.String("test.txt"),
+			InsertionPoint: proto.String("other"),
+			Content: proto.String(`
+			// Include this comment on the 'other' insertion point.
+		`),
+		},
+	); err != nil {
+		return err
+	}
+	return nil
+}
