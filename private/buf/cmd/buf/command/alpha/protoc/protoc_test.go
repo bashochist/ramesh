@@ -154,4 +154,133 @@ func TestCompareGeneratedStubsGoogleapisGo(t *testing.T) {
 	)
 }
 
-fu
+func TestCompareGeneratedStubsGoogleapisGoZip(t *testing.T) {
+	testingextended.SkipIfShort(t)
+	t.Parallel()
+	googleapisDirPath := buftesting.GetGoogleapisDirPath(t, buftestingDirPath)
+	testCompareGeneratedStubsArchive(
+		t,
+		command.NewRunner(),
+		googleapisDirPath,
+		[]testPluginInfo{
+			{name: "go", opt: "Mgoogle/api/auth.proto=foo"},
+		},
+		false,
+	)
+}
+
+func TestCompareGeneratedStubsGoogleapisGoJar(t *testing.T) {
+	testingextended.SkipIfShort(t)
+	t.Parallel()
+	googleapisDirPath := buftesting.GetGoogleapisDirPath(t, buftestingDirPath)
+	testCompareGeneratedStubsArchive(
+		t,
+		command.NewRunner(),
+		googleapisDirPath,
+		[]testPluginInfo{
+			{name: "go", opt: "Mgoogle/api/auth.proto=foo"},
+		},
+		true,
+	)
+}
+
+func TestCompareGeneratedStubsGoogleapisObjc(t *testing.T) {
+	testingextended.SkipIfShort(t)
+	t.Parallel()
+	googleapisDirPath := buftesting.GetGoogleapisDirPath(t, buftestingDirPath)
+	testCompareGeneratedStubs(
+		t,
+		command.NewRunner(),
+		googleapisDirPath,
+		[]testPluginInfo{{name: "objc"}},
+	)
+}
+
+func TestCompareInsertionPointOutput(t *testing.T) {
+	testingextended.SkipIfShort(t)
+	t.Parallel()
+	insertionTestdataDirPath := filepath.Join("testdata", "insertion")
+	testCompareGeneratedStubs(
+		t,
+		command.NewRunner(),
+		insertionTestdataDirPath,
+		[]testPluginInfo{
+			{name: "insertion-point-receiver"},
+			{name: "insertion-point-writer"},
+		},
+	)
+}
+
+func TestInsertionPointMixedPathsSuccess(t *testing.T) {
+	testingextended.SkipIfShort(t)
+	t.Parallel()
+	wd, err := os.Getwd()
+	require.NoError(t, err)
+	runner := command.NewRunner()
+	testInsertionPointMixedPathsSuccess(t, runner, ".", wd)
+	testInsertionPointMixedPathsSuccess(t, runner, wd, ".")
+}
+
+// testInsertionPointMixedPathsSuccess demonstrates that insertion points are able
+// to generate to the same output directory, even if the absolute path points to
+// the same place.
+func testInsertionPointMixedPathsSuccess(t *testing.T, runner command.Runner, receiverOut string, writerOut string) {
+	dirPath := filepath.Join("testdata", "insertion")
+	filePaths := buftesting.GetProtocFilePaths(t, dirPath, 100)
+	protocFlags := []string{
+		fmt.Sprintf("--%s_out=%s", "insertion-point-receiver", receiverOut),
+		fmt.Sprintf("--%s_out=%s", "insertion-point-writer", writerOut),
+	}
+	err := prototesting.RunProtoc(
+		context.Background(),
+		runner,
+		[]string{dirPath},
+		filePaths,
+		false,
+		false,
+		map[string]string{
+			"PATH": os.Getenv("PATH"),
+		},
+		nil,
+		protocFlags...,
+	)
+	require.Error(t, err)
+	appcmdtesting.RunCommandSuccess(
+		t,
+		func(name string) *appcmd.Command {
+			return NewCommand(
+				name,
+				appflag.NewBuilder(name),
+			)
+		},
+		func(string) map[string]string {
+			return map[string]string{
+				"PATH": os.Getenv("PATH"),
+			}
+		},
+		nil,
+		nil,
+		append(
+			append(
+				protocFlags,
+				"-I",
+				dirPath,
+				"--by-dir",
+			),
+			filePaths...,
+		)...,
+	)
+}
+
+func testCompareGeneratedStubs(
+	t *testing.T,
+	runner command.Runner,
+	dirPath string,
+	plugins []testPluginInfo,
+) {
+	filePaths := buftesting.GetProtocFilePaths(t, dirPath, 100)
+	actualProtocDir := t.TempDir()
+	bufProtocDir := t.TempDir()
+	var actualProtocPluginFlags []string
+	for _, plugin := range plugins {
+		actualProtocPluginFlags = append(actualProtocPluginFlags, fmt.Sprintf("--%s_out=%s", plugin.name, 
