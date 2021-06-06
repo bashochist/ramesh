@@ -1,0 +1,11 @@
+
+-I
+proto
+--error_format
+text
+--go_out
+go_out
+--go_opt
+plugins=connect
+--plugin
+/bin/protoc-gen-go

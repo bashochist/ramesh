@@ -415,4 +415,82 @@ func testCompareGeneratedStubsArchive(
 			append(
 				bufProtocPluginFlags,
 				"-I",
-				dir
+				dirPath,
+				"--by-dir",
+			),
+			filePaths...,
+		)...,
+	)
+	actualData, err := os.ReadFile(actualProtocFile)
+	require.NoError(t, err)
+	actualReadWriteBucket := storagemem.NewReadWriteBucket()
+	err = storagearchive.Unzip(
+		context.Background(),
+		bytes.NewReader(actualData),
+		int64(len(actualData)),
+		actualReadWriteBucket,
+		nil,
+		0,
+	)
+	require.NoError(t, err)
+	bufData, err := os.ReadFile(bufProtocFile)
+	require.NoError(t, err)
+	bufReadWriteBucket := storagemem.NewReadWriteBucket()
+	err = storagearchive.Unzip(
+		context.Background(),
+		bytes.NewReader(bufData),
+		int64(len(bufData)),
+		bufReadWriteBucket,
+		nil,
+		0,
+	)
+	require.NoError(t, err)
+	diff, err := storage.DiffBytes(
+		context.Background(),
+		runner,
+		actualReadWriteBucket,
+		bufReadWriteBucket,
+	)
+	require.NoError(t, err)
+	assert.Empty(t, string(diff))
+}
+
+func testGetBufProtocFileDescriptorSet(t *testing.T, dirPath string) *descriptorpb.FileDescriptorSet {
+	data := testGetBufProtocFileDescriptorSetBytes(t, dirPath)
+	fileDescriptorSet := &descriptorpb.FileDescriptorSet{}
+	// TODO: change to image read logic
+	require.NoError(
+		t,
+		protoencoding.NewWireUnmarshaler(nil).Unmarshal(
+			data,
+			fileDescriptorSet,
+		),
+	)
+	return fileDescriptorSet
+}
+
+func testGetBufProtocFileDescriptorSetBytes(t *testing.T, dirPath string) []byte {
+	stdout := bytes.NewBuffer(nil)
+	appcmdtesting.RunCommandSuccess(
+		t,
+		func(name string) *appcmd.Command {
+			return NewCommand(
+				name,
+				appflag.NewBuilder(name),
+			)
+		},
+		nil,
+		nil,
+		stdout,
+		append(
+			[]string{
+				"-I",
+				dirPath,
+				"-o",
+				"-",
+			},
+			buftesting.GetProtocFilePaths(t, dirPath, 100)...,
+		)...,
+	)
+	return stdout.Bytes()
+}
