@@ -283,4 +283,136 @@ func testCompareGeneratedStubs(
 	bufProtocDir := t.TempDir()
 	var actualProtocPluginFlags []string
 	for _, plugin := range plugins {
-		actualProtocPluginFlags = append(actualProtocPluginFlags, fmt.Sprintf("--%s_out=%s", plugin.name, 
+		actualProtocPluginFlags = append(actualProtocPluginFlags, fmt.Sprintf("--%s_out=%s", plugin.name, actualProtocDir))
+		if plugin.opt != "" {
+			actualProtocPluginFlags = append(actualProtocPluginFlags, fmt.Sprintf("--%s_opt=%s", plugin.name, plugin.opt))
+		}
+	}
+	buftesting.RunActualProtoc(
+		t,
+		runner,
+		false,
+		false,
+		dirPath,
+		filePaths,
+		map[string]string{
+			"PATH": os.Getenv("PATH"),
+		},
+		nil,
+		actualProtocPluginFlags...,
+	)
+	var bufProtocPluginFlags []string
+	for _, plugin := range plugins {
+		bufProtocPluginFlags = append(bufProtocPluginFlags, fmt.Sprintf("--%s_out=%s", plugin.name, bufProtocDir))
+		if plugin.opt != "" {
+			bufProtocPluginFlags = append(bufProtocPluginFlags, fmt.Sprintf("--%s_opt=%s", plugin.name, plugin.opt))
+		}
+	}
+	appcmdtesting.RunCommandSuccess(
+		t,
+		func(name string) *appcmd.Command {
+			return NewCommand(
+				name,
+				appflag.NewBuilder(name),
+			)
+		},
+		func(string) map[string]string {
+			return map[string]string{
+				"PATH": os.Getenv("PATH"),
+			}
+		},
+		nil,
+		nil,
+		append(
+			append(
+				bufProtocPluginFlags,
+				"-I",
+				dirPath,
+				"--by-dir",
+			),
+			filePaths...,
+		)...,
+	)
+	storageosProvider := storageos.NewProvider(storageos.ProviderWithSymlinks())
+	actualReadWriteBucket, err := storageosProvider.NewReadWriteBucket(
+		actualProtocDir,
+		storageos.ReadWriteBucketWithSymlinksIfSupported(),
+	)
+	require.NoError(t, err)
+	bufReadWriteBucket, err := storageosProvider.NewReadWriteBucket(
+		bufProtocDir,
+		storageos.ReadWriteBucketWithSymlinksIfSupported(),
+	)
+	require.NoError(t, err)
+	diff, err := storage.DiffBytes(
+		context.Background(),
+		runner,
+		actualReadWriteBucket,
+		bufReadWriteBucket,
+	)
+	require.NoError(t, err)
+	assert.Empty(t, string(diff))
+}
+
+func testCompareGeneratedStubsArchive(
+	t *testing.T,
+	runner command.Runner,
+	dirPath string,
+	plugins []testPluginInfo,
+	useJar bool,
+) {
+	fileExt := ".zip"
+	if useJar {
+		fileExt = ".jar"
+	}
+	filePaths := buftesting.GetProtocFilePaths(t, dirPath, 100)
+	tempDir := t.TempDir()
+	actualProtocFile := filepath.Join(tempDir, "actual-protoc"+fileExt)
+	bufProtocFile := filepath.Join(tempDir, "buf-protoc"+fileExt)
+	var actualProtocPluginFlags []string
+	for _, plugin := range plugins {
+		actualProtocPluginFlags = append(actualProtocPluginFlags, fmt.Sprintf("--%s_out=%s", plugin.name, actualProtocFile))
+		if plugin.opt != "" {
+			actualProtocPluginFlags = append(actualProtocPluginFlags, fmt.Sprintf("--%s_opt=%s", plugin.name, plugin.opt))
+		}
+	}
+	buftesting.RunActualProtoc(
+		t,
+		runner,
+		false,
+		false,
+		dirPath,
+		filePaths,
+		map[string]string{
+			"PATH": os.Getenv("PATH"),
+		},
+		nil,
+		actualProtocPluginFlags...,
+	)
+	var bufProtocPluginFlags []string
+	for _, plugin := range plugins {
+		bufProtocPluginFlags = append(bufProtocPluginFlags, fmt.Sprintf("--%s_out=%s", plugin.name, bufProtocFile))
+		if plugin.opt != "" {
+			bufProtocPluginFlags = append(bufProtocPluginFlags, fmt.Sprintf("--%s_opt=%s", plugin.name, plugin.opt))
+		}
+	}
+	appcmdtesting.RunCommandSuccess(
+		t,
+		func(name string) *appcmd.Command {
+			return NewCommand(
+				name,
+				appflag.NewBuilder(name),
+			)
+		},
+		func(string) map[string]string {
+			return map[string]string{
+				"PATH": os.Getenv("PATH"),
+			}
+		},
+		nil,
+		nil,
+		append(
+			append(
+				bufProtocPluginFlags,
+				"-I",
+				dir
