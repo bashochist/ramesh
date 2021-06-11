@@ -81,4 +81,43 @@ func (f *flags) Bind(flagSet *pflag.FlagSet) {
 	_ = cobra.MarkFlagRequired(flagSet, tokenIDFlagName)
 }
 
-fun
+func run(
+	ctx context.Context,
+	container appflag.Container,
+	flags *flags,
+) error {
+	bufcli.WarnAlphaCommand(ctx, container)
+	remote := container.Arg(0)
+	if err := bufmoduleref.ValidateRemoteNotEmpty(remote); err != nil {
+		return err
+	}
+	if err := bufmoduleref.ValidateRemoteHasNoPaths(remote); err != nil {
+		return err
+	}
+	format, err := bufprint.ParseFormat(flags.Format)
+	if err != nil {
+		return appcmd.NewInvalidArgumentError(err.Error())
+	}
+	clientConfig, err := bufcli.NewConnectClientConfig(container)
+	if err != nil {
+		return err
+	}
+	service := connectclient.Make(clientConfig, remote, registryv1alpha1connect.NewTokenServiceClient)
+	resp, err := service.GetToken(
+		ctx,
+		connect.NewRequest(&registryv1alpha1.GetTokenRequest{
+			TokenId: flags.TokenID,
+		}),
+	)
+	if err != nil {
+		if connect.CodeOf(err) == connect.CodeNotFound {
+			return bufcli.NewTokenNotFoundError(flags.TokenID)
+		}
+		return err
+	}
+	printer, err := bufprint.NewTokenPrinter(container.Stdout(), format)
+	if err != nil {
+		return bufcli.NewInternalError(err)
+	}
+	return printer.PrintTokens(ctx, resp.Msg.Token)
+}
