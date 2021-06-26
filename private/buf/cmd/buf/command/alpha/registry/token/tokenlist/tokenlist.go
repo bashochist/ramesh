@@ -44,3 +44,93 @@ func NewCommand(
 	builder appflag.Builder,
 ) *appcmd.Command {
 	flags := newFlags()
+	return &appcmd.Command{
+		Use:   name + " <buf.build>",
+		Short: "List user tokens",
+		Args:  cobra.ExactArgs(1),
+		Run: builder.NewRunFunc(
+			func(ctx context.Context, container appflag.Container) error {
+				return run(ctx, container, flags)
+			},
+			bufcli.NewErrorInterceptor(),
+		),
+		BindFlags: flags.Bind,
+	}
+}
+
+type flags struct {
+	PageSize  uint32
+	PageToken string
+	Reverse   bool
+	Format    string
+}
+
+func newFlags() *flags {
+	return &flags{}
+}
+
+func (f *flags) Bind(flagSet *pflag.FlagSet) {
+	flagSet.Uint32Var(&f.PageSize,
+		pageSizeFlagName,
+		10,
+		`The page size.`,
+	)
+	flagSet.StringVar(&f.PageToken,
+		pageTokenFlagName,
+		"",
+		`The page token. If more results are available, a "next_page" key is present in the --format=json output.`,
+	)
+	flagSet.BoolVar(&f.Reverse,
+		reverseFlagName,
+		false,
+		`Reverse the results.`,
+	)
+	flagSet.StringVar(
+		&f.Format,
+		formatFlagName,
+		bufprint.FormatText.String(),
+		fmt.Sprintf(`The output format to use. Must be one of %s`, bufprint.AllFormatsString),
+	)
+}
+
+func run(
+	ctx context.Context,
+	container appflag.Container,
+	flags *flags,
+) (retErr error) {
+	bufcli.WarnAlphaCommand(ctx, container)
+	remote := container.Arg(0)
+	if err := bufmoduleref.ValidateRemoteNotEmpty(remote); err != nil {
+		return err
+	}
+	if err := bufmoduleref.ValidateRemoteHasNoPaths(remote); err != nil {
+		return err
+	}
+	format, err := bufprint.ParseFormat(flags.Format)
+	if err != nil {
+		return appcmd.NewInvalidArgumentError(err.Error())
+	}
+	clientConfig, err := bufcli.NewConnectClientConfig(container)
+	if err != nil {
+		return err
+	}
+	service := connectclient.Make(clientConfig, remote, registryv1alpha1connect.NewTokenServiceClient)
+	resp, err := service.ListTokens(
+		ctx,
+		connect.NewRequest(&registryv1alpha1.ListTokensRequest{
+			PageSize:  flags.PageSize,
+			PageToken: flags.PageToken,
+			Reverse:   flags.Reverse,
+		}),
+	)
+	if err != nil {
+		return err
+	}
+	printer, err := bufprint.NewTokenPrinter(container.Stdout(), format)
+	if err != nil {
+		return bufcli.NewInternalError(err)
+	}
+	// TODO: flag docs say "next_token" field will be present in the output,
+	//  for paging through results but we are actually ignoring that field now.
+	return printer.PrintTokens(ctx, resp.Msg.Tokens...)
+}
