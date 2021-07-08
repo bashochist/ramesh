@@ -14,6 +14,6 @@
 
 // Generated. DO NOT EDIT.
 
-package commitlist
+package draftdelete
 
 import _ "github.com/bufbuild/buf/private/usage"
