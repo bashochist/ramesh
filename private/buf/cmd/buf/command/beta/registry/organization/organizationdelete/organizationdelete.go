@@ -1,3 +1,4 @@
+
 // Copyright 2020-2023 Buf Technologies, Inc.
 //
 // Licensed under the Apache License, Version 2.0 (the "License");
@@ -12,14 +13,13 @@
 // See the License for the specific language governing permissions and
 // limitations under the License.
 
-package organizationcreate
+package organizationdelete
 
 import (
 	"context"
 	"fmt"
 
 	"github.com/bufbuild/buf/private/buf/bufcli"
-	"github.com/bufbuild/buf/private/buf/bufprint"
 	"github.com/bufbuild/buf/private/bufpkg/bufmodule/bufmoduleref"
 	"github.com/bufbuild/buf/private/gen/proto/connect/buf/alpha/registry/v1alpha1/registryv1alpha1connect"
 	registryv1alpha1 "github.com/bufbuild/buf/private/gen/proto/go/buf/alpha/registry/v1alpha1"
@@ -31,7 +31,7 @@ import (
 	"github.com/spf13/pflag"
 )
 
-const formatFlagName = "format"
+const forceFlagName = "force"
 
 // NewCommand returns a new Command
 func NewCommand(
@@ -41,7 +41,7 @@ func NewCommand(
 	flags := newFlags()
 	return &appcmd.Command{
 		Use:   name + " <buf.build/organization>",
-		Short: "Create a new BSR organization",
+		Short: "Delete a BSR organization",
 		Args:  cobra.ExactArgs(1),
 		Run: builder.NewRunFunc(
 			func(ctx context.Context, container appflag.Container) error {
@@ -54,7 +54,7 @@ func NewCommand(
 }
 
 type flags struct {
-	Format string
+	Force bool
 }
 
 func newFlags() *flags {
@@ -62,11 +62,11 @@ func newFlags() *flags {
 }
 
 func (f *flags) Bind(flagSet *pflag.FlagSet) {
-	flagSet.StringVar(
-		&f.Format,
-		formatFlagName,
-		bufprint.FormatText.String(),
-		fmt.Sprintf(`The output format to use. Must be one of %s`, bufprint.AllFormatsString),
+	flagSet.BoolVar(
+		&f.Force,
+		forceFlagName,
+		false,
+		"Force deletion without confirming. Use with caution",
 	)
 }
 
@@ -80,11 +80,6 @@ func run(
 	if err != nil {
 		return appcmd.NewInvalidArgumentError(err.Error())
 	}
-	format, err := bufprint.ParseFormat(flags.Format)
-	if err != nil {
-		return appcmd.NewInvalidArgumentError(err.Error())
-	}
-
 	clientConfig, err := bufcli.NewConnectClientConfig(container)
 	if err != nil {
 		return err
@@ -94,20 +89,24 @@ func run(
 		moduleOwner.Remote(),
 		registryv1alpha1connect.NewOrganizationServiceClient,
 	)
-	resp, err := service.CreateOrganization(
+	if !flags.Force {
+		if err := bufcli.PromptUserForDelete(container, "organization", moduleOwner.Owner()); err != nil {
+			return err
+		}
+	}
+	if _, err := service.DeleteOrganizationByName(
 		ctx,
-		connect.NewRequest(&registryv1alpha1.CreateOrganizationRequest{
+		connect.NewRequest(&registryv1alpha1.DeleteOrganizationByNameRequest{
 			Name: moduleOwner.Owner(),
 		}),
-	)
-	if err != nil {
-		if connect.CodeOf(err) == connect.CodeAlreadyExists {
-			return bufcli.NewOrganizationNameAlreadyExistsError(container.Arg(0))
+	); err != nil {
+		if connect.CodeOf(err) == connect.CodeNotFound {
+			return bufcli.NewOrganizationNotFoundError(container.Arg(0))
 		}
 		return err
 	}
-	return bufprint.NewOrganizationPrinter(
-		moduleOwner.Remote(),
-		container.Stdout(),
-	).PrintOrganization(ctx, format, resp.Msg.Organization)
+	if _, err := fmt.Fprintln(container.Stdout(), "Organization deleted."); err != nil {
+		return bufcli.NewInternalError(err)
+	}
+	return nil
 }
