@@ -14,6 +14,6 @@
 
 // Generated. DO NOT EDIT.
 
-package organizationdelete
+package plugincreate
 
 import _ "github.com/bufbuild/buf/private/usage"
