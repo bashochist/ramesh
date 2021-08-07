@@ -1,3 +1,4 @@
+
 // Copyright 2020-2023 Buf Technologies, Inc.
 //
 // Licensed under the Apache License, Version 2.0 (the "License");
@@ -12,13 +13,13 @@
 // See the License for the specific language governing permissions and
 // limitations under the License.
 
-package plugindelete
+package plugindeprecate
 
 import (
 	"context"
 
 	"github.com/bufbuild/buf/private/buf/bufcli"
-	internal "github.com/bufbuild/buf/private/bufpkg/bufremoteplugin"
+	"github.com/bufbuild/buf/private/bufpkg/bufremoteplugin"
 	"github.com/bufbuild/buf/private/gen/proto/connect/buf/alpha/registry/v1alpha1/registryv1alpha1connect"
 	registryv1alpha1 "github.com/bufbuild/buf/private/gen/proto/go/buf/alpha/registry/v1alpha1"
 	"github.com/bufbuild/buf/private/pkg/app/appcmd"
@@ -30,7 +31,7 @@ import (
 )
 
 const (
-	forceFlagName = "force"
+	messageFlagName = "message"
 )
 
 // NewCommand returns a new Command
@@ -40,8 +41,8 @@ func NewCommand(
 ) *appcmd.Command {
 	flags := newFlags()
 	return &appcmd.Command{
-		Use:   name + " <buf.build/owner/" + internal.PluginsPathName + "/plugin>",
-		Short: "Delete a Protobuf plugin",
+		Use:   name + " <buf.build/owner/" + bufremoteplugin.PluginsPathName + "/plugin>",
+		Short: "Deprecate a Protobuf plugin",
 		Args:  cobra.ExactArgs(1),
 		Run: builder.NewRunFunc(
 			func(ctx context.Context, container appflag.Container) error {
@@ -54,7 +55,7 @@ func NewCommand(
 }
 
 type flags struct {
-	Force bool
+	Message string
 }
 
 func newFlags() *flags {
@@ -62,11 +63,11 @@ func newFlags() *flags {
 }
 
 func (f *flags) Bind(flagSet *pflag.FlagSet) {
-	flagSet.BoolVar(
-		&f.Force,
-		forceFlagName,
-		false,
-		"Force deletion without confirming. Use with caution",
+	flagSet.StringVar(
+		&f.Message,
+		messageFlagName,
+		"",
+		`The message to display with deprecation warnings`,
 	)
 }
 
@@ -84,21 +85,17 @@ func run(
 	if err != nil {
 		return err
 	}
-	remote, owner, name, err := internal.ParsePluginPath(pluginPath)
+	remote, owner, name, err := bufremoteplugin.ParsePluginPath(pluginPath)
 	if err != nil {
 		return err
 	}
 	pluginService := connectclient.Make(clientConfig, remote, registryv1alpha1connect.NewPluginServiceClient)
-	if !flags.Force {
-		if err := bufcli.PromptUserForDelete(container, "plugin", name); err != nil {
-			return err
-		}
-	}
-	if _, err := pluginService.DeletePlugin(
+	if _, err := pluginService.DeprecatePlugin(
 		ctx,
-		connect.NewRequest(&registryv1alpha1.DeletePluginRequest{
-			Owner: owner,
-			Name:  name,
+		connect.NewRequest(&registryv1alpha1.DeprecatePluginRequest{
+			Owner:   owner,
+			Name:    name,
+			Message: flags.Message,
 		}),
 	); err != nil {
 		if connect.CodeOf(err) == connect.CodeNotFound {
