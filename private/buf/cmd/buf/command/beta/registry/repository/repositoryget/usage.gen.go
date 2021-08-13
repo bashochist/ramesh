@@ -16,4 +16,4 @@
 
 package repositoryget
 
-import _ "github.com/buf
+import _ "github.com/bufbuild/buf/private/usage"
