@@ -118,3 +118,23 @@ func run(
 	service := connectclient.Make(
 		clientConfig,
 		remote,
+		registryv1alpha1connect.NewRepositoryServiceClient,
+	)
+	resp, err := service.ListRepositories(
+		ctx,
+		connect.NewRequest(&registryv1alpha1.ListRepositoriesRequest{
+			PageSize:  flags.PageSize,
+			PageToken: flags.PageToken,
+			Reverse:   flags.Reverse,
+		}),
+	)
+	if err != nil {
+		return err
+	}
+	repositories, nextPageToken := resp.Msg.Repositories, resp.Msg.NextPageToken
+	return bufprint.NewRepositoryPrinter(
+		clientConfig,
+		remote,
+		container.Stdout(),
+	).PrintRepositories(ctx, format, nextPageToken, repositories...)
+}
