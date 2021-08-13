@@ -13,13 +13,14 @@
 // See the License for the specific language governing permissions and
 // limitations under the License.
 
-package pluginundeprecate
+package repositorydelete
 
 import (
 	"context"
+	"fmt"
 
 	"github.com/bufbuild/buf/private/buf/bufcli"
-	"github.com/bufbuild/buf/private/bufpkg/bufremoteplugin"
+	"github.com/bufbuild/buf/private/bufpkg/bufmodule/bufmoduleref"
 	"github.com/bufbuild/buf/private/gen/proto/connect/buf/alpha/registry/v1alpha1/registryv1alpha1connect"
 	registryv1alpha1 "github.com/bufbuild/buf/private/gen/proto/go/buf/alpha/registry/v1alpha1"
 	"github.com/bufbuild/buf/private/pkg/app/appcmd"
@@ -27,50 +28,85 @@ import (
 	"github.com/bufbuild/buf/private/pkg/connectclient"
 	"github.com/bufbuild/connect-go"
 	"github.com/spf13/cobra"
+	"github.com/spf13/pflag"
 )
+
+const forceFlagName = "force"
 
 // NewCommand returns a new Command
 func NewCommand(
 	name string,
 	builder appflag.Builder,
 ) *appcmd.Command {
+	flags := newFlags()
 	return &appcmd.Command{
-		Use:   name + " <buf.build/owner/" + bufremoteplugin.PluginsPathName + "/plugin>",
-		Short: "Undeprecate a plugin",
+		Use:   name + " <buf.build/owner/repository>",
+		Short: "Delete a BSR repository",
 		Args:  cobra.ExactArgs(1),
-		Run:   builder.NewRunFunc(run, bufcli.NewErrorInterceptor()),
+		Run: builder.NewRunFunc(
+			func(ctx context.Context, container appflag.Container) error {
+				return run(ctx, container, flags)
+			},
+			bufcli.NewErrorInterceptor(),
+		),
+		BindFlags: flags.Bind,
 	}
+}
+
+type flags struct {
+	Force bool
+}
+
+func newFlags() *flags {
+	return &flags{}
+}
+
+func (f *flags) Bind(flagSet *pflag.FlagSet) {
+	flagSet.BoolVar(
+		&f.Force,
+		forceFlagName,
+		false,
+		"Force deletion without confirming. Use with caution",
+	)
 }
 
 func run(
 	ctx context.Context,
 	container appflag.Container,
+	flags *flags,
 ) error {
 	bufcli.WarnBetaCommand(ctx, container)
-	pluginPath := container.Arg(0)
-	if pluginPath == "" {
-		return appcmd.NewInvalidArgumentError("you must specify a plugin path")
+	moduleIdentity, err := bufmoduleref.ModuleIdentityForString(container.Arg(0))
+	if err != nil {
+		return appcmd.NewInvalidArgumentError(err.Error())
 	}
 	clientConfig, err := bufcli.NewConnectClientConfig(container)
 	if err != nil {
 		return err
 	}
-	remote, owner, name, err := bufremoteplugin.ParsePluginPath(pluginPath)
-	if err != nil {
-		return err
+	service := connectclient.Make(
+		clientConfig,
+		moduleIdentity.Remote(),
+		registryv1alpha1connect.NewRepositoryServiceClient,
+	)
+	if !flags.Force {
+		if err := bufcli.PromptUserForDelete(container, "repository", moduleIdentity.Repository()); err != nil {
+			return err
+		}
 	}
-	pluginService := connectclient.Make(clientConfig, remote, registryv1alpha1connect.NewPluginServiceClient)
-	if _, err := pluginService.UndeprecatePlugin(
+	if _, err := service.DeleteRepositoryByFullName(
 		ctx,
-		connect.NewRequest(&registryv1alpha1.UndeprecatePluginRequest{
-			Owner: owner,
-			Name:  name,
+		connect.NewRequest(&registryv1alpha1.DeleteRepositoryByFullNameRequest{
+			FullName: moduleIdentity.Owner() + "/" + moduleIdentity.Repository(),
 		}),
 	); err != nil {
 		if connect.CodeOf(err) == connect.CodeNotFound {
-			return bufcli.NewPluginNotFoundError(owner, name)
+			return bufcli.NewRepositoryNotFoundError(container.Arg(0))
 		}
 		return err
+	}
+	if _, err := fmt.Fprintln(container.Stdout(), "Repository deleted."); err != nil {
+		return bufcli.NewInternalError(err)
 	}
 	return nil
 }

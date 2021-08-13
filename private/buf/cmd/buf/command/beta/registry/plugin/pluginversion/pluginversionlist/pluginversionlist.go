@@ -13,12 +13,14 @@
 // See the License for the specific language governing permissions and
 // limitations under the License.
 
-package pluginundeprecate
+package pluginversionlist
 
 import (
 	"context"
+	"fmt"
 
 	"github.com/bufbuild/buf/private/buf/bufcli"
+	"github.com/bufbuild/buf/private/buf/bufprint"
 	"github.com/bufbuild/buf/private/bufpkg/bufremoteplugin"
 	"github.com/bufbuild/buf/private/gen/proto/connect/buf/alpha/registry/v1alpha1/registryv1alpha1connect"
 	registryv1alpha1 "github.com/bufbuild/buf/private/gen/proto/go/buf/alpha/registry/v1alpha1"
@@ -27,6 +29,14 @@ import (
 	"github.com/bufbuild/buf/private/pkg/connectclient"
 	"github.com/bufbuild/connect-go"
 	"github.com/spf13/cobra"
+	"github.com/spf13/pflag"
+)
+
+const (
+	pageSizeFlagName  = "page-size"
+	pageTokenFlagName = "page-token"
+	reverseFlagName   = "reverse"
+	formatFlagName    = "format"
 )
 
 // NewCommand returns a new Command
@@ -34,22 +44,66 @@ func NewCommand(
 	name string,
 	builder appflag.Builder,
 ) *appcmd.Command {
+	flags := newFlags()
 	return &appcmd.Command{
 		Use:   name + " <buf.build/owner/" + bufremoteplugin.PluginsPathName + "/plugin>",
-		Short: "Undeprecate a plugin",
+		Short: "List plugin versions",
 		Args:  cobra.ExactArgs(1),
-		Run:   builder.NewRunFunc(run, bufcli.NewErrorInterceptor()),
+		Run: builder.NewRunFunc(
+			func(ctx context.Context, container appflag.Container) error {
+				return run(ctx, container, flags)
+			},
+			bufcli.NewErrorInterceptor(),
+		),
+		BindFlags: flags.Bind,
 	}
+}
+
+type flags struct {
+	PageSize  uint32
+	PageToken string
+	Reverse   bool
+	Format    string
+}
+
+func newFlags() *flags {
+	return &flags{}
+}
+
+func (f *flags) Bind(flagSet *pflag.FlagSet) {
+	flagSet.Uint32Var(&f.PageSize,
+		pageSizeFlagName,
+		10,
+		`The page size`,
+	)
+	flagSet.StringVar(&f.PageToken,
+		pageTokenFlagName,
+		"",
+		`The page token. If more results are available, a "next_page" key is present in the --format=json output`,
+	)
+	flagSet.BoolVar(&f.Reverse,
+		reverseFlagName,
+		false,
+		`Reverse the results`,
+	)
+	flagSet.StringVar(
+		&f.Format,
+		formatFlagName,
+		bufprint.FormatText.String(),
+		fmt.Sprintf(`The output format to use. Must be one of %s`, bufprint.AllFormatsString),
+	)
 }
 
 func run(
 	ctx context.Context,
 	container appflag.Container,
-) error {
+	flags *flags,
+) (retErr error) {
 	bufcli.WarnBetaCommand(ctx, container)
 	pluginPath := container.Arg(0)
-	if pluginPath == "" {
-		return appcmd.NewInvalidArgumentError("you must specify a plugin path")
+	format, err := bufprint.ParseFormat(flags.Format)
+	if err != nil {
+		return appcmd.NewInvalidArgumentError(err.Error())
 	}
 	clientConfig, err := bufcli.NewConnectClientConfig(container)
 	if err != nil {
@@ -60,17 +114,19 @@ func run(
 		return err
 	}
 	pluginService := connectclient.Make(clientConfig, remote, registryv1alpha1connect.NewPluginServiceClient)
-	if _, err := pluginService.UndeprecatePlugin(
+	resp, err := pluginService.ListPluginVersions(
 		ctx,
-		connect.NewRequest(&registryv1alpha1.UndeprecatePluginRequest{
-			Owner: owner,
-			Name:  name,
+		connect.NewRequest(&registryv1alpha1.ListPluginVersionsRequest{
+			Owner:     owner,
+			Name:      name,
+			PageSize:  flags.PageSize,
+			PageToken: flags.PageToken,
+			Reverse:   flags.Reverse,
 		}),
-	); err != nil {
-		if connect.CodeOf(err) == connect.CodeNotFound {
-			return bufcli.NewPluginNotFoundError(owner, name)
-		}
+	)
+	if err != nil {
 		return err
 	}
-	return nil
+	return bufprint.NewPluginVersionPrinter(container.Stdout()).
+		PrintPluginVersions(ctx, format, resp.Msg.NextPageToken, resp.Msg.PluginVersions...)
 }
