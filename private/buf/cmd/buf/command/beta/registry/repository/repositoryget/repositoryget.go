@@ -1,3 +1,4 @@
+
 // Copyright 2020-2023 Buf Technologies, Inc.
 //
 // Licensed under the Apache License, Version 2.0 (the "License");
@@ -12,13 +13,14 @@
 // See the License for the specific language governing permissions and
 // limitations under the License.
 
-package repositorydeprecate
+package repositoryget
 
 import (
 	"context"
 	"fmt"
 
 	"github.com/bufbuild/buf/private/buf/bufcli"
+	"github.com/bufbuild/buf/private/buf/bufprint"
 	"github.com/bufbuild/buf/private/bufpkg/bufmodule/bufmoduleref"
 	"github.com/bufbuild/buf/private/gen/proto/connect/buf/alpha/registry/v1alpha1/registryv1alpha1connect"
 	registryv1alpha1 "github.com/bufbuild/buf/private/gen/proto/go/buf/alpha/registry/v1alpha1"
@@ -30,16 +32,17 @@ import (
 	"github.com/spf13/pflag"
 )
 
-const (
-	messageFlagName = "message"
-)
+const formatFlagName = "format"
 
 // NewCommand returns a new Command
-func NewCommand(name string, builder appflag.Builder) *appcmd.Command {
+func NewCommand(
+	name string,
+	builder appflag.Builder,
+) *appcmd.Command {
 	flags := newFlags()
 	return &appcmd.Command{
 		Use:   name + " <buf.build/owner/repository>",
-		Short: "Deprecate a BSR repository",
+		Short: "Get a BSR repository",
 		Args:  cobra.ExactArgs(1),
 		Run: builder.NewRunFunc(
 			func(ctx context.Context, container appflag.Container) error {
@@ -52,7 +55,7 @@ func NewCommand(name string, builder appflag.Builder) *appcmd.Command {
 }
 
 type flags struct {
-	Message string
+	Format string
 }
 
 func newFlags() *flags {
@@ -61,19 +64,28 @@ func newFlags() *flags {
 
 func (f *flags) Bind(flagSet *pflag.FlagSet) {
 	flagSet.StringVar(
-		&f.Message,
-		messageFlagName,
-		"",
-		`The message to display with deprecation warnings`,
+		&f.Format,
+		formatFlagName,
+		bufprint.FormatText.String(),
+		fmt.Sprintf(`The output format to use. Must be one of %s`, bufprint.AllFormatsString),
 	)
 }
 
-func run(ctx context.Context, container appflag.Container, flags *flags) error {
+func run(
+	ctx context.Context,
+	container appflag.Container,
+	flags *flags,
+) error {
 	bufcli.WarnBetaCommand(ctx, container)
 	moduleIdentity, err := bufmoduleref.ModuleIdentityForString(container.Arg(0))
 	if err != nil {
 		return appcmd.NewInvalidArgumentError(err.Error())
 	}
+	format, err := bufprint.ParseFormat(flags.Format)
+	if err != nil {
+		return appcmd.NewInvalidArgumentError(err.Error())
+	}
+
 	clientConfig, err := bufcli.NewConnectClientConfig(container)
 	if err != nil {
 		return err
@@ -83,21 +95,22 @@ func run(ctx context.Context, container appflag.Container, flags *flags) error {
 		moduleIdentity.Remote(),
 		registryv1alpha1connect.NewRepositoryServiceClient,
 	)
-	if _, err := service.DeprecateRepositoryByName(
+	resp, err := service.GetRepositoryByFullName(
 		ctx,
-		connect.NewRequest(&registryv1alpha1.DeprecateRepositoryByNameRequest{
-			OwnerName:          moduleIdentity.Owner(),
-			RepositoryName:     moduleIdentity.Repository(),
-			DeprecationMessage: flags.Message,
+		connect.NewRequest(&registryv1alpha1.GetRepositoryByFullNameRequest{
+			FullName: moduleIdentity.Owner() + "/" + moduleIdentity.Repository(),
 		}),
-	); err != nil {
+	)
+	if err != nil {
 		if connect.CodeOf(err) == connect.CodeNotFound {
 			return bufcli.NewRepositoryNotFoundError(container.Arg(0))
 		}
 		return err
 	}
-	if _, err := fmt.Fprintln(container.Stdout(), "Repository deprecated."); err != nil {
-		return bufcli.NewInternalError(err)
-	}
-	return nil
+	repository := resp.Msg.Repository
+	return bufprint.NewRepositoryPrinter(
+		clientConfig,
+		moduleIdentity.Remote(),
+		container.Stdout(),
+	).PrintRepository(ctx, format, repository)
 }
