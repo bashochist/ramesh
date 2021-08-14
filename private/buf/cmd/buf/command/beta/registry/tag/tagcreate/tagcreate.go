@@ -1,3 +1,4 @@
+
 // Copyright 2020-2023 Buf Technologies, Inc.
 //
 // Licensed under the Apache License, Version 2.0 (the "License");
@@ -12,13 +13,14 @@
 // See the License for the specific language governing permissions and
 // limitations under the License.
 
-package repositoryupdate
+package tagcreate
 
 import (
 	"context"
 	"fmt"
 
 	"github.com/bufbuild/buf/private/buf/bufcli"
+	"github.com/bufbuild/buf/private/buf/bufprint"
 	"github.com/bufbuild/buf/private/bufpkg/bufmodule/bufmoduleref"
 	"github.com/bufbuild/buf/private/gen/proto/connect/buf/alpha/registry/v1alpha1/registryv1alpha1connect"
 	registryv1alpha1 "github.com/bufbuild/buf/private/gen/proto/go/buf/alpha/registry/v1alpha1"
@@ -30,17 +32,18 @@ import (
 	"github.com/spf13/pflag"
 )
 
-const (
-	visibilityFlagName = "visibility"
-)
+const formatFlagName = "format"
 
 // NewCommand returns a new Command
-func NewCommand(name string, builder appflag.Builder) *appcmd.Command {
+func NewCommand(
+	name string,
+	builder appflag.Builder,
+) *appcmd.Command {
 	flags := newFlags()
 	return &appcmd.Command{
-		Use:   name + " <buf.build/owner/repository>",
-		Short: "Update BSR repository settings",
-		Args:  cobra.ExactArgs(1),
+		Use:   name + " <buf.build/owner/repository:commit> <tag>",
+		Short: "Create a tag for a specified commit",
+		Args:  cobra.ExactArgs(2),
 		Run: builder.NewRunFunc(
 			func(ctx context.Context, container appflag.Container) error {
 				return run(ctx, container, flags)
@@ -51,9 +54,8 @@ func NewCommand(name string, builder appflag.Builder) *appcmd.Command {
 	}
 }
 
-// TODO: add Description and Url field if it's desired to udpate them from the CLI
 type flags struct {
-	Visibility string
+	Format string
 }
 
 func newFlags() *flags {
@@ -61,7 +63,12 @@ func newFlags() *flags {
 }
 
 func (f *flags) Bind(flagSet *pflag.FlagSet) {
-	bufcli.BindVisibility(flagSet, &f.Visibility, visibilityFlagName)
+	flagSet.StringVar(
+		&f.Format,
+		formatFlagName,
+		bufprint.FormatText.String(),
+		fmt.Sprintf(`The output format to use. Must be one of %s`, bufprint.AllFormatsString),
+	)
 }
 
 func run(
@@ -70,39 +77,63 @@ func run(
 	flags *flags,
 ) error {
 	bufcli.WarnBetaCommand(ctx, container)
-	moduleIdentity, err := bufmoduleref.ModuleIdentityForString(container.Arg(0))
+	moduleReference, err := bufmoduleref.ModuleReferenceForString(
+		container.Arg(0),
+	)
 	if err != nil {
 		return appcmd.NewInvalidArgumentError(err.Error())
 	}
-	visibility, err := bufcli.VisibilityFlagToVisibilityAllowUnspecified(flags.Visibility)
+	if !bufmoduleref.IsCommitModuleReference(moduleReference) {
+		return fmt.Errorf("commit is required, but a tag was given: %q", container.Arg(0))
+	}
+	format, err := bufprint.ParseFormat(flags.Format)
 	if err != nil {
 		return appcmd.NewInvalidArgumentError(err.Error())
 	}
+
 	clientConfig, err := bufcli.NewConnectClientConfig(container)
 	if err != nil {
 		return err
 	}
-	service := connectclient.Make(
+	repositoryService := connectclient.Make(
 		clientConfig,
-		moduleIdentity.Remote(),
+		moduleReference.Remote(),
 		registryv1alpha1connect.NewRepositoryServiceClient,
 	)
-	if _, err := service.UpdateRepositorySettingsByName(
-		ctx,
-		connect.NewRequest(&registryv1alpha1.UpdateRepositorySettingsByNameRequest{
-			OwnerName:      moduleIdentity.Owner(),
-			RepositoryName: moduleIdentity.Repository(),
-			Visibility:     visibility,
-			// TODO: pass description and url
+	repositoryTagService := connectclient.Make(
+		clientConfig,
+		moduleReference.Remote(),
+		registryv1alpha1connect.NewRepositoryTagServiceClient,
+	)
+	resp, err := repositoryService.GetRepositoryByFullName(ctx,
+		connect.NewRequest(&registryv1alpha1.GetRepositoryByFullNameRequest{
+			FullName: moduleReference.Owner() + "/" + moduleReference.Repository(),
 		}),
-	); err != nil {
+	)
+	if err != nil {
 		if connect.CodeOf(err) == connect.CodeNotFound {
-			return bufcli.NewRepositoryNotFoundError(container.Arg(0))
+			return bufcli.NewRepositoryNotFoundError(moduleReference.Remote() + "/" + moduleReference.Owner() + "/" + moduleReference.Repository())
 		}
 		return err
 	}
-	if _, err := fmt.Fprintln(container.Stdout(), "Settings Updated."); err != nil {
-		return bufcli.NewInternalError(err)
+	tag := container.Arg(1)
+	commit := moduleReference.Reference()
+	tagResp, err := repositoryTagService.CreateRepositoryTag(
+		ctx,
+		connect.NewRequest(&registryv1alpha1.CreateRepositoryTagRequest{
+			RepositoryId: resp.Msg.Repository.Id,
+			Name:         tag,
+			CommitName:   commit,
+		}),
+	)
+	if err != nil {
+		if connect.CodeOf(err) == connect.CodeAlreadyExists {
+			return bufcli.NewTagOrDraftNameAlreadyExistsError(tag)
+		}
+		if connect.CodeOf(err) == connect.CodeNotFound {
+			return bufcli.NewModuleReferenceNotFoundError(moduleReference)
+		}
+		return err
 	}
-	return nil
+	return bufprint.NewRepositoryTagPrinter(container.Stdout()).PrintRepositoryTag(ctx, format, tagResp.Msg.RepositoryTag)
 }
