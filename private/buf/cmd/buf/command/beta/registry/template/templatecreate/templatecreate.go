@@ -13,7 +13,7 @@
 // See the License for the specific language governing permissions and
 // limitations under the License.
 
-package taglist
+package templatecreate
 
 import (
 	"context"
@@ -21,23 +21,31 @@ import (
 
 	"github.com/bufbuild/buf/private/buf/bufcli"
 	"github.com/bufbuild/buf/private/buf/bufprint"
-	"github.com/bufbuild/buf/private/bufpkg/bufmodule/bufmoduleref"
+	"github.com/bufbuild/buf/private/bufpkg/bufremoteplugin"
 	"github.com/bufbuild/buf/private/gen/proto/connect/buf/alpha/registry/v1alpha1/registryv1alpha1connect"
 	registryv1alpha1 "github.com/bufbuild/buf/private/gen/proto/go/buf/alpha/registry/v1alpha1"
 	"github.com/bufbuild/buf/private/pkg/app/appcmd"
 	"github.com/bufbuild/buf/private/pkg/app/appflag"
 	"github.com/bufbuild/buf/private/pkg/connectclient"
+	"github.com/bufbuild/buf/private/pkg/stringutil"
 	"github.com/bufbuild/connect-go"
 	"github.com/spf13/cobra"
 	"github.com/spf13/pflag"
 )
 
 const (
-	pageSizeFlagName  = "page-size"
-	pageTokenFlagName = "page-token"
-	reverseFlagName   = "reverse"
-	formatFlagName    = "format"
+	configFlagName     = "config"
+	visibilityFlagName = "visibility"
+	formatFlagName     = "format"
+
+	publicVisibility  = "public"
+	privateVisibility = "private"
 )
+
+var allVisibiltyStrings = []string{
+	publicVisibility,
+	privateVisibility,
+}
 
 // NewCommand returns a new Command
 func NewCommand(
@@ -46,8 +54,8 @@ func NewCommand(
 ) *appcmd.Command {
 	flags := newFlags()
 	return &appcmd.Command{
-		Use:   name + " <buf.build/owner/repository>",
-		Short: "List repository tags",
+		Use:   name + " <buf.build/owner/" + bufremoteplugin.TemplatesPathName + "/template>",
+		Short: "Create a Buf template",
 		Args:  cobra.ExactArgs(1),
 		Run: builder.NewRunFunc(
 			func(ctx context.Context, container appflag.Container) error {
@@ -60,10 +68,9 @@ func NewCommand(
 }
 
 type flags struct {
-	PageSize  uint32
-	PageToken string
-	Reverse   bool
-	Format    string
+	Config     string
+	Visibility string
+	Format     string
 }
 
 func newFlags() *flags {
@@ -71,21 +78,20 @@ func newFlags() *flags {
 }
 
 func (f *flags) Bind(flagSet *pflag.FlagSet) {
-	flagSet.Uint32Var(&f.PageSize,
-		pageSizeFlagName,
-		10,
-		`The page size.`,
-	)
-	flagSet.StringVar(&f.PageToken,
-		pageTokenFlagName,
+	flagSet.StringVar(
+		&f.Config,
+		configFlagName,
 		"",
-		`The page token. If more results are available, a "next_page" key is present in the --format=json output`,
+		`The template file or data to use for configuration. Must be in either YAML or JSON format`,
 	)
-	flagSet.BoolVar(&f.Reverse,
-		reverseFlagName,
-		false,
-		`Reverse the results`,
+	_ = cobra.MarkFlagRequired(flagSet, configFlagName)
+	flagSet.StringVar(
+		&f.Visibility,
+		visibilityFlagName,
+		"",
+		fmt.Sprintf(`The template's visibility setting. Must be one of %s`, stringutil.SliceToString(allVisibiltyStrings)),
 	)
+	_ = cobra.MarkFlagRequired(flagSet, visibilityFlagName)
 	flagSet.StringVar(
 		&f.Format,
 		formatFlagName,
@@ -100,10 +106,8 @@ func run(
 	flags *flags,
 ) error {
 	bufcli.WarnBetaCommand(ctx, container)
-	if container.Arg(0) == "" {
-		return appcmd.NewInvalidArgumentError("repository is required")
-	}
-	moduleIdentity, err := bufmoduleref.ModuleIdentityForString(container.Arg(0))
+	templatePath := container.Arg(0)
+	visibility, err := visibilityFlagToVisibility(flags.Visibility)
 	if err != nil {
 		return appcmd.NewInvalidArgumentError(err.Error())
 	}
@@ -111,39 +115,42 @@ func run(
 	if err != nil {
 		return appcmd.NewInvalidArgumentError(err.Error())
 	}
-
+	templateConfig, err := bufremoteplugin.ParseTemplateConfig(flags.Config)
+	if err != nil {
+		return err
+	}
 	clientConfig, err := bufcli.NewConnectClientConfig(container)
 	if err != nil {
 		return err
 	}
-	repositoryService := connectclient.Make(
-		clientConfig,
-		moduleIdentity.Remote(),
-		registryv1alpha1connect.NewRepositoryServiceClient,
-	)
-	resp, err := repositoryService.GetRepositoryByFullName(ctx,
-		connect.NewRequest(&registryv1alpha1.GetRepositoryByFullNameRequest{
-			FullName: moduleIdentity.Owner() + "/" + moduleIdentity.Repository(),
-		}),
-	)
+	remote, owner, name, err := bufremoteplugin.ParseTemplatePath(templatePath)
 	if err != nil {
-		if connect.CodeOf(err) == connect.CodeNotFound {
-			return bufcli.NewRepositoryNotFoundError(container.Arg(0))
-		}
 		return err
 	}
-	repositoryTagService := connectclient.Make(clientConfig, moduleIdentity.Remote(), registryv1alpha1connect.NewRepositoryTagServiceClient)
-	tagsResp, err := repositoryTagService.ListRepositoryTags(
+	pluginService := connectclient.Make(clientConfig, remote, registryv1alpha1connect.NewPluginServiceClient)
+	resp, err := pluginService.CreateTemplate(
 		ctx,
-		connect.NewRequest(&registryv1alpha1.ListRepositoryTagsRequest{
-			RepositoryId: resp.Msg.Repository.Id,
-			PageSize:     flags.PageSize,
-			PageToken:    flags.PageToken,
-			Reverse:      flags.Reverse,
+		connect.NewRequest(&registryv1alpha1.CreateTemplateRequest{
+			Owner:         owner,
+			Name:          name,
+			Visibility:    visibility,
+			PluginConfigs: bufremoteplugin.TemplateConfigToProtoPluginConfigs(templateConfig),
 		}),
 	)
 	if err != nil {
 		return err
 	}
-	return bufprint.NewRepositoryTagPrinter(container.Stdout()).PrintRepositoryTags(ctx, format, tagsResp.Msg.NextPageToken, tagsResp.Msg.RepositoryTags...)
+	return bufprint.NewTemplatePrinter(container.Stdout()).PrintTemplate(ctx, format, resp.Msg.Template)
+}
+
+// visibilityFlagToVisibility parses the given string as a registryv1alpha1.PluginVisibility.
+func visibilityFlagToVisibility(visibility string) (registryv1alpha1.PluginVisibility, error) {
+	switch visibility {
+	case publicVisibility:
+		return registryv1alpha1.PluginVisibility_PLUGIN_VISIBILITY_PUBLIC, nil
+	case privateVisibility:
+		return registryv1alpha1.PluginVisibility_PLUGIN_VISIBILITY_PRIVATE, nil
+	default:
+		return 0, fmt.Errorf("invalid visibility: %s, expected one of %s", visibility, stringutil.SliceToString(allVisibiltyStrings))
+	}
 }
