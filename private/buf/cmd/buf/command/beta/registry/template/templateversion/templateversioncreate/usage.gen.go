@@ -14,6 +14,6 @@
 
 // Generated. DO NOT EDIT.
 
-package templateundeprecate
+package templateversioncreate
 
 import _ "github.com/bufbuild/buf/private/usage"

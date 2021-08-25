@@ -1,3 +1,4 @@
+
 // Copyright 2020-2023 Buf Technologies, Inc.
 //
 // Licensed under the Apache License, Version 2.0 (the "License");
@@ -14,6 +15,6 @@
 
 // Generated. DO NOT EDIT.
 
-package templateundeprecate
+package webhookcreate
 
 import _ "github.com/bufbuild/buf/private/usage"
