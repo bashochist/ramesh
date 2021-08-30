@@ -13,10 +13,11 @@
 // See the License for the specific language governing permissions and
 // limitations under the License.
 
-package webhookdelete
+package webhooklist
 
 import (
 	"context"
+	"encoding/json"
 
 	"github.com/bufbuild/buf/private/buf/bufcli"
 	"github.com/bufbuild/buf/private/gen/proto/connect/buf/alpha/registry/v1alpha1/registryv1alpha1connect"
@@ -30,8 +31,9 @@ import (
 )
 
 const (
-	webhookIDFlagName = "id"
-	remoteFlagName    = "remote"
+	ownerFlagName      = "owner"
+	repositoryFlagName = "repository"
+	remoteFlagName     = "remote"
 )
 
 // NewCommand returns a new Command
@@ -42,7 +44,7 @@ func NewCommand(
 	flags := newFlags()
 	return &appcmd.Command{
 		Use:   name,
-		Short: "Delete a repository webhook",
+		Short: "List repository webhooks",
 		Args:  cobra.ExactArgs(0),
 		Run: builder.NewRunFunc(
 			func(ctx context.Context, container appflag.Container) error {
@@ -55,8 +57,9 @@ func NewCommand(
 }
 
 type flags struct {
-	WebhookID string
-	Remote    string
+	OwnerName      string
+	RepositoryName string
+	Remote         string
 }
 
 func newFlags() *flags {
@@ -65,17 +68,24 @@ func newFlags() *flags {
 
 func (f *flags) Bind(flagSet *pflag.FlagSet) {
 	flagSet.StringVar(
-		&f.WebhookID,
-		webhookIDFlagName,
+		&f.OwnerName,
+		ownerFlagName,
 		"",
-		"The webhook ID to delete",
+		`The owner name of the repository to list webhooks for`,
 	)
-	_ = cobra.MarkFlagRequired(flagSet, webhookIDFlagName)
+	_ = cobra.MarkFlagRequired(flagSet, ownerFlagName)
+	flagSet.StringVar(
+		&f.RepositoryName,
+		repositoryFlagName,
+		"",
+		"The repository name to list webhooks for.",
+	)
+	_ = cobra.MarkFlagRequired(flagSet, repositoryFlagName)
 	flagSet.StringVar(
 		&f.Remote,
 		remoteFlagName,
 		"",
-		"The remote of the repository the webhook ID belongs to",
+		"The remote of the owner and repository to list webhooks for",
 	)
 	_ = cobra.MarkFlagRequired(flagSet, remoteFlagName)
 }
@@ -91,13 +101,28 @@ func run(
 		return err
 	}
 	service := connectclient.Make(clientConfig, flags.Remote, registryv1alpha1connect.NewWebhookServiceClient)
-	if _, err := service.DeleteWebhook(
+	resp, err := service.ListWebhooks(
 		ctx,
-		connect.NewRequest(&registryv1alpha1.DeleteWebhookRequest{
-			WebhookId: flags.WebhookID,
+		connect.NewRequest(&registryv1alpha1.ListWebhooksRequest{
+			RepositoryName: flags.RepositoryName,
+			OwnerName:      flags.OwnerName,
+			// TODO: this should probably be in a loop so we can get page token from
+			//   response and query for the next page
 		}),
-	); err != nil {
+	)
+	if err != nil {
 		return err
 	}
+	if resp.Msg.Webhooks == nil {
+		// Ignore errors for writing to stdout.
+		_, _ = container.Stdout().Write([]byte("[]"))
+		return nil
+	}
+	webhooksJSON, err := json.MarshalIndent(resp.Msg.Webhooks, "", "\t")
+	if err != nil {
+		return err
+	}
+	// Ignore errors for writing to stdout.
+	_, _ = container.Stdout().Write(webhooksJSON)
 	return nil
 }
