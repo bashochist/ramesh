@@ -74,4 +74,121 @@ type flags struct {
 	CACert            string
 	ClientCert        string
 	ClientKey         string
-	ServerCert
+	ServerCert        string
+	ServerKey         string
+	PrivateNetwork    bool
+}
+
+func newFlags() *flags {
+	return &flags{}
+}
+
+func (f *flags) Bind(flagSet *pflag.FlagSet) {
+	flagSet.StringVar(
+		&f.BindAddress,
+		bindFlagName,
+		"127.0.0.1",
+		"The address to be exposed to accept HTTP requests",
+	)
+	flagSet.StringVar(
+		&f.Port,
+		portFlagName,
+		"8080",
+		"The port to be exposed to accept HTTP requests",
+	)
+	flagSet.StringVar(
+		&f.Origin,
+		originFlagName,
+		"https://studio.buf.build",
+		"The allowed origin for CORS options",
+	)
+	flagSet.StringSliceVar(
+		&f.DisallowedHeaders,
+		disallowedHeadersFlagName,
+		nil,
+		`The header names that are disallowed by this agent. When the agent receives an enveloped request with these headers set, it will return an error rather than forward the request to the target server. Multiple headers are appended if specified multiple times`,
+	)
+	flagSet.StringToStringVar(
+		&f.ForwardHeaders,
+		forwardHeadersFlagName,
+		nil,
+		`The headers to be forwarded via the agent to the target server. Must be an equals sign separated key-value pair (like --forward-header=fromHeader1=toHeader1). Multiple header pairs are appended if specified multiple times`,
+	)
+	flagSet.StringVar(
+		&f.CACert,
+		caCertFlagName,
+		"",
+		"The CA cert to be used in the client and server TLS configuration",
+	)
+	flagSet.StringVar(
+		&f.ClientCert,
+		clientCertFlagName,
+		"",
+		"The cert to be used in the client TLS configuration",
+	)
+	flagSet.StringVar(
+		&f.ClientKey,
+		clientKeyFlagName,
+		"",
+		"The key to be used in the client TLS configuration",
+	)
+	flagSet.StringVar(
+		&f.ServerCert,
+		serverCertFlagName,
+		"",
+		"The cert to be used in the server TLS configuration",
+	)
+	flagSet.StringVar(
+		&f.ServerKey,
+		serverKeyFlagName,
+		"",
+		"The key to be used in the server TLS configuration",
+	)
+	flagSet.BoolVar(
+		&f.PrivateNetwork,
+		privateNetworkFlagName,
+		false,
+		`Use the agent with private network CORS`,
+	)
+}
+
+func run(
+	ctx context.Context,
+	container appflag.Container,
+	flags *flags,
+) error {
+	// CA cert pool is optional. If it is nil, TLS uses the host's root CA set.
+	var rootCAConfig *tls.Config
+	var err error
+	if flags.CACert != "" {
+		rootCAConfig, err = certclient.NewClientTLSConfigFromRootCertFiles(flags.CACert)
+		if err != nil {
+			return err
+		}
+	}
+	// client TLS config is optional. If it is nil, it uses the default configuration from http2.Transport.
+	var clientTLSConfig *tls.Config
+	if flags.ClientCert != "" || flags.ClientKey != "" {
+		clientTLSConfig, err = newTLSConfig(rootCAConfig, flags.ClientCert, flags.ClientKey)
+		if err != nil {
+			return fmt.Errorf("cannot create new client TLS config: %w", err)
+		}
+	}
+	// server TLS config is optional. If it is nil, we serve with a h2c handler.
+	var serverTLSConfig *tls.Config
+	if flags.ServerCert != "" || flags.ServerKey != "" {
+		serverTLSConfig, err = newTLSConfig(rootCAConfig, flags.ServerCert, flags.ServerKey)
+		if err != nil {
+			return fmt.Errorf("cannot create new server TLS config: %w", err)
+		}
+	}
+	mux := bufstudioagent.NewHandler(
+		container.Logger(),
+		flags.Origin,
+		clientTLSConfig,
+		stringutil.SliceToMap(flags.DisallowedHeaders),
+		flags.ForwardHeaders,
+		flags.PrivateNetwork,
+	)
+	var httpListenConfig net.ListenConfig
+	httpListener, err := httpListenConfig.Listen(ctx, "tcp", fmt.Sprintf("%s:%s", flags.BindAddress, 
