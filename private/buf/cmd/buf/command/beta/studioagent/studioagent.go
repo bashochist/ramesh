@@ -191,4 +191,33 @@ func run(
 		flags.PrivateNetwork,
 	)
 	var httpListenConfig net.ListenConfig
-	httpListener, err := httpListenConfig.Listen(ctx, "tcp", fmt.Sprintf("%s:%s", flags.BindAddress, 
+	httpListener, err := httpListenConfig.Listen(ctx, "tcp", fmt.Sprintf("%s:%s", flags.BindAddress, flags.Port))
+	if err != nil {
+		return err
+	}
+
+	return httpserver.Run(
+		ctx,
+		container.Logger(),
+		httpListener,
+		mux,
+		httpserver.RunWithTLSConfig(
+			serverTLSConfig,
+		),
+	)
+}
+
+func newTLSConfig(baseConfig *tls.Config, certFile, keyFile string) (*tls.Config, error) {
+	config := baseConfig.Clone()
+	if config == nil {
+		config = &tls.Config{
+			MinVersion: tls.VersionTLS12,
+		}
+	}
+	cert, err := tls.LoadX509KeyPair(certFile, keyFile)
+	if err != nil {
+		return nil, fmt.Errorf("error creating x509 keypair from cert file %s and key file %s", certFile, keyFile)
+	}
+	config.Certificates = []tls.Certificate{cert}
+	return config, nil
+}
