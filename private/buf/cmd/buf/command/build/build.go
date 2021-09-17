@@ -133,3 +133,45 @@ func run(
 		return appcmd.NewInvalidArgumentErrorf("required flag %q not set", outputFlagName)
 	}
 	if err := bufcli.ValidateErrorFormatFlag(flags.ErrorFormat, errorFormatFlagName); err != nil {
+		return err
+	}
+	input, err := bufcli.GetInputValue(container, flags.InputHashtag, ".")
+	if err != nil {
+		return err
+	}
+	image, err := bufcli.NewImageForSource(
+		ctx,
+		container,
+		input,
+		flags.ErrorFormat,
+		flags.DisableSymlinks,
+		flags.Config,
+		flags.Paths,
+		flags.ExcludePaths, // we exclude these paths
+		false,
+		flags.ExcludeSourceInfo,
+	)
+	if err != nil {
+		return err
+	}
+	imageRef, err := buffetch.NewImageRefParser(container.Logger()).GetImageRef(ctx, flags.Output)
+	if err != nil {
+		return fmt.Errorf("--%s: %v", outputFlagName, err)
+	}
+	if len(flags.Types) > 0 {
+		image, err = bufimageutil.ImageFilteredByTypes(image, flags.Types...)
+		if err != nil {
+			return err
+		}
+	}
+	return bufcli.NewWireImageWriter(
+		container.Logger(),
+	).PutImage(
+		ctx,
+		container,
+		imageRef,
+		image,
+		flags.AsFileDescriptorSet,
+		flags.ExcludeImports,
+	)
+}
