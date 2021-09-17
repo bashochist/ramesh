@@ -22,4 +22,114 @@ import (
 	"github.com/bufbuild/buf/private/buf/buffetch"
 	"github.com/bufbuild/buf/private/bufpkg/bufanalysis"
 	"github.com/bufbuild/buf/private/bufpkg/bufimage/bufimageutil"
-	"github.com/b
+	"github.com/bufbuild/buf/private/pkg/app"
+	"github.com/bufbuild/buf/private/pkg/app/appcmd"
+	"github.com/bufbuild/buf/private/pkg/app/appflag"
+	"github.com/bufbuild/buf/private/pkg/stringutil"
+	"github.com/spf13/cobra"
+	"github.com/spf13/pflag"
+)
+
+const (
+	asFileDescriptorSetFlagName = "as-file-descriptor-set"
+	errorFormatFlagName         = "error-format"
+	excludeImportsFlagName      = "exclude-imports"
+	excludeSourceInfoFlagName   = "exclude-source-info"
+	pathsFlagName               = "path"
+	outputFlagName              = "output"
+	outputFlagShortName         = "o"
+	configFlagName              = "config"
+	excludePathsFlagName        = "exclude-path"
+	disableSymlinksFlagName     = "disable-symlinks"
+)
+
+// NewCommand returns a new Command.
+func NewCommand(
+	name string,
+	builder appflag.Builder,
+) *appcmd.Command {
+	flags := newFlags()
+	return &appcmd.Command{
+		Use:   name + " <input>",
+		Short: "Build Protobuf files into a Buf image",
+		Long:  bufcli.GetInputLong(`the source or module to build or image to convert`),
+		Args:  cobra.MaximumNArgs(1),
+		Run: builder.NewRunFunc(
+			func(ctx context.Context, container appflag.Container) error {
+				return run(ctx, container, flags)
+			},
+			bufcli.NewErrorInterceptor(),
+		),
+		BindFlags: flags.Bind,
+	}
+}
+
+type flags struct {
+	AsFileDescriptorSet bool
+	ErrorFormat         string
+	ExcludeImports      bool
+	ExcludeSourceInfo   bool
+	Paths               []string
+	Output              string
+	Config              string
+	ExcludePaths        []string
+	DisableSymlinks     bool
+	Types               []string
+	// special
+	InputHashtag string
+}
+
+func newFlags() *flags {
+	return &flags{}
+}
+
+func (f *flags) Bind(flagSet *pflag.FlagSet) {
+	bufcli.BindInputHashtag(flagSet, &f.InputHashtag)
+	bufcli.BindAsFileDescriptorSet(flagSet, &f.AsFileDescriptorSet, asFileDescriptorSetFlagName)
+	bufcli.BindExcludeImports(flagSet, &f.ExcludeImports, excludeImportsFlagName)
+	bufcli.BindExcludeSourceInfo(flagSet, &f.ExcludeSourceInfo, excludeSourceInfoFlagName)
+	bufcli.BindPaths(flagSet, &f.Paths, pathsFlagName)
+	bufcli.BindExcludePaths(flagSet, &f.ExcludePaths, excludePathsFlagName)
+	bufcli.BindDisableSymlinks(flagSet, &f.DisableSymlinks, disableSymlinksFlagName)
+	flagSet.StringVar(
+		&f.ErrorFormat,
+		errorFormatFlagName,
+		"text",
+		fmt.Sprintf(
+			"The format for build errors printed to stderr. Must be one of %s",
+			stringutil.SliceToString(bufanalysis.AllFormatStrings),
+		),
+	)
+	flagSet.StringVarP(
+		&f.Output,
+		outputFlagName,
+		outputFlagShortName,
+		app.DevNullFilePath,
+		fmt.Sprintf(
+			`The output location for the built image. Must be one of format %s`,
+			buffetch.ImageFormatsString,
+		),
+	)
+	flagSet.StringVar(
+		&f.Config,
+		configFlagName,
+		"",
+		`The file or data to use to use for configuration`,
+	)
+	flagSet.StringSliceVar(
+		&f.Types,
+		"type",
+		nil,
+		"The types (message, enum, service) that should be included in this image. When specified, the resulting image will only include descriptors to describe the requested types",
+	)
+}
+
+func run(
+	ctx context.Context,
+	container appflag.Container,
+	flags *flags,
+) error {
+	if flags.Output == "" {
+		return appcmd.NewInvalidArgumentErrorf("required flag %q not set", outputFlagName)
+	}
+	if err := bufcli.ValidateErrorFormatFlag(flags.ErrorFormat, errorFormatFlagName); err != nil {
