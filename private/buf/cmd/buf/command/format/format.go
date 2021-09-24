@@ -101,4 +101,150 @@ Write a diff instead of the formatted file:
 Use the --exit-code flag to exit with a non-zero exit code if there is a diff:
 
     $ buf format --exit-code
-    $ buf for
+    $ buf format -w --exit-code
+    $ buf format -d --exit-code
+
+Format a file, directory, or module reference by specifying a source e.g.
+Write the formatted file to stdout:
+    
+    $ buf format simple/simple.proto
+    
+    syntax = "proto3";
+    
+    package simple;
+    
+    message Object {
+      string key = 1;
+      bytes value = 2;
+    }
+
+Write the formatted directory to stdout:
+
+    $ buf format simple
+    ...
+
+Write the formatted module reference to stdout:
+
+    $ buf format buf.build/acme/petapis
+    ...
+
+Write the result to a specified output file or directory with -o e.g.
+
+Write the formatted file to another file:
+
+    $ buf format simple/simple.proto -o simple/simple.formatted.proto
+
+Write the formatted directory to another directory, creating it if it doesn't exist:
+
+    $ buf format proto -o formatted
+
+This also works with module references:
+
+    $ buf format buf.build/acme/weather -o formatted
+
+Rewrite the file(s) in-place with -w. e.g.
+
+Rewrite a single file in-place:
+
+    $ buf format simple.proto -w
+
+Rewrite an entire directory in-place:
+
+    $ buf format proto -w
+
+Write a diff and rewrite the file(s) in-place:
+
+    $ buf format simple -d -w
+
+    $ diff -u simple/simple.proto.orig simple/simple.proto
+    ...
+
+The -w and -o flags cannot be used together in a single invocation.
+`,
+		Args: cobra.MaximumNArgs(1),
+		Run: builder.NewRunFunc(
+			func(ctx context.Context, container appflag.Container) error {
+				return run(ctx, container, flags)
+			},
+			bufcli.NewErrorInterceptor(),
+		),
+		BindFlags: flags.Bind,
+	}
+}
+
+type flags struct {
+	Config          string
+	Diff            bool
+	DisableSymlinks bool
+	ErrorFormat     string
+	ExcludePaths    []string
+	ExitCode        bool
+	Paths           []string
+	Output          string
+	Write           bool
+	// special
+	InputHashtag string
+}
+
+func newFlags() *flags {
+	return &flags{}
+}
+
+func (f *flags) Bind(flagSet *pflag.FlagSet) {
+	bufcli.BindInputHashtag(flagSet, &f.InputHashtag)
+	bufcli.BindPaths(flagSet, &f.Paths, pathsFlagName)
+	bufcli.BindExcludePaths(flagSet, &f.ExcludePaths, excludePathsFlagName)
+	bufcli.BindDisableSymlinks(flagSet, &f.DisableSymlinks, disableSymlinksFlagName)
+	flagSet.BoolVarP(
+		&f.Diff,
+		diffFlagName,
+		diffFlagShortName,
+		false,
+		"Display diffs instead of rewriting files",
+	)
+	flagSet.BoolVar(
+		&f.ExitCode,
+		exitCodeFlagName,
+		false,
+		"Exit with a non-zero exit code if files were not already formatted",
+	)
+	flagSet.BoolVarP(
+		&f.Write,
+		writeFlagName,
+		writeFlagShortName,
+		false,
+		"Rewrite files in-place",
+	)
+	flagSet.StringVar(
+		&f.ErrorFormat,
+		errorFormatFlagName,
+		"text",
+		fmt.Sprintf(
+			"The format for build errors printed to stderr. Must be one of %s",
+			stringutil.SliceToString(bufanalysis.AllFormatStrings),
+		),
+	)
+	flagSet.StringVarP(
+		&f.Output,
+		outputFlagName,
+		outputFlagShortName,
+		"-",
+		fmt.Sprintf(
+			`The output location for the formatted files. Must be one of format %s. If omitted, the result is written to stdout`,
+			buffetch.SourceFormatsString,
+		),
+	)
+	flagSet.StringVar(
+		&f.Config,
+		configFlagName,
+		"",
+		`The file or data to use for configuration`,
+	)
+}
+
+func run(
+	ctx context.Context,
+	container appflag.Container,
+	flags *flags,
+) (retErr error) {
+	if err := bufcli.ValidateErrorFormatFlag(flags.ErrorFormat, errorFormatFlagNam
