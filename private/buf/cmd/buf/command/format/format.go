@@ -348,4 +348,132 @@ func run(
 		}
 		if protoFileRef.IncludePackageFiles() {
 			// TODO: We need to have a better answer here. Right now, it's
-			// possible that the other files in the same package are defi
+			// possible that the other files in the same package are defined
+			// in a remote dependency, which makes it impossible to rewrite
+			// in-place.
+			//
+			// In the case that the user uses the -w flag, we'll either need
+			// to return an error, or omit the file that it can't rewrite in-place
+			// (potentially including a debug log).
+			return errors.New("this command does not support including package files")
+		}
+		module := moduleConfigs[0].Module()
+		fileInfos, err := module.TargetFileInfos(ctx)
+		if err != nil {
+			return err
+		}
+		var moduleFile bufmodule.ModuleFile
+		for _, fileInfo := range fileInfos {
+			if _, err := protoFileRef.PathForExternalPath(fileInfo.ExternalPath()); err != nil {
+				// The target file we're looking for is the only one that will not
+				// return an error.
+				continue
+			}
+			moduleFile, err = module.GetModuleFile(
+				ctx,
+				fileInfo.Path(),
+			)
+			if err != nil {
+				return err
+			}
+			defer func() {
+				retErr = multierr.Append(retErr, moduleFile.Close())
+			}()
+			break
+		}
+		if moduleFile == nil {
+			// This will only happen if a buf.work.yaml exists in a parent
+			// directory, but it does not contain the target file.
+			//
+			// This is also a problem for other commands that interact
+			// with buffetch.ProtoFileRef.
+			//
+			// TODO: Fix the buffetch.ProtoFileRef so that it works in
+			// these situtations.
+			return fmt.Errorf(
+				"source %s was not found - is the directory containing this file defined in your %s?",
+				container.Arg(0),
+				bufwork.ExternalConfigV1FilePath,
+			)
+		}
+		module, err = bufmodule.ModuleWithTargetPaths(
+			module,
+			[]string{
+				moduleFile.Path(),
+			},
+			nil, // Nothing to exclude.
+		)
+		if err != nil {
+			return err
+		}
+		diffPresent, err := formatModule(
+			ctx,
+			container,
+			runner,
+			storageosProvider,
+			module,
+			outputDirectory,
+			singleFileOutputFilename,
+			flags.ErrorFormat,
+			flags.Diff,
+			flags.Write,
+		)
+		if err != nil {
+			return err
+		}
+		if flags.ExitCode && diffPresent {
+			return bufcli.ErrFileAnnotation
+		}
+		return nil
+	}
+	for _, moduleConfig := range moduleConfigs {
+		diffPresent, err := formatModule(
+			ctx,
+			container,
+			runner,
+			storageosProvider,
+			moduleConfig.Module(),
+			outputDirectory,
+			singleFileOutputFilename,
+			flags.ErrorFormat,
+			flags.Diff,
+			flags.Write,
+		)
+		if err != nil {
+			return err
+		}
+		if flags.ExitCode && diffPresent {
+			return bufcli.ErrFileAnnotation
+		}
+	}
+	return nil
+}
+
+// formatModule formats the module's target files and writes them to the
+// writeBucket, if any. If diff is true, the diff between the original and
+// formatted files is written to stdout.
+//
+// Returns true if there was a diff and no other error.
+func formatModule(
+	ctx context.Context,
+	container appflag.Container,
+	runner command.Runner,
+	storageosProvider storageos.Provider,
+	module bufmodule.Module,
+	outputDirectory string,
+	singleFileOutputFilename string,
+	errorFormat string,
+	diff bool,
+	rewrite bool,
+) (_ bool, retErr error) {
+	originalReadWriteBucket := storagemem.NewReadWriteBucket()
+	if err := bufmodule.TargetModuleFilesToBucket(
+		ctx,
+		module,
+		originalReadWriteBucket,
+	); err != nil {
+		return false, err
+	}
+	// Note that external paths are set properly for the files in this read bucket.
+	formattedReadBucket, err := bufformat.Format(ctx, module)
+	if 
