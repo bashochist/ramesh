@@ -476,4 +476,97 @@ func formatModule(
 	}
 	// Note that external paths are set properly for the files in this read bucket.
 	formattedReadBucket, err := bufformat.Format(ctx, module)
-	if 
+	if err != nil {
+		return false, err
+	}
+	diffBuffer := bytes.NewBuffer(nil)
+	if err := storage.Diff(
+		ctx,
+		runner,
+		diffBuffer,
+		originalReadWriteBucket,
+		formattedReadBucket,
+		storage.DiffWithExternalPaths(), // No need to set prefixes as the buckets are from the same location.
+	); err != nil {
+		return false, err
+	}
+	diffPresent := diffBuffer.Len() > 0
+	if diff {
+		if _, err := io.Copy(container.Stdout(), diffBuffer); err != nil {
+			return false, err
+		}
+		if outputDirectory == "" && singleFileOutputFilename == "" && !rewrite {
+			// If the user specified --diff and has not explicitly overridden
+			// the --output or rewritten the sources in-place with --write, we
+			// can stop here.
+			return diffPresent, nil
+		}
+	}
+	if rewrite {
+		// Rewrite the sources in place.
+		if err := storage.WalkReadObjects(
+			ctx,
+			originalReadWriteBucket,
+			"",
+			func(readObject storage.ReadObject) error {
+				formattedReadObject, err := formattedReadBucket.Get(ctx, readObject.Path())
+				if err != nil {
+					return err
+				}
+				// We use os.OpenFile here instead of storage.Copy for a few reasons.
+				//
+				// storage.Copy operates on normal paths, so the copied content is always placed
+				// relative to the bucket's root (as expected). The rewrite in-place behavior can
+				// be rephrased as writing to the same bucket as the input (e.g. buf format proto -o proto).
+				//
+				// Now, if the user asks to rewrite an entire workspace (i.e. a directory containing
+				// a buf.work.yaml), we would need to call storage.Copy for each of the directories
+				// defined in the workspace. This involves parsing the buf.work.yaml and creating
+				// a storage.Bucket for each of the directories.
+				//
+				// It's simpler to just copy the files in-place based on their external path since
+				// it's the same behavior for single files, directories, and workspaces.
+				file, err := os.OpenFile(readObject.ExternalPath(), os.O_WRONLY|os.O_CREATE|os.O_TRUNC, 0644)
+				if err != nil {
+					return err
+				}
+				defer func() {
+					retErr = multierr.Append(retErr, file.Close())
+				}()
+				if _, err := file.ReadFrom(formattedReadObject); err != nil {
+					return err
+				}
+				return nil
+			},
+		); err != nil {
+			return false, err
+		}
+		return diffPresent, nil
+	}
+	var readWriteBucket storage.ReadWriteBucket
+	if outputDirectory != "" {
+		// OK to use os.Stat instead of os.LStat here as this is CLI-only
+		if _, err := os.Stat(outputDirectory); err != nil {
+			// We don't need to check fileInfo.IsDir() because it's
+			// already handled by the storageosProvider.
+			if os.IsNotExist(err) {
+				if err := os.MkdirAll(outputDirectory, 0755); err != nil {
+					return false, err
+				}
+				// Although unlikely, if an error occurs in the midst of
+				// writing the formatted files, we want to clean up the
+				// directory we just created because it didn't previously
+				// exist.
+				defer func() {
+					if retErr != nil {
+						retErr = multierr.Append(retErr, os.RemoveAll(outputDirectory))
+					}
+				}()
+			}
+		}
+		readWriteBucket, err = storageosProvider.NewReadWriteBucket(
+			outputDirectory,
+			storageos.ReadWriteBucketWithSymlinksIfSupported(),
+		)
+		if err != nil {
+			ret
