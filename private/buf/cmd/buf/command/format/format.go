@@ -247,4 +247,105 @@ func run(
 	container appflag.Container,
 	flags *flags,
 ) (retErr error) {
-	if err := bufcli.ValidateErrorFormatFlag(flags.ErrorFormat, errorFormatFlagNam
+	if err := bufcli.ValidateErrorFormatFlag(flags.ErrorFormat, errorFormatFlagName); err != nil {
+		return err
+	}
+	if flags.Output != "-" && flags.Write {
+		return fmt.Errorf("--%s cannot be used with --%s", outputFlagName, writeFlagName)
+	}
+	source, err := bufcli.GetInputValue(container, flags.InputHashtag, ".")
+	if err != nil {
+		return err
+	}
+	refParser := buffetch.NewRefParser(
+		container.Logger(),
+		buffetch.RefParserWithProtoFileRefAllowed(),
+	)
+	sourceOrModuleRef, err := refParser.GetSourceOrModuleRef(ctx, source)
+	if err != nil {
+		return err
+	}
+	if _, ok := sourceOrModuleRef.(buffetch.ModuleRef); ok && flags.Write {
+		return fmt.Errorf("--%s cannot be used with module reference inputs", writeFlagName)
+	}
+	clientConfig, err := bufcli.NewConnectClientConfig(container)
+	if err != nil {
+		return err
+	}
+	moduleReader, err := bufcli.NewModuleReaderAndCreateCacheDirs(container, clientConfig)
+	if err != nil {
+		return err
+	}
+	runner := command.NewRunner()
+	storageosProvider := bufcli.NewStorageosProvider(flags.DisableSymlinks)
+	moduleConfigReader, err := bufcli.NewWireModuleConfigReaderForModuleReader(
+		container,
+		storageosProvider,
+		runner,
+		clientConfig,
+		moduleReader,
+	)
+	if err != nil {
+		return err
+	}
+	moduleConfigs, err := moduleConfigReader.GetModuleConfigs(
+		ctx,
+		container,
+		sourceOrModuleRef,
+		flags.Config,
+		flags.Paths,
+		flags.ExcludePaths,
+		false,
+	)
+	if err != nil {
+		return err
+	}
+	var outputDirectory string
+	var singleFileOutputFilename string
+	if flags.Output != "-" {
+		// The output file type is determined based on its extension,
+		// so it's possible to write a single file's formatted content
+		// to another single file.
+		//
+		//  $ buf format simple.proto -o simple.formatted.proto
+		//
+		// In this case, it's also possible to write an entire directory's
+		// formatted content to a single file (like we see in the default
+		// behavior with stdout).
+		//
+		//  $ buf format simple -o simple.formatted.proto
+		//
+		outputRef, err := refParser.GetSourceOrModuleRef(ctx, flags.Output)
+		if err != nil {
+			return err
+		}
+		if _, ok := outputRef.(buffetch.ProtoFileRef); ok {
+			if directory := filepath.Dir(flags.Output); directory != "." {
+				// The output is a single file, so we need to create
+				// the file's directory (if any).
+				//
+				// For example,
+				//
+				//  $ buf format simple.proto -o formatted/simple.formatted.proto
+				//
+				outputDirectory = directory
+			}
+			// The outputDirectory will not be set for single file outputs
+			// in the current directory (e.g. simple.formatted.proto).
+			singleFileOutputFilename = flags.Output
+		} else {
+			// The output is a directory, so we can just create it as-is.
+			outputDirectory = flags.Output
+		}
+	}
+	if protoFileRef, ok := sourceOrModuleRef.(buffetch.ProtoFileRef); ok {
+		// If we have a single ProtoFileRef, we only want to format that file.
+		// The file will be available from the first module (i.e. it's
+		// the target source, or the first module in a workspace).
+		if len(moduleConfigs) == 0 {
+			// Unreachable - we should always have at least one module.
+			return fmt.Errorf("could not build module for %s", container.Arg(0))
+		}
+		if protoFileRef.IncludePackageFiles() {
+			// TODO: We need to have a better answer here. Right now, it's
+			// possible that the other files in the same package are defi
