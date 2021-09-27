@@ -569,4 +569,55 @@ func formatModule(
 			storageos.ReadWriteBucketWithSymlinksIfSupported(),
 		)
 		if err != nil {
-			ret
+			return false, err
+		}
+	}
+	if readWriteBucket == nil || singleFileOutputFilename != "" {
+		// If the readWriteBucket is nil, we write the output to stdout.
+		//
+		// If a single file output was used, we can't just copy the content
+		// between buckets - we need to write all of the bucket's content
+		// into the single file (exactly like we do for writing to stdout).
+		//
+		// We might want to order these, although the output is kind of useless
+		// if we're writing more than one file.
+		writer := container.Stdout()
+		if singleFileOutputFilename != "" {
+			file, err := os.OpenFile(singleFileOutputFilename, os.O_WRONLY|os.O_CREATE|os.O_TRUNC, 0644)
+			if err != nil {
+				return false, err
+			}
+			defer func() {
+				retErr = multierr.Append(retErr, file.Close())
+			}()
+			writer = file
+		}
+		if err := storage.WalkReadObjects(
+			ctx,
+			formattedReadBucket,
+			"",
+			func(readObject storage.ReadObject) error {
+				data, err := io.ReadAll(readObject)
+				if err != nil {
+					return err
+				}
+				if _, err := writer.Write(data); err != nil {
+					return err
+				}
+				return nil
+			},
+		); err != nil {
+			return false, err
+		}
+		return diffPresent, nil
+	}
+	// The user specified -o, so we copy the files into the output bucket.
+	if _, err := storage.Copy(
+		ctx,
+		formattedReadBucket,
+		readWriteBucket,
+	); err != nil {
+		return false, err
+	}
+	return diffPresent, nil
+}
