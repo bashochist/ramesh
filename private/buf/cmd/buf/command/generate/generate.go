@@ -246,4 +246,104 @@ func (f *flags) Bind(flagSet *pflag.FlagSet) {
 		baseOutDirPathFlagName,
 		baseOutDirPathFlagShortName,
 		".",
-		
+		`The base directory to generate to. This is prepended to the out directories in the generation template`,
+	)
+	flagSet.StringVar(
+		&f.ErrorFormat,
+		errorFormatFlagName,
+		"text",
+		fmt.Sprintf(
+			"The format for build errors, printed to stderr. Must be one of %s",
+			stringutil.SliceToString(bufanalysis.AllFormatStrings),
+		),
+	)
+	flagSet.StringVar(
+		&f.Config,
+		configFlagName,
+		"",
+		`The file or data to use for configuration`,
+	)
+	flagSet.StringSliceVar(
+		&f.Types,
+		typeFlagName,
+		nil,
+		"The types (message, enum, service) that should be included in this image. When specified, the resulting image will only include descriptors to describe the requested types. Flag usage overrides buf.gen.yaml",
+	)
+	flagSet.StringSliceVar(
+		&f.TypesDeprecated,
+		typeDeprecatedFlagName,
+		nil,
+		"The types (message, enum, service) that should be included in this image. When specified, the resulting image will only include descriptors to describe the requested types. Flag usage overrides buf.gen.yaml",
+	)
+	_ = flagSet.MarkDeprecated(typeDeprecatedFlagName, fmt.Sprintf("Use --%s instead", typeFlagName))
+	_ = flagSet.MarkHidden(typeDeprecatedFlagName)
+}
+
+func run(
+	ctx context.Context,
+	container appflag.Container,
+	flags *flags,
+) (retErr error) {
+	logger := container.Logger()
+	if flags.IncludeWKT && !flags.IncludeImports {
+		// You need to set --include-imports if you set --include-wkt, which isn’t great. The alternative is to have
+		// --include-wkt implicitly set --include-imports, but this could be surprising. Or we could rename
+		// --include-wkt to --include-imports-and/with-wkt. But the summary is that the flag only makes sense
+		// in the context of including imports.
+		return appcmd.NewInvalidArgumentErrorf("Cannot set --%s without --%s", includeWKTFlagName, includeImportsFlagName)
+	}
+	if err := bufcli.ValidateErrorFormatFlag(flags.ErrorFormat, errorFormatFlagName); err != nil {
+		return err
+	}
+	input, err := bufcli.GetInputValue(container, flags.InputHashtag, ".")
+	if err != nil {
+		return err
+	}
+	ref, err := buffetch.NewRefParser(container.Logger(), buffetch.RefParserWithProtoFileRefAllowed()).GetRef(ctx, input)
+	if err != nil {
+		return err
+	}
+	storageosProvider := bufcli.NewStorageosProvider(flags.DisableSymlinks)
+	runner := command.NewRunner()
+	readWriteBucket, err := storageosProvider.NewReadWriteBucket(
+		".",
+		storageos.ReadWriteBucketWithSymlinksIfSupported(),
+	)
+	if err != nil {
+		return err
+	}
+	genConfig, err := bufgen.ReadConfig(
+		ctx,
+		logger,
+		bufgen.NewProvider(logger),
+		readWriteBucket,
+		bufgen.ReadConfigWithOverride(flags.Template),
+	)
+	if err != nil {
+		return err
+	}
+	clientConfig, err := bufcli.NewConnectClientConfig(container)
+	if err != nil {
+		return err
+	}
+	imageConfigReader, err := bufcli.NewWireImageConfigReader(
+		container,
+		storageosProvider,
+		runner,
+		clientConfig,
+	)
+	if err != nil {
+		return err
+	}
+	imageConfigs, fileAnnotations, err := imageConfigReader.GetImageConfigs(
+		ctx,
+		container,
+		ref,
+		flags.Config,
+		flags.Paths,        // we filter on files
+		flags.ExcludePaths, // we exclude these paths
+		false,              // input files must exist
+		false,              // we must include source info for generation
+	)
+	if err != nil {
+		retur
