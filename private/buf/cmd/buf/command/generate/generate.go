@@ -346,4 +346,60 @@ func run(
 		false,              // we must include source info for generation
 	)
 	if err != nil {
-		retur
+		return err
+	}
+	if len(fileAnnotations) > 0 {
+		if err := bufanalysis.PrintFileAnnotations(container.Stderr(), fileAnnotations, flags.ErrorFormat); err != nil {
+			return err
+		}
+		return bufcli.ErrFileAnnotation
+	}
+	images := make([]bufimage.Image, 0, len(imageConfigs))
+	for _, imageConfig := range imageConfigs {
+		images = append(images, imageConfig.Image())
+	}
+	image, err := bufimage.MergeImages(images...)
+	if err != nil {
+		return err
+	}
+	generateOptions := []bufgen.GenerateOption{
+		bufgen.GenerateWithBaseOutDirPath(flags.BaseOutDirPath),
+	}
+	if flags.IncludeImports {
+		generateOptions = append(
+			generateOptions,
+			bufgen.GenerateWithIncludeImports(),
+		)
+	}
+	if flags.IncludeWKT {
+		generateOptions = append(
+			generateOptions,
+			bufgen.GenerateWithIncludeWellKnownTypes(),
+		)
+	}
+	var includedTypes []string
+	if len(flags.Types) > 0 || len(flags.TypesDeprecated) > 0 {
+		// command-line flags take precedence
+		includedTypes = append(flags.Types, flags.TypesDeprecated...)
+	} else if genConfig.TypesConfig != nil {
+		includedTypes = genConfig.TypesConfig.Include
+	}
+	if len(includedTypes) > 0 {
+		image, err = bufimageutil.ImageFilteredByTypes(image, includedTypes...)
+		if err != nil {
+			return err
+		}
+	}
+	return bufgen.NewGenerator(
+		logger,
+		storageosProvider,
+		runner,
+		clientConfig,
+	).Generate(
+		ctx,
+		container,
+		genConfig,
+		image,
+		generateOptions...,
+	)
+}
