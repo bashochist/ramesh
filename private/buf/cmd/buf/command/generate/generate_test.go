@@ -61,4 +61,135 @@ func TestCompareGeneratedStubsGoogleapisGo(t *testing.T) {
 		t,
 		command.NewRunner(),
 		googleapisDirPath,
-	
+		[]*testPluginInfo{
+			{name: "go", opt: "Mgoogle/api/auth.proto=foo"},
+		},
+	)
+}
+
+func TestCompareGeneratedStubsGoogleapisGoZip(t *testing.T) {
+	testingextended.SkipIfShort(t)
+	t.Parallel()
+	googleapisDirPath := buftesting.GetGoogleapisDirPath(t, buftestingDirPath)
+	testCompareGeneratedStubsArchive(
+		t,
+		command.NewRunner(),
+		googleapisDirPath,
+		[]*testPluginInfo{
+			{name: "go", opt: "Mgoogle/api/auth.proto=foo"},
+		},
+		false,
+	)
+}
+
+func TestCompareGeneratedStubsGoogleapisGoJar(t *testing.T) {
+	testingextended.SkipIfShort(t)
+	t.Parallel()
+	googleapisDirPath := buftesting.GetGoogleapisDirPath(t, buftestingDirPath)
+	testCompareGeneratedStubsArchive(
+		t,
+		command.NewRunner(),
+		googleapisDirPath,
+		[]*testPluginInfo{
+			{name: "go", opt: "Mgoogle/api/auth.proto=foo"},
+		},
+		true,
+	)
+}
+
+func TestCompareGeneratedStubsGoogleapisObjc(t *testing.T) {
+	testingextended.SkipIfShort(t)
+	t.Parallel()
+	googleapisDirPath := buftesting.GetGoogleapisDirPath(t, buftestingDirPath)
+	testCompareGeneratedStubs(
+		t,
+		command.NewRunner(),
+		googleapisDirPath,
+		[]*testPluginInfo{{name: "objc"}},
+	)
+}
+
+func TestCompareGeneratedStubsGoogleapisPyi(t *testing.T) {
+	testingextended.SkipIfShort(t)
+	t.Parallel()
+	googleapisDirPath := buftesting.GetGoogleapisDirPath(t, buftestingDirPath)
+	testCompareGeneratedStubs(
+		t,
+		command.NewRunner(),
+		googleapisDirPath,
+		[]*testPluginInfo{{name: "pyi"}},
+	)
+}
+
+func TestCompareInsertionPointOutput(t *testing.T) {
+	testingextended.SkipIfShort(t)
+	t.Parallel()
+	insertionTestdataDirPath := filepath.Join("testdata", "insertion")
+	testCompareGeneratedStubs(
+		t,
+		command.NewRunner(),
+		insertionTestdataDirPath,
+		[]*testPluginInfo{
+			{name: "insertion-point-receiver"},
+			{name: "insertion-point-writer"},
+		},
+	)
+}
+
+func TestOutputFlag(t *testing.T) {
+	tempDirPath := t.TempDir()
+	testRunSuccess(
+		t,
+		"--output",
+		tempDirPath,
+		"--template",
+		filepath.Join("testdata", "simple", "buf.gen.yaml"),
+		filepath.Join("testdata", "simple"),
+	)
+	_, err := os.Stat(filepath.Join(tempDirPath, "java", "a", "v1", "A.java"))
+	require.NoError(t, err)
+}
+
+func TestProtoFileRefIncludePackageFiles(t *testing.T) {
+	tempDirPath := t.TempDir()
+	testRunSuccess(
+		t,
+		"--output",
+		tempDirPath,
+		"--template",
+		filepath.Join("testdata", "protofileref", "buf.gen.yaml"),
+		fmt.Sprintf("%s#include_package_files=true", filepath.Join("testdata", "protofileref", "a", "v1", "a.proto")),
+	)
+	_, err := os.Stat(filepath.Join(tempDirPath, "java", "a", "v1", "A.java"))
+	require.NoError(t, err)
+	_, err = os.Stat(filepath.Join(tempDirPath, "java", "a", "v1", "B.java"))
+	require.NoError(t, err)
+}
+
+func TestGenerateDuplicatePlugins(t *testing.T) {
+	tempDirPath := t.TempDir()
+	testRunSuccess(
+		t,
+		"--output",
+		tempDirPath,
+		"--template",
+		filepath.Join("testdata", "duplicate_plugins", "buf.gen.yaml"),
+		filepath.Join("testdata", "duplicate_plugins"),
+	)
+	_, err := os.Stat(filepath.Join(tempDirPath, "foo", "a", "v1", "A.java"))
+	require.NoError(t, err)
+	_, err = os.Stat(filepath.Join(tempDirPath, "bar", "a", "v1", "A.java"))
+	require.NoError(t, err)
+}
+
+func TestOutputWithPathEqualToExclude(t *testing.T) {
+	tempDirPath := t.TempDir()
+	testRunStdoutStderr(
+		t,
+		nil,
+		1,
+		``,
+		filepath.FromSlash(`Failure: cannot set the same path for both --path and --exclude-path flags: a/v1/a.proto`),
+		"--output",
+		tempDirPath,
+		"--templa
