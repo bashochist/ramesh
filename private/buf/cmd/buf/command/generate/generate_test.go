@@ -192,4 +192,119 @@ func TestOutputWithPathEqualToExclude(t *testing.T) {
 		filepath.FromSlash(`Failure: cannot set the same path for both --path and --exclude-path flags: a/v1/a.proto`),
 		"--output",
 		tempDirPath,
-		"--templa
+		"--template",
+		filepath.Join("testdata", "paths", "buf.gen.yaml"),
+		"--exclude-path",
+		filepath.Join("testdata", "paths", "a", "v1", "a.proto"),
+		"--path",
+		filepath.Join("testdata", "paths", "a", "v1", "a.proto"),
+		filepath.Join("testdata", "paths"),
+	)
+}
+
+func TestGenerateInsertionPoint(t *testing.T) {
+	t.Parallel()
+	runner := command.NewRunner()
+	testGenerateInsertionPoint(t, runner, ".", ".", filepath.Join("testdata", "insertion_point"))
+	testGenerateInsertionPoint(t, runner, "gen/proto/insertion", "gen/proto/insertion", filepath.Join("testdata", "nested_insertion_point"))
+	testGenerateInsertionPoint(t, runner, "gen/proto/insertion/", "./gen/proto/insertion", filepath.Join("testdata", "nested_insertion_point"))
+}
+
+func TestGenerateInsertionPointFail(t *testing.T) {
+	t.Parallel()
+	successTemplate := `
+version: v1
+plugins:
+  - name: insertion-point-receiver
+    out: gen/proto/insertion
+  - name: insertion-point-writer
+    out: .
+`
+	testRunStdoutStderr(
+		t,
+		nil,
+		1,
+		``,
+		`Failure: plugin insertion-point-writer: test.txt: does not exist`,
+		filepath.Join("testdata", "simple"), // The input directory is irrelevant for these insertion points.
+		"--template",
+		successTemplate,
+		"-o",
+		t.TempDir(),
+	)
+}
+
+func TestGenerateDuplicateFileFail(t *testing.T) {
+	t.Parallel()
+	successTemplate := `
+version: v1
+plugins:
+  - name: insertion-point-receiver
+    out: .
+  - name: insertion-point-receiver
+    out: .
+`
+	testRunStdoutStderr(
+		t,
+		nil,
+		1,
+		``,
+		`Failure: file "test.txt" was generated multiple times: once by plugin "insertion-point-receiver" and again by plugin "insertion-point-receiver"`,
+		filepath.Join("testdata", "simple"), // The input directory is irrelevant for these insertion points.
+		"--template",
+		successTemplate,
+		"-o",
+		t.TempDir(),
+	)
+}
+
+func TestGenerateInsertionPointMixedPathsFail(t *testing.T) {
+	t.Parallel()
+	wd, err := os.Getwd()
+	require.NoError(t, err)
+	testGenerateInsertionPointMixedPathsFail(t, ".", wd)
+	testGenerateInsertionPointMixedPathsFail(t, wd, ".")
+}
+
+func testGenerateInsertionPoint(
+	t *testing.T,
+	runner command.Runner,
+	receiverOut string,
+	writerOut string,
+	expectedOutputPath string,
+) {
+	successTemplate := `
+version: v1
+plugins:
+  - name: insertion-point-receiver
+    out: %s
+  - name: insertion-point-writer
+    out: %s
+`
+	storageosProvider := storageos.NewProvider()
+	tempDir, readWriteBucket := internaltesting.CopyReadBucketToTempDir(
+		context.Background(),
+		t,
+		storageosProvider,
+		storagemem.NewReadWriteBucket(),
+	)
+	testRunSuccess(
+		t,
+		filepath.Join("testdata", "simple"), // The input directory is irrelevant for these insertion points.
+		"--template",
+		fmt.Sprintf(successTemplate, receiverOut, writerOut),
+		"-o",
+		tempDir,
+	)
+	expectedOutput, err := storageosProvider.NewReadWriteBucket(expectedOutputPath)
+	require.NoError(t, err)
+	diff, err := storage.DiffBytes(context.Background(), runner, expectedOutput, readWriteBucket)
+	require.NoError(t, err)
+	require.Empty(t, string(diff))
+}
+
+// testGenerateInsertionPointMixedPathsFail demonstrates that insertion points are only
+// able to generate to the same output directory, even if the absolute path points to the
+// same place. This is equivalent to protoc's behavior.
+func testGenerateInsertionPointMixedPathsFail(t *testing.T, receiverOut string, writerOut string) {
+	suc
