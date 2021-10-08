@@ -307,4 +307,140 @@ plugins:
 // able to generate to the same output directory, even if the absolute path points to the
 // same place. This is equivalent to protoc's behavior.
 func testGenerateInsertionPointMixedPathsFail(t *testing.T, receiverOut string, writerOut string) {
-	suc
+	successTemplate := `
+version: v1
+plugins:
+  - name: insertion-point-receiver
+    out: %s
+  - name: insertion-point-writer
+    out: %s
+`
+	testRunStdoutStderr(
+		t,
+		nil,
+		1,
+		``,
+		`Failure: plugin insertion-point-writer: test.txt: does not exist`,
+		filepath.Join("testdata", "simple"), // The input directory is irrelevant for these insertion points.
+		"--template",
+		fmt.Sprintf(successTemplate, receiverOut, writerOut),
+		"-o",
+		t.TempDir(),
+	)
+}
+
+func testCompareGeneratedStubs(
+	t *testing.T,
+	runner command.Runner,
+	dirPath string,
+	testPluginInfos []*testPluginInfo,
+) {
+	filePaths := buftesting.GetProtocFilePaths(t, dirPath, 100)
+	actualProtocDir := t.TempDir()
+	bufGenDir := t.TempDir()
+	var actualProtocPluginFlags []string
+	for _, testPluginInfo := range testPluginInfos {
+		actualProtocPluginFlags = append(actualProtocPluginFlags, fmt.Sprintf("--%s_out=%s", testPluginInfo.name, actualProtocDir))
+		if testPluginInfo.opt != "" {
+			actualProtocPluginFlags = append(actualProtocPluginFlags, fmt.Sprintf("--%s_opt=%s", testPluginInfo.name, testPluginInfo.opt))
+		}
+	}
+	buftesting.RunActualProtoc(
+		t,
+		runner,
+		false,
+		false,
+		dirPath,
+		filePaths,
+		map[string]string{
+			"PATH": os.Getenv("PATH"),
+		},
+		nil,
+		actualProtocPluginFlags...,
+	)
+	genFlags := []string{
+		dirPath,
+		"--template",
+		newExternalConfigV1String(t, testPluginInfos, bufGenDir),
+	}
+	for _, filePath := range filePaths {
+		genFlags = append(
+			genFlags,
+			"--path",
+			filePath,
+		)
+	}
+	appcmdtesting.RunCommandSuccess(
+		t,
+		func(name string) *appcmd.Command {
+			return NewCommand(
+				name,
+				appflag.NewBuilder(name),
+			)
+		},
+		internaltesting.NewEnvFunc(t),
+		nil,
+		nil,
+		genFlags...,
+	)
+	storageosProvider := storageos.NewProvider(storageos.ProviderWithSymlinks())
+	actualReadWriteBucket, err := storageosProvider.NewReadWriteBucket(
+		actualProtocDir,
+		storageos.ReadWriteBucketWithSymlinksIfSupported(),
+	)
+	require.NoError(t, err)
+	bufReadWriteBucket, err := storageosProvider.NewReadWriteBucket(
+		bufGenDir,
+		storageos.ReadWriteBucketWithSymlinksIfSupported(),
+	)
+	require.NoError(t, err)
+	diff, err := storage.DiffBytes(
+		context.Background(),
+		runner,
+		actualReadWriteBucket,
+		bufReadWriteBucket,
+		transformGolangProtocVersionToUnknown(t),
+	)
+	require.NoError(t, err)
+	assert.Empty(t, string(diff))
+}
+
+func testCompareGeneratedStubsArchive(
+	t *testing.T,
+	runner command.Runner,
+	dirPath string,
+	testPluginInfos []*testPluginInfo,
+	useJar bool,
+) {
+	fileExt := ".zip"
+	if useJar {
+		fileExt = ".jar"
+	}
+	filePaths := buftesting.GetProtocFilePaths(t, dirPath, 100)
+	tempDir := t.TempDir()
+	actualProtocFile := filepath.Join(tempDir, "actual-protoc"+fileExt)
+	bufGenFile := filepath.Join(tempDir, "buf-generate"+fileExt)
+	var actualProtocPluginFlags []string
+	for _, testPluginInfo := range testPluginInfos {
+		actualProtocPluginFlags = append(actualProtocPluginFlags, fmt.Sprintf("--%s_out=%s", testPluginInfo.name, actualProtocFile))
+		if testPluginInfo.opt != "" {
+			actualProtocPluginFlags = append(actualProtocPluginFlags, fmt.Sprintf("--%s_opt=%s", testPluginInfo.name, testPluginInfo.opt))
+		}
+	}
+	buftesting.RunActualProtoc(
+		t,
+		runner,
+		false,
+		false,
+		dirPath,
+		filePaths,
+		map[string]string{
+			"PATH": os.Getenv("PATH"),
+		},
+		nil,
+		actualProtocPluginFlags...,
+	)
+	genFlags := []string{
+		dirPath,
+		"--template",
+		newExternalConfigV1String(t, testPluginInfos, bufGenFile
