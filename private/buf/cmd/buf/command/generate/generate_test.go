@@ -443,4 +443,123 @@ func testCompareGeneratedStubsArchive(
 	genFlags := []string{
 		dirPath,
 		"--template",
-		newExternalConfigV1String(t, testPluginInfos, bufGenFile
+		newExternalConfigV1String(t, testPluginInfos, bufGenFile),
+	}
+	for _, filePath := range filePaths {
+		genFlags = append(
+			genFlags,
+			"--path",
+			filePath,
+		)
+	}
+	testRunSuccess(
+		t,
+		genFlags...,
+	)
+	actualData, err := os.ReadFile(actualProtocFile)
+	require.NoError(t, err)
+	actualReadWriteBucket := storagemem.NewReadWriteBucket()
+	err = storagearchive.Unzip(
+		context.Background(),
+		bytes.NewReader(actualData),
+		int64(len(actualData)),
+		actualReadWriteBucket,
+		nil,
+		0,
+	)
+	require.NoError(t, err)
+	bufData, err := os.ReadFile(bufGenFile)
+	require.NoError(t, err)
+	bufReadWriteBucket := storagemem.NewReadWriteBucket()
+	err = storagearchive.Unzip(
+		context.Background(),
+		bytes.NewReader(bufData),
+		int64(len(bufData)),
+		bufReadWriteBucket,
+		nil,
+		0,
+	)
+	require.NoError(t, err)
+	diff, err := storage.DiffBytes(
+		context.Background(),
+		runner,
+		actualReadWriteBucket,
+		bufReadWriteBucket,
+		transformGolangProtocVersionToUnknown(t),
+	)
+	require.NoError(t, err)
+	assert.Empty(t, string(diff))
+}
+
+func testRunSuccess(t *testing.T, args ...string) {
+	appcmdtesting.RunCommandSuccess(
+		t,
+		func(name string) *appcmd.Command {
+			return NewCommand(
+				name,
+				appflag.NewBuilder(name),
+			)
+		},
+		internaltesting.NewEnvFunc(t),
+		nil,
+		nil,
+		args...,
+	)
+}
+
+func testRunStdoutStderr(t *testing.T, stdin io.Reader, expectedExitCode int, expectedStdout string, expectedStderr string, args ...string) {
+	appcmdtesting.RunCommandExitCodeStdoutStderr(
+		t,
+		func(name string) *appcmd.Command {
+			return NewCommand(
+				name,
+				appflag.NewBuilder(name),
+			)
+		},
+		expectedExitCode,
+		expectedStdout,
+		expectedStderr,
+		internaltesting.NewEnvFunc(t),
+		stdin,
+		args...,
+	)
+}
+
+func newExternalConfigV1String(t *testing.T, plugins []*testPluginInfo, out string) string {
+	externalConfig := bufgen.ExternalConfigV1{
+		Version: "v1",
+	}
+	for _, plugin := range plugins {
+		externalConfig.Plugins = append(
+			externalConfig.Plugins,
+			bufgen.ExternalPluginConfigV1{
+				Name: plugin.name,
+				Out:  out,
+				Opt:  plugin.opt,
+			},
+		)
+	}
+	data, err := json.Marshal(externalConfig)
+	require.NoError(t, err)
+	return string(data)
+}
+
+type testPluginInfo struct {
+	name string
+	opt  string
+}
+
+func transformGolangProtocVersionToUnknown(t *testing.T) storage.DiffOption {
+	return storage.DiffWithTransform(func(_, _ string, content []byte) []byte {
+		lines := bytes.Split(content, []byte("\n"))
+		filteredLines := make([][]byte, 0, len(lines))
+		commentPrefix := []byte("//")
+		protocVersionIndicator := []byte("protoc")
+		for _, line := range lines {
+			if !(bytes.HasPrefix(line, commentPrefix) && bytes.Contains(line, protocVersionIndicator)) {
+				filteredLines = append(filteredLines, line)
+			}
+		}
+		return bytes.Join(filteredLines, []byte("\n"))
+	})
+}
