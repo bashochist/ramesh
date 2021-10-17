@@ -77,4 +77,9 @@ func run(
 		if err := os.RemoveAll(dirPath); err != nil {
 			return fmt.Errorf("could not remove %q: %w", dirPath, err)
 		}
-		if _, err := container.Stderr().Write([]byte("deleted " + dirPath + "\n")); err != n
+		if _, err := container.Stderr().Write([]byte("deleted " + dirPath + "\n")); err != nil {
+			return err
+		}
+	}
+	return nil
+}
