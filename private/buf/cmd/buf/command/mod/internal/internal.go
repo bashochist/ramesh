@@ -61,4 +61,15 @@ func BindLSRulesFormat(flagSet *pflag.FlagSet, addr *string, flagName string) {
 }
 
 // BindLSRulesVersion binds the version flag for an ls rules command.
-func BindLSRulesVersion(flagSet *pflag.FlagSet, addr *string, flagName string, allFlagName str
+func BindLSRulesVersion(flagSet *pflag.FlagSet, addr *string, flagName string, allFlagName string) {
+	flagSet.StringVar(
+		addr,
+		flagName,
+		"", // do not set a default as we need to know if this is unset
+		fmt.Sprintf(
+			"List all the rules for the given configuration version. Implies --%s. Must be one of %s",
+			allFlagName,
+			stringutil.SliceToString(bufconfig.AllVersions),
+		),
+	)
+}
