@@ -24,4 +24,99 @@ import (
 	"github.com/bufbuild/buf/private/bufpkg/buflock"
 	"github.com/bufbuild/buf/private/bufpkg/bufmodule"
 	"github.com/bufbuild/buf/private/bufpkg/bufmodule/bufmoduleref"
-	"github.com/bufbuild/buf/priv
+	"github.com/bufbuild/buf/private/gen/proto/connect/buf/alpha/registry/v1alpha1/registryv1alpha1connect"
+	registryv1alpha1 "github.com/bufbuild/buf/private/gen/proto/go/buf/alpha/registry/v1alpha1"
+	"github.com/bufbuild/buf/private/pkg/app/appcmd"
+	"github.com/bufbuild/buf/private/pkg/app/appflag"
+	"github.com/bufbuild/buf/private/pkg/connectclient"
+	"github.com/bufbuild/buf/private/pkg/storage/storageos"
+	"github.com/bufbuild/connect-go"
+	"github.com/spf13/cobra"
+)
+
+// NewCommand returns a new prune Command.
+func NewCommand(
+	name string,
+	builder appflag.Builder,
+) *appcmd.Command {
+	return &appcmd.Command{
+		Use:   name + " <directory>",
+		Short: fmt.Sprintf("Prune unused dependencies from the %s file", buflock.ExternalConfigFilePath),
+		Long:  `The first argument is the directory of the local module to prune. Defaults to "." if no argument is specified.`,
+		Args:  cobra.MaximumNArgs(1),
+		Run: builder.NewRunFunc(
+			func(ctx context.Context, container appflag.Container) error {
+				return run(ctx, container)
+			},
+			bufcli.NewErrorInterceptor(),
+		),
+	}
+}
+
+// run tidy to trim the buf.lock file for a specific module.
+func run(
+	ctx context.Context,
+	container appflag.Container,
+) error {
+	directoryInput, err := bufcli.GetInputValue(container, "", ".")
+	if err != nil {
+		return err
+	}
+	storageosProvider := storageos.NewProvider(storageos.ProviderWithSymlinks())
+	readWriteBucket, err := storageosProvider.NewReadWriteBucket(
+		directoryInput,
+		storageos.ReadWriteBucketWithSymlinksIfSupported(),
+	)
+	if err != nil {
+		return err
+	}
+	existingConfigFilePath, err := bufconfig.ExistingConfigFilePath(ctx, readWriteBucket)
+	if err != nil {
+		return err
+	}
+	if existingConfigFilePath == "" {
+		return bufcli.ErrNoConfigFile
+	}
+	config, err := bufconfig.GetConfigForBucket(ctx, readWriteBucket)
+	if err != nil {
+		return err
+	}
+	remote := bufconnect.DefaultRemote
+	if config.ModuleIdentity != nil && config.ModuleIdentity.Remote() != "" {
+		remote = config.ModuleIdentity.Remote()
+	}
+	clientConfig, err := bufcli.NewConnectClientConfig(container)
+	if err != nil {
+		return err
+	}
+	service := connectclient.Make(clientConfig, remote, registryv1alpha1connect.NewResolveServiceClient)
+
+	module, err := bufmodule.NewModuleForBucket(ctx, readWriteBucket)
+	if err != nil {
+		return fmt.Errorf("couldn't read current dependencies: %w", err)
+	}
+
+	requestReferences, err := referencesPinnedByLock(config.Build.DependencyModuleReferences, module.DependencyModulePins())
+	if err != nil {
+		return err
+	}
+	var dependencyModulePins []bufmoduleref.ModulePin
+	if len(requestReferences) > 0 {
+		resp, err := service.GetModulePins(
+			ctx,
+			connect.NewRequest(&registryv1alpha1.GetModulePinsRequest{
+				ModuleReferences: bufmoduleref.NewProtoModuleReferencesForModuleReferences(requestReferences...),
+			}),
+		)
+		if err != nil {
+			if connect.CodeOf(err) == connect.CodeUnimplemented && remote != bufconnect.DefaultRemote {
+				return bufcli.NewUnimplementedRemoteError(err, remote, config.ModuleIdentity.IdentityString())
+			}
+			return err
+		}
+		dependencyModulePins, err = bufmoduleref.NewModulePinsForProtos(resp.Msg.ModulePins...)
+		if err != nil {
+			return bufcli.NewInternalError(err)
+		}
+	}
+	if err := bufmoduleref.PutDependencyModulePinsToBucket(ctx, readWriteBucket, dependencyModulePins);
