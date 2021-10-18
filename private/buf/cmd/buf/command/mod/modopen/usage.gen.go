@@ -14,6 +14,6 @@
 
 // Generated. DO NOT EDIT.
 
-package modlsbreakingrules
+package modopen
 
 import _ "github.com/bufbuild/buf/private/usage"
