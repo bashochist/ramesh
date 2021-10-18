@@ -88,4 +88,84 @@ func (f *flags) Bind(flagSet *pflag.FlagSet) {
 		&f.Uncomment,
 		uncommentFlagName,
 		false,
-		"Unc
+		"Uncomment examples in the resulting configuration file",
+	)
+	_ = flagSet.MarkHidden(uncommentFlagName)
+}
+
+func run(
+	ctx context.Context,
+	container appflag.Container,
+	flags *flags,
+) error {
+	if flags.OutDirPath == "" {
+		return appcmd.NewInvalidArgumentErrorf("required flag %q not set", outDirPathFlagName)
+	}
+	storageosProvider := storageos.NewProvider(storageos.ProviderWithSymlinks())
+	readWriteBucket, err := storageosProvider.NewReadWriteBucket(
+		flags.OutDirPath,
+		storageos.ReadWriteBucketWithSymlinksIfSupported(),
+	)
+	if err != nil {
+		return err
+	}
+	existingConfigFilePath, err := bufconfig.ExistingConfigFilePath(ctx, readWriteBucket)
+	if err != nil {
+		return err
+	}
+	if existingConfigFilePath != "" {
+		return fmt.Errorf("%s already exists, not overwriting", existingConfigFilePath)
+	}
+	var writeConfigOptions []bufconfig.WriteConfigOption
+	if container.NumArgs() > 0 {
+		moduleIdentity, err := bufmoduleref.ModuleIdentityForString(container.Arg(0))
+		if err != nil {
+			return err
+		}
+		writeConfigOptions = append(
+			writeConfigOptions,
+			bufconfig.WriteConfigWithModuleIdentity(moduleIdentity),
+		)
+	}
+	if flags.DocumentationComments {
+		writeConfigOptions = append(
+			writeConfigOptions,
+			bufconfig.WriteConfigWithDocumentationComments(),
+		)
+	}
+	if flags.Uncomment {
+		writeConfigOptions = append(
+			writeConfigOptions,
+			bufconfig.WriteConfigWithUncomment(),
+		)
+	}
+	// Need to include the default version (v1), lint config, and breaking config.
+	version := bufconfig.V1Version
+	writeConfigOptions = append(
+		writeConfigOptions,
+		bufconfig.WriteConfigWithVersion(version),
+	)
+	writeConfigOptions = append(
+		writeConfigOptions,
+		bufconfig.WriteConfigWithBreakingConfig(
+			&bufbreakingconfig.Config{
+				Version: version,
+				Use:     []string{"FILE"},
+			},
+		),
+	)
+	writeConfigOptions = append(
+		writeConfigOptions,
+		bufconfig.WriteConfigWithLintConfig(
+			&buflintconfig.Config{
+				Version: version,
+				Use:     []string{"DEFAULT"},
+			},
+		),
+	)
+	return bufconfig.WriteConfig(
+		ctx,
+		readWriteBucket,
+		writeConfigOptions...,
+	)
+}
