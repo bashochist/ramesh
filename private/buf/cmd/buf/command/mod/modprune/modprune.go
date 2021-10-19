@@ -119,4 +119,37 @@ func run(
 			return bufcli.NewInternalError(err)
 		}
 	}
-	if err := bufmoduleref.PutDependencyModulePinsToBucket(ctx, readWriteBucket, dependencyModulePins);
+	if err := bufmoduleref.PutDependencyModulePinsToBucket(ctx, readWriteBucket, dependencyModulePins); err != nil {
+		return err
+	}
+	return nil
+}
+
+// referencesPinnedByLock takes moduleReferences and a list of pins, then
+// returns a new list of moduleReferences with the same identity, but their
+// reference set to the commit of the pin with the corresponding identity.
+func referencesPinnedByLock(moduleReferences []bufmoduleref.ModuleReference, modulePins []bufmoduleref.ModulePin) ([]bufmoduleref.ModuleReference, error) {
+	pinsByIdentity := make(map[string]bufmoduleref.ModulePin, len(modulePins))
+	for _, modulePin := range modulePins {
+		pinsByIdentity[modulePin.IdentityString()] = modulePin
+	}
+
+	var pinnedModuleReferences []bufmoduleref.ModuleReference
+	for _, moduleReference := range moduleReferences {
+		pin, ok := pinsByIdentity[moduleReference.IdentityString()]
+		if !ok {
+			return nil, fmt.Errorf(`can't tidy with dependency %q: no corresponding entry found in buf.lock. Use "mod update" first if this is a new dependency`, moduleReference.IdentityString())
+		}
+		newModuleReference, err := bufmoduleref.NewModuleReference(
+			moduleReference.Remote(),
+			moduleReference.Owner(),
+			moduleReference.Repository(),
+			pin.Commit(),
+		)
+		if err != nil {
+			return nil, err
+		}
+		pinnedModuleReferences = append(pinnedModuleReferences, newModuleReference)
+	}
+	return pinnedModuleReferences, nil
+}
