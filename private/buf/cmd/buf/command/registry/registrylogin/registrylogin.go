@@ -140,4 +140,91 @@ func inner(
 	if flags.Username == "" && !flags.TokenStdin {
 		if _, err := fmt.Fprintf(
 			container.Stdout(),
-			"Log in with your Buf Schema Registry username. If y
+			"Log in with your Buf Schema Registry username. If you don't have a username, create one at https://%s.\n\n",
+			remote,
+		); err != nil {
+			return err
+		}
+	}
+	username := flags.Username
+	if username == "" {
+		var err error
+		username, err = bufcli.PromptUser(container, "Username: ")
+		if err != nil {
+			if errors.Is(err, bufcli.ErrNotATTY) {
+				return errors.New("cannot perform an interactive login from a non-TTY device")
+			}
+			return err
+		}
+	}
+	var token string
+	if flags.TokenStdin {
+		data, err := io.ReadAll(container.Stdin())
+		if err != nil {
+			return err
+		}
+		token = string(data)
+	} else {
+		var err error
+		token, err = bufcli.PromptUserForPassword(container, "Token: ")
+		if err != nil {
+			if errors.Is(err, bufcli.ErrNotATTY) {
+				return errors.New("cannot perform an interactive login from a non-TTY device")
+			}
+			return err
+		}
+	}
+	// Remove leading and trailing spaces from user-supplied token to avoid
+	// common input errors such as trailing new lines, as-is the case of using
+	// echo vs echo -n.
+	token = strings.TrimSpace(token)
+	if token == "" {
+		return errors.New("token cannot be empty string")
+	}
+	clientConfig, err := bufcli.NewConnectClientConfigWithToken(container, token)
+	if err != nil {
+		return err
+	}
+	authnService := connectclient.Make(clientConfig, remote, registryv1alpha1connect.NewAuthnServiceClient)
+	resp, err := authnService.GetCurrentUser(ctx, connect.NewRequest(&registryv1alpha1.GetCurrentUserRequest{}))
+	if err != nil {
+		// We don't want to use the default error from wrapError here if the error
+		// an unauthenticated error.
+		return errors.New("invalid token provided")
+	}
+	user := resp.Msg.User
+	if user == nil {
+		return errors.New("no user found for provided token")
+	}
+	if user.Username != username {
+		return fmt.Errorf("the username associated with that token (%s) does not match the username provided (%s)", user.Username, username)
+	}
+	if err := netrc.PutMachines(
+		container,
+		netrc.NewMachine(
+			remote,
+			username,
+			token,
+		),
+		netrc.NewMachine(
+			"go."+remote,
+			username,
+			token,
+		),
+	); err != nil {
+		return err
+	}
+	netrcFilePath, err := netrc.GetFilePath(container)
+	if err != nil {
+		return err
+	}
+	loggedInMessage := fmt.Sprintf("Credentials saved to %s.\n", netrcFilePath)
+	// Unless we did not prompt at all, print a newline first
+	if flags.Username == "" || !flags.TokenStdin {
+		loggedInMessage = "\n" + loggedInMessage
+	}
+	if _, err := container.Stdout().Write([]byte(loggedInMessage)); err != nil {
+		return err
+	}
+	return nil
+}
