@@ -4,5 +4,6 @@
 # This module represents the "dir1" root found in
 # the previous configuration.
 version: v1
-deps:
-  - buf.build/beta/googleapis
+lint:
+  ignore:
+    - dir1/file1.proto

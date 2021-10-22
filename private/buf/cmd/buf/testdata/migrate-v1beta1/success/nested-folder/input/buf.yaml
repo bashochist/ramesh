@@ -1,0 +1,8 @@
+
+version: v1beta1
+build:
+  roots:
+    - dir1
+lint:
+  ignore:
+    - dir1/file1.proto
