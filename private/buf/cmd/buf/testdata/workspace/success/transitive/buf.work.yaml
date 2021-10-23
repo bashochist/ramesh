@@ -1,0 +1,5 @@
+version: v1
+directories:
+  - other/proto
+  - private/proto
+  - proto
