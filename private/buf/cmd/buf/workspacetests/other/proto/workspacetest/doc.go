@@ -12,12 +12,7 @@
 // See the License for the specific language governing permissions and
 // limitations under the License.
 
-syntax = "proto3";
-
-package one.v1;
-
-import "one/b.proto";
-
-message A {
-    one.v1.B b = 1;
-}
+// Package workspacetest is used to test if workspaces
+// work when buf is executed in a sub-directory specified
+// in the workspace.
+package workspacetest

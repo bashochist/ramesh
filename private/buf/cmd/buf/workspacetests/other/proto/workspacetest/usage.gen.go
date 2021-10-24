@@ -12,12 +12,8 @@
 // See the License for the specific language governing permissions and
 // limitations under the License.
 
-syntax = "proto3";
+// Generated. DO NOT EDIT.
 
-package one.v1;
+package workspacetest
 
-import "one/b.proto";
-
-message A {
-    one.v1.B b = 1;
-}
+im

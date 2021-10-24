@@ -16,8 +16,8 @@ syntax = "proto3";
 
 package one.v1;
 
-import "one/b.proto";
+import "two/c.proto";
 
-message A {
-    one.v1.B b = 1;
+message B {
+    two.v1.C c = 1;
 }
