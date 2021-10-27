@@ -217,4 +217,89 @@ func PrintFileAnnotations(writer io.Writer, fileAnnotations []FileAnnotation, fo
 // hash returns a hash value that uniquely identifies the given FileAnnotation.
 func hash(fileAnnotation FileAnnotation) string {
 	path := ""
-	if fileInfo := fileAnnotat
+	if fileInfo := fileAnnotation.FileInfo(); fileInfo != nil {
+		path = fileInfo.ExternalPath()
+	}
+	hash := sha256.New()
+	_, _ = hash.Write([]byte(path))
+	_, _ = hash.Write([]byte(strconv.Itoa(fileAnnotation.StartLine())))
+	_, _ = hash.Write([]byte(strconv.Itoa(fileAnnotation.StartColumn())))
+	_, _ = hash.Write([]byte(strconv.Itoa(fileAnnotation.EndLine())))
+	_, _ = hash.Write([]byte(strconv.Itoa(fileAnnotation.EndColumn())))
+	_, _ = hash.Write([]byte(fileAnnotation.Type()))
+	_, _ = hash.Write([]byte(fileAnnotation.Message()))
+	return string(hash.Sum(nil))
+}
+
+type sortFileAnnotations []FileAnnotation
+
+func (a sortFileAnnotations) Len() int               { return len(a) }
+func (a sortFileAnnotations) Swap(i int, j int)      { a[i], a[j] = a[j], a[i] }
+func (a sortFileAnnotations) Less(i int, j int) bool { return fileAnnotationCompareTo(a[i], a[j]) < 0 }
+
+// fileAnnotationCompareTo returns a value less than 0 if a < b, a value
+// greater than 0 if a > b, and 0 if a == b.
+func fileAnnotationCompareTo(a FileAnnotation, b FileAnnotation) int {
+	if a == nil && b == nil {
+		return 0
+	}
+	if a == nil && b != nil {
+		return -1
+	}
+	if a != nil && b == nil {
+		return 1
+	}
+	aFileInfo := a.FileInfo()
+	bFileInfo := b.FileInfo()
+	if aFileInfo == nil && bFileInfo != nil {
+		return -1
+	}
+	if aFileInfo != nil && bFileInfo == nil {
+		return 1
+	}
+	if aFileInfo != nil && bFileInfo != nil {
+		if aFileInfo.ExternalPath() < bFileInfo.ExternalPath() {
+			return -1
+		}
+		if aFileInfo.ExternalPath() > bFileInfo.ExternalPath() {
+			return 1
+		}
+	}
+	if a.StartLine() < b.StartLine() {
+		return -1
+	}
+	if a.StartLine() > b.StartLine() {
+		return 1
+	}
+	if a.StartColumn() < b.StartColumn() {
+		return -1
+	}
+	if a.StartColumn() > b.StartColumn() {
+		return 1
+	}
+	if a.Type() < b.Type() {
+		return -1
+	}
+	if a.Type() > b.Type() {
+		return 1
+	}
+	if a.Message() < b.Message() {
+		return -1
+	}
+	if a.Message() > b.Message() {
+		return 1
+	}
+	if a.EndLine() < b.EndLine() {
+		return -1
+	}
+	if a.EndLine() > b.EndLine() {
+		return 1
+	}
+	if a.EndColumn() < b.EndColumn() {
+		return -1
+	}
+	if a.EndColumn() > b.EndColumn() {
+		return 1
+	}
+	return 0
+}
