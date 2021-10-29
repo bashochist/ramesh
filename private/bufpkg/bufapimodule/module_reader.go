@@ -121,4 +121,15 @@ func (m *moduleReader) downloadManifestAndBlobs(
 		connect.NewRequest(&registryv1alpha1.DownloadManifestAndBlobsRequest{
 			Owner:      modulePin.Owner(),
 			Repository: modulePin.Repository(),
-			Ref
+			Reference:  modulePin.Commit(),
+		}),
+	)
+	if err != nil {
+		if connect.CodeOf(err) == connect.CodeNotFound {
+			// Required by ModuleReader interface spec
+			return nil, storage.NewErrNotExist(modulePin.String())
+		}
+		return nil, err
+	}
+	return resp.Msg, err
+}
