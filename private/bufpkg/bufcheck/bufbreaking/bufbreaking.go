@@ -58,3 +58,84 @@ func NewHandler(logger *zap.Logger) Handler {
 // Should only be used for printing.
 func RulesForConfig(config *bufbreakingconfig.Config) ([]bufcheck.Rule, error) {
 	internalConfig, err := internalConfigForConfig(config)
+	if err != nil {
+		return nil, err
+	}
+	return rulesForInternalRules(internalConfig.Rules), nil
+}
+
+// GetAllRulesV1Beta1 gets all known rules.
+//
+// Should only be used for printing.
+func GetAllRulesV1Beta1() ([]bufcheck.Rule, error) {
+	internalConfig, err := internalConfigForConfig(
+		&bufbreakingconfig.Config{
+			Use:     internal.AllIDsForVersionSpec(bufbreakingv1beta1.VersionSpec),
+			Version: bufconfig.V1Beta1Version,
+		},
+	)
+	if err != nil {
+		return nil, err
+	}
+	return rulesForInternalRules(internalConfig.Rules), nil
+}
+
+// GetAllRulesV1 gets all known rules.
+//
+// Should only be used for printing.
+func GetAllRulesV1() ([]bufcheck.Rule, error) {
+	internalConfig, err := internalConfigForConfig(
+		&bufbreakingconfig.Config{
+			Use:     internal.AllIDsForVersionSpec(bufbreakingv1.VersionSpec),
+			Version: bufconfig.V1Version,
+		},
+	)
+	if err != nil {
+		return nil, err
+	}
+	return rulesForInternalRules(internalConfig.Rules), nil
+}
+
+// GetAllRulesAndCategoriesV1Beta1 returns all rules and categories for v1beta1 as a string slice.
+//
+// This is used for validation purposes only.
+func GetAllRulesAndCategoriesV1Beta1() []string {
+	return internal.AllCategoriesAndIDsForVersionSpec(bufbreakingv1beta1.VersionSpec)
+}
+
+// GetAllRulesAndCategoriesV1 returns all rules and categories for v1 as a string slice.
+//
+// This is used for validation purposes only.
+func GetAllRulesAndCategoriesV1() []string {
+	return internal.AllCategoriesAndIDsForVersionSpec(bufbreakingv1.VersionSpec)
+}
+
+func internalConfigForConfig(config *bufbreakingconfig.Config) (*internal.Config, error) {
+	var versionSpec *internal.VersionSpec
+	switch config.Version {
+	case bufconfig.V1Beta1Version:
+		versionSpec = bufbreakingv1beta1.VersionSpec
+	case bufconfig.V1Version:
+		versionSpec = bufbreakingv1.VersionSpec
+	}
+	return internal.ConfigBuilder{
+		Use:                           config.Use,
+		Except:                        config.Except,
+		IgnoreRootPaths:               config.IgnoreRootPaths,
+		IgnoreIDOrCategoryToRootPaths: config.IgnoreIDOrCategoryToRootPaths,
+		IgnoreUnstablePackages:        config.IgnoreUnstablePackages,
+	}.NewConfig(
+		versionSpec,
+	)
+}
+
+func rulesForInternalRules(rules []*internal.Rule) []bufcheck.Rule {
+	if rules == nil {
+		return nil
+	}
+	s := make([]bufcheck.Rule, len(rules))
+	for i, e := range rules {
+		s[i] = e
+	}
+	return s
+}
