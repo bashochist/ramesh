@@ -56,4 +56,79 @@ func NewConfigV1Beta1(externalConfig ExternalConfigV1Beta1) *Config {
 		Use:                           externalConfig.Use,
 		Except:                        externalConfig.Except,
 		IgnoreRootPaths:               externalConfig.Ignore,
-		IgnoreIDOrCategoryTo
+		IgnoreIDOrCategoryToRootPaths: externalConfig.IgnoreOnly,
+		IgnoreUnstablePackages:        externalConfig.IgnoreUnstablePackages,
+		Version:                       v1Beta1Version,
+	}
+}
+
+// NewConfigV1 returns a new Config.
+func NewConfigV1(externalConfig ExternalConfigV1) *Config {
+	return &Config{
+		Use:                           externalConfig.Use,
+		Except:                        externalConfig.Except,
+		IgnoreRootPaths:               externalConfig.Ignore,
+		IgnoreIDOrCategoryToRootPaths: externalConfig.IgnoreOnly,
+		IgnoreUnstablePackages:        externalConfig.IgnoreUnstablePackages,
+		Version:                       v1Version,
+	}
+}
+
+// ConfigForProto returns the Config given the proto.
+func ConfigForProto(protoConfig *breakingv1.Config) *Config {
+	return &Config{
+		Use:                           protoConfig.GetUseIds(),
+		Except:                        protoConfig.GetExceptIds(),
+		IgnoreRootPaths:               protoConfig.GetIgnorePaths(),
+		IgnoreIDOrCategoryToRootPaths: ignoreIDOrCategoryToRootPathsForProto(protoConfig.GetIgnoreIdPaths()),
+		IgnoreUnstablePackages:        protoConfig.GetIgnoreUnstablePackages(),
+		Version:                       protoConfig.GetVersion(),
+	}
+}
+
+// ProtoForConfig takes a *Config and returns the proto representation.
+func ProtoForConfig(config *Config) *breakingv1.Config {
+	return &breakingv1.Config{
+		UseIds:                 config.Use,
+		ExceptIds:              config.Except,
+		IgnorePaths:            config.IgnoreRootPaths,
+		IgnoreIdPaths:          protoForIgnoreIDOrCategoryToRootPaths(config.IgnoreIDOrCategoryToRootPaths),
+		IgnoreUnstablePackages: config.IgnoreUnstablePackages,
+		Version:                config.Version,
+	}
+}
+
+// ExternalConfigV1Beta1 is an external config.
+type ExternalConfigV1Beta1 struct {
+	Use    []string `json:"use,omitempty" yaml:"use,omitempty"`
+	Except []string `json:"except,omitempty" yaml:"except,omitempty"`
+	// IgnoreRootPaths
+	Ignore []string `json:"ignore,omitempty" yaml:"ignore,omitempty"`
+	// IgnoreIDOrCategoryToRootPaths
+	IgnoreOnly             map[string][]string `json:"ignore_only,omitempty" yaml:"ignore_only,omitempty"`
+	IgnoreUnstablePackages bool                `json:"ignore_unstable_packages,omitempty" yaml:"ignore_unstable_packages,omitempty"`
+}
+
+// ExternalConfigV1 is an external config.
+type ExternalConfigV1 struct {
+	Use    []string `json:"use,omitempty" yaml:"use,omitempty"`
+	Except []string `json:"except,omitempty" yaml:"except,omitempty"`
+	// IgnoreRootPaths
+	Ignore []string `json:"ignore,omitempty" yaml:"ignore,omitempty"`
+	// IgnoreIDOrCategoryToRootPaths
+	IgnoreOnly             map[string][]string `json:"ignore_only,omitempty" yaml:"ignore_only,omitempty"`
+	IgnoreUnstablePackages bool                `json:"ignore_unstable_packages,omitempty" yaml:"ignore_unstable_packages,omitempty"`
+}
+
+// ExternalConfigV1Beta1ForConfig takes a *Config and returns the v1beta1 external config representation.
+func ExternalConfigV1Beta1ForConfig(config *Config) ExternalConfigV1Beta1 {
+	return ExternalConfigV1Beta1{
+		Use:                    config.Use,
+		Except:                 config.Except,
+		Ignore:                 config.IgnoreRootPaths,
+		IgnoreOnly:             config.IgnoreIDOrCategoryToRootPaths,
+		IgnoreUnstablePackages: config.IgnoreUnstablePackages,
+	}
+}
+
+// ExternalConfigV1ForCo
