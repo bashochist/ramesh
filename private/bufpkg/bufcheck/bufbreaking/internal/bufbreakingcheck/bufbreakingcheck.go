@@ -643,3 +643,464 @@ var CheckFileSameCcGenericServices = newFilePairCheckFunc(checkFileSameCcGeneric
 func checkFileSameCcGenericServices(add addFunc, corpus *corpus, previousFile protosource.File, file protosource.File) error {
 	return checkFileSameValue(add, strconv.FormatBool(previousFile.CcGenericServices()), strconv.FormatBool(file.CcGenericServices()), file, file.CcGenericServicesLocation(), `option "cc_generic_services"`)
 }
+
+// CheckFileSameJavaGenericServices is a check function.
+var CheckFileSameJavaGenericServices = newFilePairCheckFunc(checkFileSameJavaGenericServices)
+
+func checkFileSameJavaGenericServices(add addFunc, corpus *corpus, previousFile protosource.File, file protosource.File) error {
+	return checkFileSameValue(add, strconv.FormatBool(previousFile.JavaGenericServices()), strconv.FormatBool(file.JavaGenericServices()), file, file.JavaGenericServicesLocation(), `option "java_generic_services"`)
+}
+
+// CheckFileSamePyGenericServices is a check function.
+var CheckFileSamePyGenericServices = newFilePairCheckFunc(checkFileSamePyGenericServices)
+
+func checkFileSamePyGenericServices(add addFunc, corpus *corpus, previousFile protosource.File, file protosource.File) error {
+	return checkFileSameValue(add, strconv.FormatBool(previousFile.PyGenericServices()), strconv.FormatBool(file.PyGenericServices()), file, file.PyGenericServicesLocation(), `option "py_generic_services"`)
+}
+
+// CheckFileSamePhpGenericServices is a check function.
+var CheckFileSamePhpGenericServices = newFilePairCheckFunc(checkFileSamePhpGenericServices)
+
+func checkFileSamePhpGenericServices(add addFunc, corpus *corpus, previousFile protosource.File, file protosource.File) error {
+	return checkFileSameValue(add, strconv.FormatBool(previousFile.PhpGenericServices()), strconv.FormatBool(file.PhpGenericServices()), file, file.PhpGenericServicesLocation(), `option "php_generic_services"`)
+}
+
+// CheckFileSameCcEnableArenas is a check function.
+var CheckFileSameCcEnableArenas = newFilePairCheckFunc(checkFileSameCcEnableArenas)
+
+func checkFileSameCcEnableArenas(add addFunc, corpus *corpus, previousFile protosource.File, file protosource.File) error {
+	return checkFileSameValue(add, strconv.FormatBool(previousFile.CcEnableArenas()), strconv.FormatBool(file.CcEnableArenas()), file, file.CcEnableArenasLocation(), `option "cc_enable_arenas"`)
+}
+
+// CheckFileSameSyntax is a check function.
+var CheckFileSameSyntax = newFilePairCheckFunc(checkFileSameSyntax)
+
+func checkFileSameSyntax(add addFunc, corpus *corpus, previousFile protosource.File, file protosource.File) error {
+	previousSyntax := previousFile.Syntax()
+	if previousSyntax == protosource.SyntaxUnspecified {
+		previousSyntax = protosource.SyntaxProto2
+	}
+	syntax := file.Syntax()
+	if syntax == protosource.SyntaxUnspecified {
+		syntax = protosource.SyntaxProto2
+	}
+	return checkFileSameValue(add, previousSyntax.String(), syntax.String(), file, file.SyntaxLocation(), `syntax`)
+}
+
+func checkFileSameValue(add addFunc, previousValue interface{}, value interface{}, file protosource.File, location protosource.Location, name string) error {
+	if previousValue != value {
+		add(file, nil, location, `File %s changed from %q to %q.`, name, previousValue, value)
+	}
+	return nil
+}
+
+// CheckMessageNoDelete is a check function.
+var CheckMessageNoDelete = newFilePairCheckFunc(checkMessageNoDelete)
+
+func checkMessageNoDelete(add addFunc, corpus *corpus, previousFile protosource.File, file protosource.File) error {
+	previousNestedNameToMessage, err := protosource.NestedNameToMessage(previousFile)
+	if err != nil {
+		return err
+	}
+	nestedNameToMessage, err := protosource.NestedNameToMessage(file)
+	if err != nil {
+		return err
+	}
+	for previousNestedName := range previousNestedNameToMessage {
+		if _, ok := nestedNameToMessage[previousNestedName]; !ok {
+			descriptor, location := getDescriptorAndLocationForDeletedMessage(file, nestedNameToMessage, previousNestedName)
+			add(descriptor, nil, location, `Previously present message %q was deleted from file.`, previousNestedName)
+		}
+	}
+	return nil
+}
+
+// CheckMessageNoRemoveStandardDescriptorAccessor is a check function.
+var CheckMessageNoRemoveStandardDescriptorAccessor = newMessagePairCheckFunc(checkMessageNoRemoveStandardDescriptorAccessor)
+
+func checkMessageNoRemoveStandardDescriptorAccessor(add addFunc, corpus *corpus, previousMessage protosource.Message, message protosource.Message) error {
+	previous := strconv.FormatBool(previousMessage.NoStandardDescriptorAccessor())
+	current := strconv.FormatBool(message.NoStandardDescriptorAccessor())
+	if previous == "false" && current == "true" {
+		add(message, nil, message.NoStandardDescriptorAccessorLocation(), `Message option "no_standard_descriptor_accessor" changed from %q to %q.`, previous, current)
+	}
+	return nil
+}
+
+// CheckMessageSameMessageSetWireFormat is a check function.
+var CheckMessageSameMessageSetWireFormat = newMessagePairCheckFunc(checkMessageSameMessageSetWireFormat)
+
+func checkMessageSameMessageSetWireFormat(add addFunc, corpus *corpus, previousMessage protosource.Message, message protosource.Message) error {
+	previous := strconv.FormatBool(previousMessage.MessageSetWireFormat())
+	current := strconv.FormatBool(message.MessageSetWireFormat())
+	if previous != current {
+		add(message, nil, message.MessageSetWireFormatLocation(), `Message option "message_set_wire_format" changed from %q to %q.`, previous, current)
+	}
+	return nil
+}
+
+// CheckMessageSameRequiredFields is a check function.
+var CheckMessageSameRequiredFields = newMessagePairCheckFunc(checkMessageSameRequiredFields)
+
+func checkMessageSameRequiredFields(add addFunc, corpus *corpus, previousMessage protosource.Message, message protosource.Message) error {
+	previousNumberToRequiredField, err := protosource.NumberToMessageFieldForLabel(
+		previousMessage,
+		descriptorpb.FieldDescriptorProto_LABEL_REQUIRED,
+	)
+	if err != nil {
+		return err
+	}
+	numberToRequiredField, err := protosource.NumberToMessageFieldForLabel(
+		message,
+		descriptorpb.FieldDescriptorProto_LABEL_REQUIRED,
+	)
+	if err != nil {
+		return err
+	}
+	for previousNumber := range previousNumberToRequiredField {
+		if _, ok := numberToRequiredField[previousNumber]; !ok {
+			// we attach the error to the message as the field no longer exists
+			add(message, nil, message.Location(), `Message %q had required field "%d" deleted. Required fields must always be sent, so if one side does not know about the required field, this will result in a breakage.`, previousMessage.Name(), previousNumber)
+		}
+	}
+	for number, requiredField := range numberToRequiredField {
+		if _, ok := previousNumberToRequiredField[number]; !ok {
+			// we attach the error to the added required field
+			add(message, nil, requiredField.Location(), `Message %q had required field "%d" added. Required fields must always be sent, so if one side does not know about the required field, this will result in a breakage.`, message.Name(), number)
+		}
+	}
+	return nil
+}
+
+// CheckOneofNoDelete is a check function.
+var CheckOneofNoDelete = newMessagePairCheckFunc(checkOneofNoDelete)
+
+func checkOneofNoDelete(add addFunc, corpus *corpus, previousMessage protosource.Message, message protosource.Message) error {
+	previousNameToOneof, err := protosource.NameToMessageOneof(previousMessage)
+	if err != nil {
+		return err
+	}
+	nameToOneof, err := protosource.NameToMessageOneof(message)
+	if err != nil {
+		return err
+	}
+	for previousName := range previousNameToOneof {
+		if _, ok := nameToOneof[previousName]; !ok {
+			add(message, nil, message.Location(), `Previously present oneof %q on message %q was deleted.`, previousName, message.Name())
+		}
+	}
+	return nil
+}
+
+// CheckPackageEnumNoDelete is a check function.
+var CheckPackageEnumNoDelete = newFilesCheckFunc(checkPackageEnumNoDelete)
+
+func checkPackageEnumNoDelete(add addFunc, corpus *corpus) error {
+	previousPackageToNestedNameToEnum, err := protosource.PackageToNestedNameToEnum(corpus.previousFiles...)
+	if err != nil {
+		return err
+	}
+	packageToNestedNameToEnum, err := protosource.PackageToNestedNameToEnum(corpus.files...)
+	if err != nil {
+		return err
+	}
+	// caching across loops
+	var filePathToFile map[string]protosource.File
+	for previousPackage, previousNestedNameToEnum := range previousPackageToNestedNameToEnum {
+		if nestedNameToEnum, ok := packageToNestedNameToEnum[previousPackage]; ok {
+			for previousNestedName, previousEnum := range previousNestedNameToEnum {
+				if _, ok := nestedNameToEnum[previousNestedName]; !ok {
+					// if cache not populated, populate it
+					if filePathToFile == nil {
+						filePathToFile, err = protosource.FilePathToFile(corpus.files...)
+						if err != nil {
+							return err
+						}
+					}
+					// Check if the file still exists.
+					file, ok := filePathToFile[previousEnum.File().Path()]
+					if ok {
+						// File exists, try to get a location to attach the error to.
+						descriptor, location, err := getDescriptorAndLocationForDeletedEnum(file, previousNestedName)
+						if err != nil {
+							return err
+						}
+						add(descriptor, nil, location, `Previously present enum %q was deleted from package %q.`, previousNestedName, previousPackage)
+					} else {
+						// File does not exist, we don't know where the enum was deleted from.
+						// Add the previous enum to check for ignores. This means that if
+						// ignore_unstable_packages is set, this will be triggered if the
+						// previous enum was in an unstable package.
+						add(nil, []protosource.Descriptor{previousEnum}, nil, `Previously present enum %q was deleted from package %q.`, previousNestedName, previousPackage)
+					}
+				}
+			}
+		}
+	}
+	return nil
+}
+
+// CheckPackageMessageNoDelete is a check function.
+var CheckPackageMessageNoDelete = newFilesCheckFunc(checkPackageMessageNoDelete)
+
+func checkPackageMessageNoDelete(add addFunc, corpus *corpus) error {
+	previousPackageToNestedNameToMessage, err := protosource.PackageToNestedNameToMessage(corpus.previousFiles...)
+	if err != nil {
+		return err
+	}
+	packageToNestedNameToMessage, err := protosource.PackageToNestedNameToMessage(corpus.files...)
+	if err != nil {
+		return err
+	}
+	// caching across loops
+	var filePathToFile map[string]protosource.File
+	for previousPackage, previousNestedNameToMessage := range previousPackageToNestedNameToMessage {
+		if nestedNameToMessage, ok := packageToNestedNameToMessage[previousPackage]; ok {
+			for previousNestedName, previousMessage := range previousNestedNameToMessage {
+				if _, ok := nestedNameToMessage[previousNestedName]; !ok {
+					// if cache not populated, populate it
+					if filePathToFile == nil {
+						filePathToFile, err = protosource.FilePathToFile(corpus.files...)
+						if err != nil {
+							return err
+						}
+					}
+					// Check if the file still exists.
+					file, ok := filePathToFile[previousMessage.File().Path()]
+					if ok {
+						// File exists, try to get a location to attach the error to.
+						descriptor, location := getDescriptorAndLocationForDeletedMessage(file, nestedNameToMessage, previousNestedName)
+						add(descriptor, nil, location, `Previously present message %q was deleted from package %q.`, previousNestedName, previousPackage)
+					} else {
+						// File does not exist, we don't know where the message was deleted from.
+						// Add the previous message to check for ignores. This means that if
+						// ignore_unstable_packages is set, this will be triggered if the
+						// previous message was in an unstable package.
+						add(nil, []protosource.Descriptor{previousMessage}, nil, `Previously present message %q was deleted from package %q.`, previousNestedName, previousPackage)
+					}
+				}
+			}
+		}
+	}
+	return nil
+}
+
+// CheckPackageNoDelete is a check function.
+var CheckPackageNoDelete = newFilesCheckFunc(checkPackageNoDelete)
+
+func checkPackageNoDelete(add addFunc, corpus *corpus) error {
+	previousPackageToFiles, err := protosource.PackageToFiles(corpus.previousFiles...)
+	if err != nil {
+		return err
+	}
+	packageToFiles, err := protosource.PackageToFiles(corpus.files...)
+	if err != nil {
+		return err
+	}
+	for previousPackage, previousFiles := range previousPackageToFiles {
+		if _, ok := packageToFiles[previousPackage]; !ok {
+			// Add previous descriptors in the same package as other descriptors to check
+			// for ignores. This will mean that if we have ignore_unstable_packages set,
+			// any one of these files will cause the ignore to happen. Note that we
+			// could probably just attach a single file, but we do this in case we
+			// have other ways to ignore in the future.
+			previousDescriptors := make([]protosource.Descriptor, len(previousFiles))
+			for i, previousFile := range previousFiles {
+				previousDescriptors[i] = previousFile
+			}
+			add(nil, previousDescriptors, nil, `Previously present package %q was deleted.`, previousPackage)
+		}
+	}
+	return nil
+}
+
+// CheckPackageServiceNoDelete is a check function.
+var CheckPackageServiceNoDelete = newFilesCheckFunc(checkPackageServiceNoDelete)
+
+func checkPackageServiceNoDelete(add addFunc, corpus *corpus) error {
+	previousPackageToNameToService, err := protosource.PackageToNameToService(corpus.previousFiles...)
+	if err != nil {
+		return err
+	}
+	packageToNameToService, err := protosource.PackageToNameToService(corpus.files...)
+	if err != nil {
+		return err
+	}
+	// caching across loops
+	var filePathToFile map[string]protosource.File
+	for previousPackage, previousNameToService := range previousPackageToNameToService {
+		if nameToService, ok := packageToNameToService[previousPackage]; ok {
+			for previousName, previousService := range previousNameToService {
+				if _, ok := nameToService[previousName]; !ok {
+					// if cache not populated, populate it
+					if filePathToFile == nil {
+						filePathToFile, err = protosource.FilePathToFile(corpus.files...)
+						if err != nil {
+							return err
+						}
+					}
+					// Check if the file still exists.
+					file, ok := filePathToFile[previousService.File().Path()]
+					if ok {
+						// File exists.
+						add(file, nil, nil, `Previously present service %q was deleted from package %q.`, previousName, previousPackage)
+					} else {
+						// File does not exist, we don't know where the service was deleted from.
+						// Add the previous service to check for ignores. This means that if
+						// ignore_unstable_packages is set, this will be triggered if the
+						// previous service was in an unstable package.
+						// TODO: find the service and print that this moved?
+						add(nil, []protosource.Descriptor{previousService}, nil, `Previously present service %q was deleted from package %q.`, previousName, previousPackage)
+					}
+				}
+			}
+		}
+	}
+	return nil
+}
+
+// CheckReservedEnumNoDelete is a check function.
+var CheckReservedEnumNoDelete = newEnumPairCheckFunc(checkReservedEnumNoDelete)
+
+func checkReservedEnumNoDelete(add addFunc, corpus *corpus, previousEnum protosource.Enum, enum protosource.Enum) error {
+	previousRanges := previousEnum.ReservedTagRanges()
+	ranges := enum.ReservedTagRanges()
+	if isSubset, missing := protosource.CheckTagRangeIsSubset(ranges, previousRanges); !isSubset {
+		for _, tagRange := range missing {
+			add(enum, nil, enum.Location(), `Previously present reserved range %q on enum %q was deleted.`, protosource.TagRangeString(tagRange), enum.Name())
+		}
+	}
+	previousValueToReservedName := protosource.ValueToReservedName(previousEnum)
+	valueToReservedName := protosource.ValueToReservedName(enum)
+	for previousValue := range previousValueToReservedName {
+		if _, ok := valueToReservedName[previousValue]; !ok {
+			add(enum, nil, enum.Location(), `Previously present reserved name %q on enum %q was deleted.`, previousValue, enum.Name())
+		}
+	}
+	return nil
+}
+
+// CheckReservedMessageNoDelete is a check function.
+var CheckReservedMessageNoDelete = newMessagePairCheckFunc(checkReservedMessageNoDelete)
+
+func checkReservedMessageNoDelete(add addFunc, corpus *corpus, previousMessage protosource.Message, message protosource.Message) error {
+	previousRanges := previousMessage.ReservedTagRanges()
+	ranges := message.ReservedTagRanges()
+	if isSubset, missing := protosource.CheckTagRangeIsSubset(ranges, previousRanges); !isSubset {
+		for _, tagRange := range missing {
+			add(message, nil, message.Location(), `Previously present reserved range %q on message %q was deleted.`, protosource.TagRangeString(tagRange), message.Name())
+		}
+	}
+	previousValueToReservedName := protosource.ValueToReservedName(previousMessage)
+	valueToReservedName := protosource.ValueToReservedName(message)
+	for previousValue := range previousValueToReservedName {
+		if _, ok := valueToReservedName[previousValue]; !ok {
+			add(message, nil, message.Location(), `Previously present reserved name %q on message %q was deleted.`, previousValue, message.Name())
+		}
+	}
+	return nil
+}
+
+// CheckRPCNoDelete is a check function.
+var CheckRPCNoDelete = newServicePairCheckFunc(checkRPCNoDelete)
+
+func checkRPCNoDelete(add addFunc, corpus *corpus, previousService protosource.Service, service protosource.Service) error {
+	previousNameToMethod, err := protosource.NameToMethod(previousService)
+	if err != nil {
+		return err
+	}
+	nameToMethod, err := protosource.NameToMethod(service)
+	if err != nil {
+		return err
+	}
+	for previousName := range previousNameToMethod {
+		if _, ok := nameToMethod[previousName]; !ok {
+			add(service, nil, service.Location(), `Previously present RPC %q on service %q was deleted.`, previousName, service.Name())
+		}
+	}
+	return nil
+}
+
+// CheckRPCSameClientStreaming is a check function.
+var CheckRPCSameClientStreaming = newMethodPairCheckFunc(checkRPCSameClientStreaming)
+
+func checkRPCSameClientStreaming(add addFunc, corpus *corpus, previousMethod protosource.Method, method protosource.Method) error {
+	if previousMethod.ClientStreaming() != method.ClientStreaming() {
+		previous := "streaming"
+		current := "unary"
+		if method.ClientStreaming() {
+			previous = "unary"
+			current = "streaming"
+		}
+		add(method, nil, method.Location(), `RPC %q on service %q changed from client %s to client %s.`, method.Name(), method.Service().Name(), previous, current)
+	}
+	return nil
+}
+
+// CheckRPCSameIdempotencyLevel is a check function.
+var CheckRPCSameIdempotencyLevel = newMethodPairCheckFunc(checkRPCSameIdempotencyLevel)
+
+func checkRPCSameIdempotencyLevel(add addFunc, corpus *corpus, previousMethod protosource.Method, method protosource.Method) error {
+	previous := previousMethod.IdempotencyLevel()
+	current := method.IdempotencyLevel()
+	if previous != current {
+		add(method, nil, method.IdempotencyLevelLocation(), `RPC %q on service %q changed option "idempotency_level" from %q to %q.`, method.Name(), method.Service().Name(), previous.String(), current.String())
+	}
+	return nil
+}
+
+// CheckRPCSameRequestType is a check function.
+var CheckRPCSameRequestType = newMethodPairCheckFunc(checkRPCSameRequestType)
+
+func checkRPCSameRequestType(add addFunc, corpus *corpus, previousMethod protosource.Method, method protosource.Method) error {
+	if previousMethod.InputTypeName() != method.InputTypeName() {
+		add(method, nil, method.InputTypeLocation(), `RPC %q on service %q changed request type from %q to %q.`, method.Name(), method.Service().Name(), previousMethod.InputTypeName(), method.InputTypeName())
+	}
+	return nil
+}
+
+// CheckRPCSameResponseType is a check function.
+var CheckRPCSameResponseType = newMethodPairCheckFunc(checkRPCSameResponseType)
+
+func checkRPCSameResponseType(add addFunc, corpus *corpus, previousMethod protosource.Method, method protosource.Method) error {
+	if previousMethod.OutputTypeName() != method.OutputTypeName() {
+		add(method, nil, method.OutputTypeLocation(), `RPC %q on service %q changed response type from %q to %q.`, method.Name(), method.Service().Name(), previousMethod.OutputTypeName(), method.OutputTypeName())
+	}
+	return nil
+}
+
+// CheckRPCSameServerStreaming is a check function.
+var CheckRPCSameServerStreaming = newMethodPairCheckFunc(checkRPCSameServerStreaming)
+
+func checkRPCSameServerStreaming(add addFunc, corpus *corpus, previousMethod protosource.Method, method protosource.Method) error {
+	if previousMethod.ServerStreaming() != method.ServerStreaming() {
+		previous := "streaming"
+		current := "unary"
+		if method.ServerStreaming() {
+			previous = "unary"
+			current = "streaming"
+		}
+		add(method, nil, method.Location(), `RPC %q on service %q changed from server %s to server %s.`, method.Name(), method.Service().Name(), previous, current)
+	}
+	return nil
+}
+
+// CheckServiceNoDelete is a check function.
+var CheckServiceNoDelete = newFilePairCheckFunc(checkServiceNoDelete)
+
+func checkServiceNoDelete(add addFunc, corpus *corpus, previousFile protosource.File, file protosource.File) error {
+	previousNameToService, err := protosource.NameToService(previousFile)
+	if err != nil {
+		return err
+	}
+	nameToService, err := protosource.NameToService(file)
+	if err != nil {
+		return err
+	}
+	for previousName := range previousNameToService {
+		if _, ok := nameToService[previousName]; !ok {
+			add(file, nil, nil, `Previously present service %q was deleted from file.`, previousName)
+		}
+	}
+	return nil
+}
