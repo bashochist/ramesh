@@ -214,3 +214,12 @@ func protoForIgnoreIDOrCategoryToRootPaths(ignoreIDOrCategoryToRootPaths map[str
 	if ignoreIDOrCategoryToRootPaths == nil {
 		return nil
 	}
+	idPathsProto := make([]*breakingv1.IDPaths, 0, len(ignoreIDOrCategoryToRootPaths))
+	for id, paths := range ignoreIDOrCategoryToRootPaths {
+		idPathsProto = append(idPathsProto, &breakingv1.IDPaths{
+			Id:    id,
+			Paths: paths,
+		})
+	}
+	return idPathsProto
+}
