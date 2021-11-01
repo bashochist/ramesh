@@ -131,4 +131,86 @@ func ExternalConfigV1Beta1ForConfig(config *Config) ExternalConfigV1Beta1 {
 	}
 }
 
-// ExternalConfigV1ForCo
+// ExternalConfigV1ForConfig takes a *Config and returns the v1 external config representation.
+func ExternalConfigV1ForConfig(config *Config) ExternalConfigV1 {
+	return ExternalConfigV1{
+		Use:                    config.Use,
+		Except:                 config.Except,
+		Ignore:                 config.IgnoreRootPaths,
+		IgnoreOnly:             config.IgnoreIDOrCategoryToRootPaths,
+		IgnoreUnstablePackages: config.IgnoreUnstablePackages,
+	}
+}
+
+// BytesForConfig takes a *Config and returns the deterministic []byte representation.
+// We use an unexported intermediary JSON form and sort all fields to ensure that the bytes
+// associated with the *Config are deterministic.
+func BytesForConfig(config *Config) ([]byte, error) {
+	if config == nil {
+		return nil, nil
+	}
+	return json.Marshal(configToJSON(config))
+}
+
+type configJSON struct {
+	Use                           []string      `json:"use,omitempty"`
+	Except                        []string      `json:"except,omitempty"`
+	IgnoreRootPaths               []string      `json:"ignore_root_paths,omitempty"`
+	IgnoreIDOrCategoryToRootPaths []idPathsJSON `json:"ignore_id_to_root_paths,omitempty"`
+	IgnoreUnstablePackages        bool          `json:"ignore_unstable_packages,omitempty"`
+	Version                       string        `json:"version,omitempty"`
+}
+
+type idPathsJSON struct {
+	ID    string   `json:"id,omitempty"`
+	Paths []string `json:"paths,omitempty"`
+}
+
+func configToJSON(config *Config) *configJSON {
+	ignoreIDPathsJSON := make([]idPathsJSON, 0, len(config.IgnoreIDOrCategoryToRootPaths))
+	for ignoreID, rootPaths := range config.IgnoreIDOrCategoryToRootPaths {
+		rootPathsCopy := make([]string, len(rootPaths))
+		copy(rootPathsCopy, rootPaths)
+		sort.Strings(rootPathsCopy)
+		ignoreIDPathsJSON = append(ignoreIDPathsJSON, idPathsJSON{
+			ID:    ignoreID,
+			Paths: rootPathsCopy,
+		})
+	}
+	sort.Slice(ignoreIDPathsJSON, func(i, j int) bool { return ignoreIDPathsJSON[i].ID < ignoreIDPathsJSON[j].ID })
+	// We should not be sorting in place for the config structure, since it will mutate the
+	// underlying config ordering.
+	use := make([]string, len(config.Use))
+	copy(use, config.Use)
+	except := make([]string, len(config.Except))
+	copy(except, config.Except)
+	ignoreRootPaths := make([]string, len(config.IgnoreRootPaths))
+	copy(ignoreRootPaths, config.IgnoreRootPaths)
+	sort.Strings(use)
+	sort.Strings(except)
+	sort.Strings(ignoreRootPaths)
+	return &configJSON{
+		Use:                           use,
+		Except:                        except,
+		IgnoreRootPaths:               ignoreRootPaths,
+		IgnoreIDOrCategoryToRootPaths: ignoreIDPathsJSON,
+		IgnoreUnstablePackages:        config.IgnoreUnstablePackages,
+		Version:                       config.Version,
+	}
+}
+
+func ignoreIDOrCategoryToRootPathsForProto(protoIgnoreIDPaths []*breakingv1.IDPaths) map[string][]string {
+	if protoIgnoreIDPaths == nil {
+		return nil
+	}
+	ignoreIDOrCategoryToRootPaths := make(map[string][]string)
+	for _, protoIgnoreIDPath := range protoIgnoreIDPaths {
+		ignoreIDOrCategoryToRootPaths[protoIgnoreIDPath.GetId()] = protoIgnoreIDPath.GetPaths()
+	}
+	return ignoreIDOrCategoryToRootPaths
+}
+
+func protoForIgnoreIDOrCategoryToRootPaths(ignoreIDOrCategoryToRootPaths map[string][]string) []*breakingv1.IDPaths {
+	if ignoreIDOrCategoryToRootPaths == nil {
+		return nil
+	}
