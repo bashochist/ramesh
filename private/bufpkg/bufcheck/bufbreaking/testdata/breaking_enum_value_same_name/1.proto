@@ -3,17 +3,17 @@ syntax = "proto3";
 package a;
 
 enum Two {
-  reserved "TWO_TWO";
-
   TWO_UNSPECIFIED = 0;
+  TWO_ONE = 1;
+  TWO_THREE = 2;
 }
 
 message Three {
   message Four {
     enum Five {
-      reserved "FIVE_TWO";
-
       FIVE_UNSPECIFIED = 0;
+      FIVE_ONE = 1;
+      FIVE_THREE = 2;
     }
     enum Six {
       SIX_UNSPECIFIED = 0;
@@ -22,9 +22,9 @@ message Three {
     }
   }
   enum Seven {
-    reserved "SEVEN_TWO";
-
     SEVEN_UNSPECIFIED = 0;
+    SEVEN_ONE = 1;
+    SEVEN_THREE = 2;
   }
   enum Eight {
     EIGHT_UNSPECIFIED = 0;
@@ -41,5 +41,16 @@ enum Ten {
 }
 
 enum Eleven {
+  option allow_alias = true;
   ELEVEN_UNSPECIFIED = 0;
+  ELEVEN_ONE = 1;
+  ELEVEN_THREE = 1;
+}
+
+enum Twelve {
+  option allow_alias = true;
+  TWELVE_UNSPECIFIED = 0;
+  TWELVE_ONE = 1;
+  TWELVE_TWO = 1;
+  TWELVE_THREE = 1;
 }

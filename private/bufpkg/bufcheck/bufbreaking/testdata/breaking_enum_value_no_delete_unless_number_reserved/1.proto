@@ -1,9 +1,10 @@
+
 syntax = "proto3";
 
 package a;
 
 enum Two {
-  reserved "TWO_TWO";
+  reserved 2 to 6;
 
   TWO_UNSPECIFIED = 0;
 }
@@ -11,7 +12,7 @@ enum Two {
 message Three {
   message Four {
     enum Five {
-      reserved "FIVE_TWO";
+      reserved 2 to 6;
 
       FIVE_UNSPECIFIED = 0;
     }
@@ -22,7 +23,7 @@ message Three {
     }
   }
   enum Seven {
-    reserved "SEVEN_TWO";
+    reserved 2 to 6;
 
     SEVEN_UNSPECIFIED = 0;
   }
