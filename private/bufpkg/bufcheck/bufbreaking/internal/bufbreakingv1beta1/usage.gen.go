@@ -1,3 +1,4 @@
+
 // Copyright 2020-2023 Buf Technologies, Inc.
 //
 // Licensed under the Apache License, Version 2.0 (the "License");
@@ -12,16 +13,8 @@
 // See the License for the specific language governing permissions and
 // limitations under the License.
 
-// Package bufbreakingv1beta1 contains the VersionSpec for v1beta1.
-//
-// It uses bufbreakingcheck and bufbreakingbuild.
+// Generated. DO NOT EDIT.
+
 package bufbreakingv1beta1
 
-import "github.com/bufbuild/buf/private/bufpkg/bufcheck/internal"
-
-// VersionSpec is the version specification for v1beta1.
-var VersionSpec = &internal.VersionSpec{
-	RuleBuilders:      v1beta1RuleBuilders,
-	DefaultCategories: v1beta1DefaultCategories,
-	IDToCategories:    v1beta1IDToCategories,
-}
+import _ "github.com/bufbuild/buf/private/usage"
