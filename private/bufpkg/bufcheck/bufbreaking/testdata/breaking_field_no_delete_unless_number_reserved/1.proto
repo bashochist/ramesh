@@ -1,0 +1,12 @@
+syntax = "proto3";
+
+package a;
+
+message Two {
+  reserved 3 ;
+
+  int32 one = 1;
+}
+
+message Three {
+  message Four 
