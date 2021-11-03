@@ -46,4 +46,6 @@ message Nine2 {
 }
 
 message Nine {
-  optional int64 one = 1 [jstype = 
+  optional int64 one = 1 [jstype = JS_NUMBER];
+  optional int64 two = 2;
+}
