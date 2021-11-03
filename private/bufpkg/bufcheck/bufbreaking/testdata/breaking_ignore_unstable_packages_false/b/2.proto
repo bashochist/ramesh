@@ -1,0 +1,10 @@
+syntax = "proto3";
+
+package b;
+
+enum One2 {
+  ONE_2_UNSPECIFIED = 0;
+}
+
+enum Two2 {
+  TWO_2_UNSPECIFIED 

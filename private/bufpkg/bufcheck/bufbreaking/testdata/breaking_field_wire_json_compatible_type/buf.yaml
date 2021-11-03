@@ -1,0 +1,5 @@
+
+version: v1
+breaking:
+  use:
+    - FIELD_WIRE_JSON_COMPATIBLE_TYPE

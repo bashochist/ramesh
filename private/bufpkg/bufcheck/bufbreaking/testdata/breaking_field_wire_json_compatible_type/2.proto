@@ -56,4 +56,34 @@ enum Baz {
 
 message WithCompatibleEnums {
   enum Foo {
-    FOO_UNSPECI
+    FOO_UNSPECIFIED = 0;
+    FOO_ONE = 1;
+    FOO_TWO = 2;
+  }
+  Foo foo = 1;
+  Baz baz = 2;
+}
+
+enum Bat {
+  BAT_UNSPECIFIED = 0;
+  BAT_TWO = 1;
+}
+
+message WithIncompatibleEnums {
+  enum Bar {
+    BAR_UNSPECIFIED = 0;
+    BAR_TWO = 1;
+  }
+  enum Ban {
+    BAN_UNSPECIFIED = 0;
+    BAN_ONE = 1;
+  }
+  Bar bar = 1;
+  Bat bat = 2;
+  Ban ban = 3;
+}
+
+message StringBytes {
+  bytes string_field_1 = 1;
+  string bytes_field_1 = 2;
+}
