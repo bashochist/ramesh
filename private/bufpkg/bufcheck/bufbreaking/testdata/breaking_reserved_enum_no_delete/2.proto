@@ -1,0 +1,47 @@
+syntax = "proto3";
+
+package a;
+
+enum One {
+  reserved 3 to 5, 100 to 200;
+  reserved 300, 301, 1000 to max;
+  reserved "foo", "bar";
+  reserved "baz";
+  ONE_UNSPECIFIED = 0;
+  ONE_ONE = 1;
+  ONE_TWO = 2;
+}
+
+enum One2 {
+  reserved 3 to 5, 100 to 200;
+  reserved 300, 301, 1000 to max;
+  reserved "foo", "bar";
+  reserved "baz";
+  ONE2_UNSPECIFIED = 0;
+  ONE2_ONE = 1;
+  ONE2_TWO = 2;
+}
+
+enum Two2 {
+  reserved 3 to 5, 100 to 200;
+  reserved 300, 301, 1000 to max;
+  reserved "foo", "bar";
+  reserved "baz";
+  TWO2_UNSPECIFIED = 0;
+  TWO2_ONE = 1;
+  TWO2_TWO = 2;
+}
+
+message Three2 {
+  message Four2 {
+    enum Five2 {
+      reserved 3 to 5, 100 to 200;
+      reserved 300, 301, 1000 to max;
+      reserved "foo", "bar";
+      reserved "baz";
+      FIVE_UNSPECIFIED = 0;
+      FIVE_ONE = 1;
+      FIVE_TWO = 2;
+    }
+    enum Six2 {
+      reserved 

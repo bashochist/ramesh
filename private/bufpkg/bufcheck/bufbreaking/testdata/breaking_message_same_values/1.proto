@@ -21,4 +21,8 @@ message Three {
     option message_set_wire_format = false;
   }
   message Eight {
-    option message_set_
+    option message_set_wire_format = true;
+    extensions 4 to max;
+  }
+  option no_standard_descriptor_accessor = true;
+}
