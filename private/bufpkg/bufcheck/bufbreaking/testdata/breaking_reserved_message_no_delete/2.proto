@@ -68,3 +68,29 @@ message Three2 {
     reserved "foo", "bar";
     reserved "baz";
     int32 one = 1;
+    int32 two = 2;
+    int32 three = 3;
+  }
+  int32 one = 1;
+  int32 two = 2;
+  int32 three = 3;
+}
+
+message Nine2 {
+  reserved 4 to 5, 100 to 200;
+  reserved 300, 301, 1000 to max;
+  reserved "foo", "bar";
+  reserved "baz";
+  int32 one = 1;
+  int32 two = 2;
+  int32 three = 3;
+}
+
+message Nine {
+  reserved 100 to 200;
+  reserved 300;
+  reserved "foo";
+  int32 one = 1;
+  int32 two = 2;
+  int32 three = 3;
+}

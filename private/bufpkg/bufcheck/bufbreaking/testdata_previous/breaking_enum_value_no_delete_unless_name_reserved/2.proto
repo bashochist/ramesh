@@ -1,0 +1,25 @@
+syntax = "proto3";
+
+package a;
+
+enum One2 {
+  ONE2_UNSPECIFIED = 0;
+  ONE2_ONE = 1;
+  ONE2_TWO = 2;
+}
+
+enum Two2 {
+  TWO2_UNSPECIFIED = 0;
+  TWO2_ONE = 1;
+  TWO2_TWO = 2;
+}
+
+message Three2 {
+  message Four2 {
+    enum Five2 {
+      FIVE_UNSPECIFIED = 0;
+      FIVE_ONE = 1;
+      FIVE_TWO = 2;
+    }
+    enum Six2 {
+      SIX_UNSPECIFIED = 0
