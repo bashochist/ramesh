@@ -2,37 +2,37 @@ syntax = "proto3";
 
 package a;
 
-message One {
+message One2 {
   int32 one = 1;
   int32 two = 2;
   int32 three = 3;
 }
 
-message Two {
+message Two2 {
   int32 one = 1;
   int32 two = 2;
   int32 three = 3;
 }
 
-message Three {
-  message Four {
-    message Five {
+message Three2 {
+  message Four2 {
+    message Five2 {
       int32 one = 1;
       int32 two = 2;
       int32 three = 3;
     }
-    message Six {
+    message Six2 {
       int32 one = 1;
       int32 two = 2;
       int32 three = 3;
     }
   }
-  message Seven {
+  message Seven2 {
     int32 one = 1;
     int32 two = 2;
     int32 three = 3;
   }
-  message Eight {
+  message Eight2 {
     int32 one = 1;
     int32 two = 2;
     int32 three = 3;
@@ -42,7 +42,7 @@ message Three {
   int32 three = 3;
 }
 
-message Nine {
+message Nine2 {
   int32 one = 1;
   int32 two = 2;
   int32 three = 3;

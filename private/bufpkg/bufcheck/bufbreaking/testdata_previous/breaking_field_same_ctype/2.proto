@@ -1,0 +1,16 @@
+syntax = "proto2";
+
+package a;
+
+message One2 {
+  optional string one = 1 [ctype = STRING_PIECE];
+  required string two = 2 [ctype = CORD];
+}
+
+message Two2 {
+  optional string one = 1 [ctype = STRING_PIECE];
+  required string two = 2 [ctype = CORD];
+}
+
+message Three2 {
+ 
