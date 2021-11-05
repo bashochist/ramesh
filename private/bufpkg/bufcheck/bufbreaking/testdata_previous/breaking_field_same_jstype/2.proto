@@ -1,0 +1,11 @@
+syntax = "proto2";
+
+package a;
+
+message One2 {
+  optional int64 one = 1 [jstype = JS_NUMBER];
+  required int64 two = 2 [jstype = JS_STRING];
+}
+
+message Two2 {
+  optional int64 one = 1 [jstyp
