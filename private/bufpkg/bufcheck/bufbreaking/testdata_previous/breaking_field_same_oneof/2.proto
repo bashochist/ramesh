@@ -69,3 +69,13 @@ message Three2 {
   }
   int32 three = 3;
 }
+
+message Nine2 {
+  oneof foo {
+  int32 one = 1;
+  }
+  oneof bar {
+  int32 two = 2;
+  }
+  int32 three = 3;
+}
