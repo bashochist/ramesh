@@ -1,0 +1,16 @@
+syntax = "proto3";
+
+package a.v1beta1;
+
+enum One {
+  ONE_UNSPECIFIED = 0;
+}
+
+enum Two {
+  TWO_UNSPECIFIED = 0;
+}
+
+message Three {
+  message Four {
+    enum Five {
+      FIVE_UNSPECIFIED 
