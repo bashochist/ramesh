@@ -1,6 +1,6 @@
 syntax = "proto3";
 
-package a.v1beta1;
+package a.v1;
 
 enum One {
   ONE_UNSPECIFIED = 0;
