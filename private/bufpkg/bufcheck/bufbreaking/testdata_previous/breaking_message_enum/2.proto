@@ -2,4 +2,6 @@ syntax = "proto3";
 message Foo2 {
   Bar2 foo = 1;
 }
-enum Bar2 
+enum Bar2 {
+  Blah = 0;
+}
