@@ -98,3 +98,53 @@ func GetAllRulesV1() ([]bufcheck.Rule, error) {
 		return nil, err
 	}
 	return rulesForInternalRules(internalConfig.Rules), nil
+}
+
+// GetAllRulesAndCategoriesV1Beta1 returns all rules and categories for v1beta1 as a string slice.
+//
+// This is used for validation purposes only.
+func GetAllRulesAndCategoriesV1Beta1() []string {
+	return internal.AllCategoriesAndIDsForVersionSpec(buflintv1beta1.VersionSpec)
+}
+
+// GetAllRulesAndCategoriesV1 returns all rules and categories for v1 as a string slice.
+//
+// This is used for validation purposes only.
+func GetAllRulesAndCategoriesV1() []string {
+	return internal.AllCategoriesAndIDsForVersionSpec(buflintv1.VersionSpec)
+}
+
+func internalConfigForConfig(config *buflintconfig.Config) (*internal.Config, error) {
+	var versionSpec *internal.VersionSpec
+	switch config.Version {
+	case bufconfig.V1Beta1Version:
+		versionSpec = buflintv1beta1.VersionSpec
+	case bufconfig.V1Version:
+		versionSpec = buflintv1.VersionSpec
+	}
+	return internal.ConfigBuilder{
+		Use:                                  config.Use,
+		Except:                               config.Except,
+		IgnoreRootPaths:                      config.IgnoreRootPaths,
+		IgnoreIDOrCategoryToRootPaths:        config.IgnoreIDOrCategoryToRootPaths,
+		AllowCommentIgnores:                  config.AllowCommentIgnores,
+		EnumZeroValueSuffix:                  config.EnumZeroValueSuffix,
+		RPCAllowSameRequestResponse:          config.RPCAllowSameRequestResponse,
+		RPCAllowGoogleProtobufEmptyRequests:  config.RPCAllowGoogleProtobufEmptyRequests,
+		RPCAllowGoogleProtobufEmptyResponses: config.RPCAllowGoogleProtobufEmptyResponses,
+		ServiceSuffix:                        config.ServiceSuffix,
+	}.NewConfig(
+		versionSpec,
+	)
+}
+
+func rulesForInternalRules(rules []*internal.Rule) []bufcheck.Rule {
+	if rules == nil {
+		return nil
+	}
+	s := make([]bufcheck.Rule, len(rules))
+	for i, e := range rules {
+		s[i] = e
+	}
+	return s
+}
