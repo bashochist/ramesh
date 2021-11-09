@@ -708,3 +708,259 @@ func checkRPCRequestResponseUnique(
 	add addFunc,
 	files []protosource.File,
 	allowSameRequestResponse bool,
+	allowGoogleProtobufEmptyRequests bool,
+	allowGoogleProtobufEmptyResponses bool,
+) error {
+	allFullNameToMethod, err := protosource.FullNameToMethod(files...)
+	if err != nil {
+		return err
+	}
+	// first check if any requests or responses are the same
+	// if not, we can treat requests and responses equally for checking if more than
+	// one method uses a type
+	if !allowSameRequestResponse {
+		for _, method := range allFullNameToMethod {
+			if method.InputTypeName() == method.OutputTypeName() {
+				// if we allow both empty requests and responses, we do not want to add a FileAnnotation
+				if !(method.InputTypeName() == "google.protobuf.Empty" && allowGoogleProtobufEmptyRequests && allowGoogleProtobufEmptyResponses) {
+					add(
+						method,
+						method.Location(),
+						// also check the service for this comment ignore
+						// this allows users to set this "globally" for a service
+						[]protosource.Location{
+							method.Service().Location(),
+						},
+						"RPC %q has the same type %q for the request and response.",
+						method.Name(),
+						method.InputTypeName(),
+					)
+				}
+			}
+		}
+	}
+	// we have now added errors for the same request and response type if applicable
+	// we can now check methods for unique usage of a given type
+	requestResponseTypeToFullNameToMethod := make(map[string]map[string]protosource.Method)
+	for fullName, method := range allFullNameToMethod {
+		for _, requestResponseType := range []string{method.InputTypeName(), method.OutputTypeName()} {
+			fullNameToMethod, ok := requestResponseTypeToFullNameToMethod[requestResponseType]
+			if !ok {
+				fullNameToMethod = make(map[string]protosource.Method)
+				requestResponseTypeToFullNameToMethod[requestResponseType] = fullNameToMethod
+			}
+			fullNameToMethod[fullName] = method
+		}
+	}
+	for requestResponseType, fullNameToMethod := range requestResponseTypeToFullNameToMethod {
+		// only this method uses this request or response type, no issue
+		if len(fullNameToMethod) == 1 {
+			continue
+		}
+		// if the request or response type is google.protobuf.Empty and we allow this for requests or responses,
+		// we have to do a harder check
+		if requestResponseType == "google.protobuf.Empty" && (allowGoogleProtobufEmptyRequests || allowGoogleProtobufEmptyResponses) {
+			// if both requests and responses can be google.protobuf.Empty, then do not add any error
+			// else, we check
+			if !(allowGoogleProtobufEmptyRequests && allowGoogleProtobufEmptyResponses) {
+				// inside this if statement, one of allowGoogleProtobufEmptyRequests or allowGoogleProtobufEmptyResponses is true
+				var requestMethods []protosource.Method
+				var responseMethods []protosource.Method
+				for _, method := range fullNameToMethod {
+					if method.InputTypeName() == "google.protobuf.Empty" {
+						requestMethods = append(requestMethods, method)
+					}
+					if method.OutputTypeName() == "google.protobuf.Empty" {
+						responseMethods = append(responseMethods, method)
+					}
+				}
+				if !allowGoogleProtobufEmptyRequests && len(requestMethods) > 1 {
+					for _, method := range requestMethods {
+						add(
+							method,
+							method.Location(),
+							// also check the service for this comment ignore
+							// this allows users to set this "globally" for a service
+							[]protosource.Location{
+								method.Service().Location(),
+							},
+							"%q is used as the request for multiple RPCs.",
+							requestResponseType,
+						)
+					}
+				}
+				if !allowGoogleProtobufEmptyResponses && len(responseMethods) > 1 {
+					for _, method := range responseMethods {
+						add(
+							method,
+							method.Location(),
+							// also check the service for this comment ignore
+							// this allows users to set this "globally" for a service
+							[]protosource.Location{
+								method.Service().Location(),
+							},
+							"%q is used as the response for multiple RPCs.",
+							requestResponseType,
+						)
+					}
+				}
+			}
+		} else {
+			// else, we have a duplicate usage of requestResponseType, add an FileAnnotation to each method
+			for _, method := range fullNameToMethod {
+				add(
+					method,
+					method.Location(),
+					// also check the service for this comment ignore
+					// this allows users to set this "globally" for a service
+					[]protosource.Location{
+						method.Service().Location(),
+					},
+					"%q is used as the request or response type for multiple RPCs.",
+					requestResponseType,
+				)
+			}
+		}
+	}
+	return nil
+}
+
+// CheckRPCRequestStandardName is a check function.
+var CheckRPCRequestStandardName = func(
+	id string,
+	ignoreFunc internal.IgnoreFunc,
+	files []protosource.File,
+	allowGoogleProtobufEmptyRequests bool,
+) ([]bufanalysis.FileAnnotation, error) {
+	return newMethodCheckFunc(
+		func(add addFunc, method protosource.Method) error {
+			return checkRPCRequestStandardName(add, method, allowGoogleProtobufEmptyRequests)
+		},
+	)(id, ignoreFunc, files)
+}
+
+func checkRPCRequestStandardName(add addFunc, method protosource.Method, allowGoogleProtobufEmptyRequests bool) error {
+	service := method.Service()
+	if service == nil {
+		return errors.New("method.Service() is nil")
+	}
+	name := method.InputTypeName()
+	if allowGoogleProtobufEmptyRequests && name == "google.protobuf.Empty" {
+		return nil
+	}
+	if strings.Contains(name, ".") {
+		split := strings.Split(name, ".")
+		name = split[len(split)-1]
+	}
+	expectedName1 := stringutil.ToPascalCase(method.Name()) + "Request"
+	expectedName2 := stringutil.ToPascalCase(service.Name()) + expectedName1
+	if name != expectedName1 && name != expectedName2 {
+		add(
+			method,
+			method.InputTypeLocation(),
+			// also check the method and service for this comment ignore
+			// this came up in https://github.com/bufbuild/buf/issues/242
+			[]protosource.Location{
+				method.Location(),
+				method.Service().Location(),
+			},
+			"RPC request type %q should be named %q or %q.",
+			name,
+			expectedName1,
+			expectedName2,
+		)
+	}
+	return nil
+}
+
+// CheckRPCResponseStandardName is a check function.
+var CheckRPCResponseStandardName = func(
+	id string,
+	ignoreFunc internal.IgnoreFunc,
+	files []protosource.File,
+	allowGoogleProtobufEmptyResponses bool,
+) ([]bufanalysis.FileAnnotation, error) {
+	return newMethodCheckFunc(
+		func(add addFunc, method protosource.Method) error {
+			return checkRPCResponseStandardName(add, method, allowGoogleProtobufEmptyResponses)
+		},
+	)(id, ignoreFunc, files)
+}
+
+func checkRPCResponseStandardName(add addFunc, method protosource.Method, allowGoogleProtobufEmptyResponses bool) error {
+	service := method.Service()
+	if service == nil {
+		return errors.New("method.Service() is nil")
+	}
+	name := method.OutputTypeName()
+	if allowGoogleProtobufEmptyResponses && name == "google.protobuf.Empty" {
+		return nil
+	}
+	if strings.Contains(name, ".") {
+		split := strings.Split(name, ".")
+		name = split[len(split)-1]
+	}
+	expectedName1 := stringutil.ToPascalCase(method.Name()) + "Response"
+	expectedName2 := stringutil.ToPascalCase(service.Name()) + expectedName1
+	if name != expectedName1 && name != expectedName2 {
+		add(
+			method,
+			method.OutputTypeLocation(),
+			// also check the method and service for this comment ignore
+			// this came up in https://github.com/bufbuild/buf/issues/242
+			[]protosource.Location{
+				method.Location(),
+				method.Service().Location(),
+			},
+			"RPC response type %q should be named %q or %q.",
+			name,
+			expectedName1,
+			expectedName2,
+		)
+	}
+	return nil
+}
+
+// CheckServicePascalCase is a check function.
+var CheckServicePascalCase = newServiceCheckFunc(checkServicePascalCase)
+
+func checkServicePascalCase(add addFunc, service protosource.Service) error {
+	name := service.Name()
+	expectedName := stringutil.ToPascalCase(name)
+	if name != expectedName {
+		add(service, service.NameLocation(), nil, "Service name %q should be PascalCase, such as %q.", name, expectedName)
+	}
+	return nil
+}
+
+// CheckServiceSuffix is a check function.
+var CheckServiceSuffix = func(
+	id string,
+	ignoreFunc internal.IgnoreFunc,
+	files []protosource.File,
+	suffix string,
+) ([]bufanalysis.FileAnnotation, error) {
+	return newServiceCheckFunc(
+		func(add addFunc, service protosource.Service) error {
+			return checkServiceSuffix(add, service, suffix)
+		},
+	)(id, ignoreFunc, files)
+}
+
+func checkServiceSuffix(add addFunc, service protosource.Service, suffix string) error {
+	name := service.Name()
+	if !strings.HasSuffix(name, suffix) {
+		add(service, service.NameLocation(), nil, "Service name %q should be suffixed with %q.", name, suffix)
+	}
+	return nil
+}
+
+// CheckSyntaxSpecified is a check function.
+var CheckSyntaxSpecified = newFileCheckFunc(checkSyntaxSpecified)
+
+func checkSyntaxSpecified(add addFunc, file protosource.File) error {
+	if file.Syntax() == protosource.SyntaxUnspecified {
+		add(file, file.SyntaxLocation(), nil, `Files must have a syntax explicitly specified. If no syntax is specified, the file defaults to "proto2".`)
+	}
+	return nil
+}
