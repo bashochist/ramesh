@@ -77,4 +77,114 @@ func getImportCycleIfExists(
 		return nil
 	}
 	usedPackageMap[pkg] = struct{}{}
-	//
+	// Will never equal pkg
+	for directlyImportedPackage := range packageToDirectlyImportedPackageToFileImports[pkg] {
+		// Can equal "" per the function signature of PackageToDirectlyImportedPackageToFileImports
+		if directlyImportedPackage == "" {
+			continue
+		}
+		if importCycle := getImportCycleIfExists(
+			directlyImportedPackage,
+			packageToDirectlyImportedPackageToFileImports,
+			usedPackageMap,
+			usedPackageList,
+		); len(importCycle) != 0 {
+			return importCycle
+		}
+	}
+	delete(usedPackageMap, pkg)
+	return nil
+}
+
+func newFilesCheckFunc(
+	f func(addFunc, []protosource.File) error,
+) func(string, internal.IgnoreFunc, []protosource.File) ([]bufanalysis.FileAnnotation, error) {
+	return func(id string, ignoreFunc internal.IgnoreFunc, files []protosource.File) ([]bufanalysis.FileAnnotation, error) {
+		helper := internal.NewHelper(id, ignoreFunc)
+		if err := f(helper.AddFileAnnotationWithExtraIgnoreLocationsf, files); err != nil {
+			return nil, err
+		}
+		return helper.FileAnnotations(), nil
+	}
+}
+
+func newPackageToFilesCheckFunc(
+	f func(add addFunc, pkg string, files []protosource.File) error,
+) func(string, internal.IgnoreFunc, []protosource.File) ([]bufanalysis.FileAnnotation, error) {
+	return newFilesCheckFunc(
+		func(add addFunc, files []protosource.File) error {
+			packageToFiles, err := protosource.PackageToFiles(files...)
+			if err != nil {
+				return err
+			}
+			for pkg, files := range packageToFiles {
+				if err := f(add, pkg, files); err != nil {
+					return err
+				}
+			}
+			return nil
+		},
+	)
+}
+
+func newDirToFilesCheckFunc(
+	f func(add addFunc, dirPath string, files []protosource.File) error,
+) func(string, internal.IgnoreFunc, []protosource.File) ([]bufanalysis.FileAnnotation, error) {
+	return newFilesCheckFunc(
+		func(add addFunc, files []protosource.File) error {
+			dirPathToFiles, err := protosource.DirPathToFiles(files...)
+			if err != nil {
+				return err
+			}
+			for dirPath, files := range dirPathToFiles {
+				if err := f(add, dirPath, files); err != nil {
+					return err
+				}
+			}
+			return nil
+		},
+	)
+}
+
+func newFileCheckFunc(
+	f func(addFunc, protosource.File) error,
+) func(string, internal.IgnoreFunc, []protosource.File) ([]bufanalysis.FileAnnotation, error) {
+	return newFilesCheckFunc(
+		func(add addFunc, files []protosource.File) error {
+			for _, file := range files {
+				if err := f(add, file); err != nil {
+					return err
+				}
+			}
+			return nil
+		},
+	)
+}
+
+func newFileImportCheckFunc(
+	f func(addFunc, protosource.FileImport) error,
+) func(string, internal.IgnoreFunc, []protosource.File) ([]bufanalysis.FileAnnotation, error) {
+	return newFileCheckFunc(
+		func(add addFunc, file protosource.File) error {
+			for _, fileImport := range file.FileImports() {
+				if err := f(add, fileImport); err != nil {
+					return err
+				}
+			}
+			return nil
+		},
+	)
+}
+
+func newEnumCheckFunc(
+	f func(addFunc, protosource.Enum) error,
+) func(string, internal.IgnoreFunc, []protosource.File) ([]bufanalysis.FileAnnotation, error) {
+	return newFileCheckFunc(
+		func(add addFunc, file protosource.File) error {
+			return protosource.ForEachEnum(
+				func(enum protosource.Enum) error {
+					return f(add, enum)
+				},
+				file,
+			)
+		},
