@@ -188,3 +188,101 @@ func newEnumCheckFunc(
 				file,
 			)
 		},
+	)
+}
+
+func newEnumValueCheckFunc(
+	f func(addFunc, protosource.EnumValue) error,
+) func(string, internal.IgnoreFunc, []protosource.File) ([]bufanalysis.FileAnnotation, error) {
+	return newEnumCheckFunc(
+		func(add addFunc, enum protosource.Enum) error {
+			for _, enumValue := range enum.Values() {
+				if err := f(add, enumValue); err != nil {
+					return err
+				}
+			}
+			return nil
+		},
+	)
+}
+
+func newMessageCheckFunc(
+	f func(addFunc, protosource.Message) error,
+) func(string, internal.IgnoreFunc, []protosource.File) ([]bufanalysis.FileAnnotation, error) {
+	return newFileCheckFunc(
+		func(add addFunc, file protosource.File) error {
+			return protosource.ForEachMessage(
+				func(message protosource.Message) error {
+					return f(add, message)
+				},
+				file,
+			)
+		},
+	)
+}
+
+func newFieldCheckFunc(
+	f func(addFunc, protosource.Field) error,
+) func(string, internal.IgnoreFunc, []protosource.File) ([]bufanalysis.FileAnnotation, error) {
+	return newMessageCheckFunc(
+		func(add addFunc, message protosource.Message) error {
+			for _, field := range message.Fields() {
+				if err := f(add, field); err != nil {
+					return err
+				}
+			}
+			// TODO: is this right?
+			for _, field := range message.Extensions() {
+				if err := f(add, field); err != nil {
+					return err
+				}
+			}
+			return nil
+		},
+	)
+}
+
+func newOneofCheckFunc(
+	f func(addFunc, protosource.Oneof) error,
+) func(string, internal.IgnoreFunc, []protosource.File) ([]bufanalysis.FileAnnotation, error) {
+	return newMessageCheckFunc(
+		func(add addFunc, message protosource.Message) error {
+			for _, oneof := range message.Oneofs() {
+				if err := f(add, oneof); err != nil {
+					return err
+				}
+			}
+			return nil
+		},
+	)
+}
+
+func newServiceCheckFunc(
+	f func(addFunc, protosource.Service) error,
+) func(string, internal.IgnoreFunc, []protosource.File) ([]bufanalysis.FileAnnotation, error) {
+	return newFileCheckFunc(
+		func(add addFunc, file protosource.File) error {
+			for _, service := range file.Services() {
+				if err := f(add, service); err != nil {
+					return err
+				}
+			}
+			return nil
+		},
+	)
+}
+
+func newMethodCheckFunc(
+	f func(addFunc, protosource.Method) error,
+) func(string, internal.IgnoreFunc, []protosource.File) ([]bufanalysis.FileAnnotation, error) {
+	return newServiceCheckFunc(
+		func(add addFunc, service protosource.Service) error {
+			for _, method := range service.Methods() {
+				if err := f(add, method); err != nil {
+					return err
+				}
+			}
+			return nil
+		},
+	)
+}
