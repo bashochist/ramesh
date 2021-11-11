@@ -104,4 +104,130 @@ var (
 			"DEFAULT",
 		},
 		"ENUM_NO_ALLOW_ALIAS": {
-			"BASIC
+			"BASIC",
+			"DEFAULT",
+		},
+		"ENUM_PASCAL_CASE": {
+			"BASIC",
+			"DEFAULT",
+		},
+		"ENUM_VALUE_PREFIX": {
+			"DEFAULT",
+		},
+		"ENUM_VALUE_UPPER_SNAKE_CASE": {
+			"BASIC",
+			"DEFAULT",
+		},
+		"ENUM_ZERO_VALUE_SUFFIX": {
+			"DEFAULT",
+		},
+		"FIELD_LOWER_SNAKE_CASE": {
+			"BASIC",
+			"DEFAULT",
+		},
+		"FILE_LOWER_SNAKE_CASE": {
+			"DEFAULT",
+		},
+		"IMPORT_NO_PUBLIC": {
+			"BASIC",
+			"DEFAULT",
+		},
+		"IMPORT_NO_WEAK": {
+			"BASIC",
+			"DEFAULT",
+		},
+		"IMPORT_USED": {
+			"BASIC",
+			"DEFAULT",
+		},
+		"MESSAGE_PASCAL_CASE": {
+			"BASIC",
+			"DEFAULT",
+		},
+		"ONEOF_LOWER_SNAKE_CASE": {
+			"BASIC",
+			"DEFAULT",
+		},
+		"PACKAGE_DEFINED": {
+			"MINIMAL",
+			"BASIC",
+			"DEFAULT",
+		},
+		"PACKAGE_DIRECTORY_MATCH": {
+			"MINIMAL",
+			"BASIC",
+			"DEFAULT",
+		},
+		"PACKAGE_LOWER_SNAKE_CASE": {
+			"BASIC",
+			"DEFAULT",
+		},
+		"PACKAGE_NO_IMPORT_CYCLE": {},
+		"PACKAGE_SAME_CSHARP_NAMESPACE": {
+			"BASIC",
+			"DEFAULT",
+		},
+		"PACKAGE_SAME_DIRECTORY": {
+			"MINIMAL",
+			"BASIC",
+			"DEFAULT",
+		},
+		"PACKAGE_SAME_GO_PACKAGE": {
+			"BASIC",
+			"DEFAULT",
+		},
+		"PACKAGE_SAME_JAVA_MULTIPLE_FILES": {
+			"BASIC",
+			"DEFAULT",
+		},
+		"PACKAGE_SAME_JAVA_PACKAGE": {
+			"BASIC",
+			"DEFAULT",
+		},
+		"PACKAGE_SAME_PHP_NAMESPACE": {
+			"BASIC",
+			"DEFAULT",
+		},
+		"PACKAGE_SAME_RUBY_PACKAGE": {
+			"BASIC",
+			"DEFAULT",
+		},
+		"PACKAGE_SAME_SWIFT_PREFIX": {
+			"BASIC",
+			"DEFAULT",
+		},
+		"PACKAGE_VERSION_SUFFIX": {
+			"DEFAULT",
+		},
+		"RPC_NO_CLIENT_STREAMING": {
+			"UNARY_RPC",
+		},
+		"RPC_NO_SERVER_STREAMING": {
+			"UNARY_RPC",
+		},
+		"RPC_PASCAL_CASE": {
+			"BASIC",
+			"DEFAULT",
+		},
+		"RPC_REQUEST_RESPONSE_UNIQUE": {
+			"DEFAULT",
+		},
+		"RPC_REQUEST_STANDARD_NAME": {
+			"DEFAULT",
+		},
+		"RPC_RESPONSE_STANDARD_NAME": {
+			"DEFAULT",
+		},
+		"SERVICE_PASCAL_CASE": {
+			"BASIC",
+			"DEFAULT",
+		},
+		"SERVICE_SUFFIX": {
+			"DEFAULT",
+		},
+		"SYNTAX_SPECIFIED": {
+			"BASIC",
+			"DEFAULT",
+		},
+	}
+)
