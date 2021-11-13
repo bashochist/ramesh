@@ -1,0 +1,6 @@
+
+syntax = "proto3";
+
+package c;
+
+import "d1.proto";
