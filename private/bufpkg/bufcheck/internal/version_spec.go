@@ -43,4 +43,33 @@ func AllCategoriesForVersionSpec(versionSpec *VersionSpec) []string {
 	sort.Slice(
 		categories,
 		func(i int, j int) bool {
-			return categoryLess
+			return categoryLess(categories[i], categories[j])
+		},
+	)
+	return categories
+}
+
+// AllIDsForVersionSpec returns all ids for the VersionSpec.
+//
+// Sorted lexographically.
+func AllIDsForVersionSpec(versionSpec *VersionSpec) []string {
+	m := make(map[string]struct{})
+	for id := range versionSpec.IDToCategories {
+		m[id] = struct{}{}
+	}
+	return stringutil.MapToSortedSlice(m)
+}
+
+// AllCategoriesAndIDsForVersionSpec returns all categories and rules for the VersionSpec.
+//
+// Sorted lexographically.
+func AllCategoriesAndIDsForVersionSpec(versionSpec *VersionSpec) []string {
+	m := make(map[string]struct{})
+	for id, categories := range versionSpec.IDToCategories {
+		m[id] = struct{}{}
+		for _, category := range categories {
+			m[category] = struct{}{}
+		}
+	}
+	return stringutil.MapToSortedSlice(m)
+}
