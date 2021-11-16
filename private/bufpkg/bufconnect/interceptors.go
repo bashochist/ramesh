@@ -69,4 +69,11 @@ func NewAuthorizationInterceptorProvider(tokenProviders ...TokenProvider) func(s
 				}
 				response, err := next(ctx, req)
 				if err != nil && usingTokenEnvKey {
-					err = &AuthError{cause: err, token
+					err = &AuthError{cause: err, tokenEnvKey: tokenEnvKey}
+				}
+				return response, err
+			})
+		}
+		return interceptor
+	}
+}
