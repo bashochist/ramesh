@@ -255,3 +255,107 @@ func NewImageForCodeGeneratorRequest(request *pluginpb.CodeGeneratorRequest, opt
 		return nil, err
 	}
 	return ImageWithOnlyPaths(
+		image,
+		request.GetFileToGenerate(),
+		nil,
+	)
+}
+
+// NewImageForProtoOption is an option for use with NewImageForProto.
+type NewImageForProtoOption func(*newImageForProtoOptions)
+
+// WithNoReparse instructs NewImageForProto to skip the reparse step. The reparse
+// step is usually needed when unmarshalling the image from bytes. It reconstitutes
+// custom options, from unrecognized bytes to known extension fields.
+func WithNoReparse() NewImageForProtoOption {
+	return func(options *newImageForProtoOptions) {
+		options.noReparse = true
+	}
+}
+
+// ImageWithoutImports returns a copy of the Image without imports.
+//
+// The backing Files are not copied.
+func ImageWithoutImports(image Image) Image {
+	imageFiles := image.Files()
+	newImageFiles := make([]ImageFile, 0, len(imageFiles))
+	for _, imageFile := range imageFiles {
+		if !imageFile.IsImport() {
+			newImageFiles = append(newImageFiles, imageFile)
+		}
+	}
+	return newImageNoValidate(newImageFiles)
+}
+
+// ImageWithOnlyPaths returns a copy of the Image that only includes the files
+// with the given root relative file paths or directories.
+//
+// Note that paths can be either files or directories - whether or not a path
+// is included is a result of normalpath.EqualsOrContainsPath.
+//
+// If a root relative file path does not exist, this errors.
+func ImageWithOnlyPaths(
+	image Image,
+	paths []string,
+	excludePaths []string,
+) (Image, error) {
+	return imageWithOnlyPaths(image, paths, excludePaths, false)
+}
+
+// ImageWithOnlyPathsAllowNotExist returns a copy of the Image that only includes the files
+// with the given root relative file paths.
+//
+// Note that paths can be either files or directories - whether or not a path
+// is included is a result of normalpath.EqualsOrContainsPath.
+//
+// If a root relative file path does not exist, this skips this path.
+func ImageWithOnlyPathsAllowNotExist(
+	image Image,
+	paths []string,
+	excludePaths []string,
+) (Image, error) {
+	return imageWithOnlyPaths(image, paths, excludePaths, true)
+}
+
+// ImageByDir returns multiple images that have non-imports split
+// by directory.
+//
+// That is, each Image will only contain a single directory's files
+// as it's non-imports, along with all required imports for the
+// files in that directory.
+func ImageByDir(image Image) ([]Image, error) {
+	imageFiles := image.Files()
+	paths := make([]string, 0, len(imageFiles))
+	for _, imageFile := range imageFiles {
+		if !imageFile.IsImport() {
+			paths = append(paths, imageFile.Path())
+		}
+	}
+	dirToPaths := normalpath.ByDir(paths...)
+	// we need this to produce a deterministic order of the returned Images
+	dirs := make([]string, 0, len(dirToPaths))
+	for dir := range dirToPaths {
+		dirs = append(dirs, dir)
+	}
+	sort.Strings(dirs)
+	newImages := make([]Image, 0, len(dirToPaths))
+	for _, dir := range dirs {
+		paths, ok := dirToPaths[dir]
+		if !ok {
+			// this should never happen
+			return nil, fmt.Errorf("no dir for %q in dirToPaths", dir)
+		}
+		newImage, err := ImageWithOnlyPaths(image, paths, nil)
+		if err != nil {
+			return nil, err
+		}
+		newImages = append(newImages, newImage)
+	}
+	return newImages, nil
+}
+
+// ImageToProtoImage returns a new ProtoImage for the Image.
+func ImageToProtoImage(image Image) *imagev1.Image {
+	imageFiles := image.Files()
+	protoImage := &imagev1.Image{
+		File: make([]*imagev1.ImageFi
