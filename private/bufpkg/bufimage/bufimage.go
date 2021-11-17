@@ -160,4 +160,98 @@ func MergeImages(images ...Image) (Image, error) {
 		// We need to preserve order for deterministic results, so we add
 		// the files in the order they're given, but base our selection
 		// on the imageFileSet.
-		imageFiles := make([]ImageFile, 
+		imageFiles := make([]ImageFile, 0, len(imageFileSet))
+		for _, path := range paths {
+			imageFiles = append(imageFiles, imageFileSet[path] /* Guaranteed to exist */)
+		}
+		return newImage(imageFiles, true)
+	}
+}
+
+// NewImageForProto returns a new Image for the given proto Image.
+//
+// The input Files are expected to be in correct DAG order!
+// TODO: Consider checking the above, and if not, reordering the Files.
+//
+// TODO: do we want to add the ability to do external path resolution here?
+func NewImageForProto(protoImage *imagev1.Image, options ...NewImageForProtoOption) (Image, error) {
+	var newImageOptions newImageForProtoOptions
+	for _, option := range options {
+		option(&newImageOptions)
+	}
+	if !newImageOptions.noReparse {
+		if err := reparseImageProto(protoImage); err != nil {
+			return nil, err
+		}
+	}
+	if err := validateProtoImage(protoImage); err != nil {
+		return nil, err
+	}
+	imageFiles := make([]ImageFile, len(protoImage.File))
+	for i, protoImageFile := range protoImage.File {
+		var isImport bool
+		var isSyntaxUnspecified bool
+		var unusedDependencyIndexes []int32
+		var moduleIdentity bufmoduleref.ModuleIdentity
+		var commit string
+		var err error
+		if protoImageFileExtension := protoImageFile.GetBufExtension(); protoImageFileExtension != nil {
+			isImport = protoImageFileExtension.GetIsImport()
+			isSyntaxUnspecified = protoImageFileExtension.GetIsSyntaxUnspecified()
+			unusedDependencyIndexes = protoImageFileExtension.GetUnusedDependency()
+			if protoModuleInfo := protoImageFileExtension.GetModuleInfo(); protoModuleInfo != nil {
+				if protoModuleName := protoModuleInfo.GetName(); protoModuleName != nil {
+					moduleIdentity, err = bufmoduleref.NewModuleIdentity(
+						protoModuleName.GetRemote(),
+						protoModuleName.GetOwner(),
+						protoModuleName.GetRepository(),
+					)
+					if err != nil {
+						return nil, err
+					}
+					// we only want to set this if there is a module name
+					commit = protoModuleInfo.GetCommit()
+				}
+			}
+		}
+		imageFile, err := NewImageFile(
+			protoImageFile,
+			moduleIdentity,
+			commit,
+			protoImageFile.GetName(),
+			isImport,
+			isSyntaxUnspecified,
+			unusedDependencyIndexes,
+		)
+		if err != nil {
+			return nil, err
+		}
+		imageFiles[i] = imageFile
+	}
+	return NewImage(imageFiles)
+}
+
+// NewImageForCodeGeneratorRequest returns a new Image from a given CodeGeneratorRequest.
+//
+// The input Files are expected to be in correct DAG order!
+// TODO: Consider checking the above, and if not, reordering the Files.
+func NewImageForCodeGeneratorRequest(request *pluginpb.CodeGeneratorRequest, options ...NewImageForProtoOption) (Image, error) {
+	if err := protodescriptor.ValidateCodeGeneratorRequestExceptFileDescriptorProtos(request); err != nil {
+		return nil, err
+	}
+	protoImageFiles := make([]*imagev1.ImageFile, len(request.GetProtoFile()))
+	for i, fileDescriptorProto := range request.GetProtoFile() {
+		// we filter whether something is an import or not in ImageWithOnlyPaths
+		// we cannot determine if the syntax was unset
+		protoImageFiles[i] = fileDescriptorProtoToProtoImageFile(fileDescriptorProto, false, false, nil, nil, "")
+	}
+	image, err := NewImageForProto(
+		&imagev1.Image{
+			File: protoImageFiles,
+		},
+		options...,
+	)
+	if err != nil {
+		return nil, err
+	}
+	return ImageWithOnlyPaths(
