@@ -358,4 +358,83 @@ func ImageByDir(image Image) ([]Image, error) {
 func ImageToProtoImage(image Image) *imagev1.Image {
 	imageFiles := image.Files()
 	protoImage := &imagev1.Image{
-		File: make([]*imagev1.ImageFi
+		File: make([]*imagev1.ImageFile, len(imageFiles)),
+	}
+	for i, imageFile := range imageFiles {
+		protoImage.File[i] = imageFileToProtoImageFile(imageFile)
+	}
+	return protoImage
+}
+
+// ImageToFileDescriptorSet returns a new FileDescriptorSet for the Image.
+func ImageToFileDescriptorSet(image Image) *descriptorpb.FileDescriptorSet {
+	return protodescriptor.FileDescriptorSetForFileDescriptors(ImageToFileDescriptors(image)...)
+}
+
+// ImageToFileDescriptors returns the FileDescriptors for the Image.
+func ImageToFileDescriptors(image Image) []protodescriptor.FileDescriptor {
+	return imageFilesToFileDescriptors(image.Files())
+}
+
+// ImageToFileDescriptorProtos returns the FileDescriptorProtos for the Image.
+func ImageToFileDescriptorProtos(image Image) []*descriptorpb.FileDescriptorProto {
+	return imageFilesToFileDescriptorProtos(image.Files())
+}
+
+// ImageToCodeGeneratorRequest returns a new CodeGeneratorRequest for the Image.
+//
+// All non-imports are added as files to generate.
+// If includeImports is set, all non-well-known-type imports are also added as files to generate.
+// If includeWellKnownTypes is set, well-known-type imports are also added as files to generate.
+// includeWellKnownTypes has no effect if includeImports is not set.
+func ImageToCodeGeneratorRequest(
+	image Image,
+	parameter string,
+	compilerVersion *pluginpb.Version,
+	includeImports bool,
+	includeWellKnownTypes bool,
+) *pluginpb.CodeGeneratorRequest {
+	return imageToCodeGeneratorRequest(
+		image,
+		parameter,
+		compilerVersion,
+		includeImports,
+		includeWellKnownTypes,
+		nil,
+		nil,
+	)
+}
+
+// ImagesToCodeGeneratorRequests converts the Images to CodeGeneratorRequests.
+//
+// All non-imports are added as files to generate.
+// If includeImports is set, all non-well-known-type imports are also added as files to generate.
+// If includeImports is set, only one CodeGeneratorRequest will contain any given file as a FileToGenerate.
+// If includeWellKnownTypes is set, well-known-type imports are also added as files to generate.
+// includeWellKnownTypes has no effect if includeImports is not set.
+func ImagesToCodeGeneratorRequests(
+	images []Image,
+	parameter string,
+	compilerVersion *pluginpb.Version,
+	includeImports bool,
+	includeWellKnownTypes bool,
+) []*pluginpb.CodeGeneratorRequest {
+	requests := make([]*pluginpb.CodeGeneratorRequest, len(images))
+	// alreadyUsedPaths is a map of paths that have already been added to an image.
+	//
+	// We track this if includeImports is set, so that when we find an import, we can
+	// see if the import was already added to a CodeGeneratorRequest via another Image
+	// in the Image slice. If the import was already added, we do not add duplicates
+	// across CodeGeneratorRequests.
+	var alreadyUsedPaths map[string]struct{}
+	// nonImportPaths is a map of non-import paths.
+	//
+	// We track this if includeImports is set. If we find a non-import file in Image A
+	// and this file is an import in Image B, the file will have already been added to
+	// a CodeGeneratorRequest via Image A, so do not add the duplicate to any other
+	// CodeGeneratorRequest.
+	var nonImportPaths map[string]struct{}
+	if includeImports {
+		// We don't need to track these if includeImports is false, so we only populate
+		// the maps if includeImports is true. If includeImports is false, only non-imports
+		// will be added to each Cod
