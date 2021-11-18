@@ -437,4 +437,53 @@ func ImagesToCodeGeneratorRequests(
 	if includeImports {
 		// We don't need to track these if includeImports is false, so we only populate
 		// the maps if includeImports is true. If includeImports is false, only non-imports
-		// will be added to each Cod
+		// will be added to each CodeGeneratorRequest, so figuring out whether or not
+		// we should add a given import to a given CodeGeneratorRequest is unnecessary.
+		//
+		// imageToCodeGeneratorRequest checks if these maps are nil before every access.
+		alreadyUsedPaths = make(map[string]struct{})
+		nonImportPaths = make(map[string]struct{})
+		for _, image := range images {
+			for _, imageFile := range image.Files() {
+				if !imageFile.IsImport() {
+					nonImportPaths[imageFile.Path()] = struct{}{}
+				}
+			}
+		}
+	}
+	for i, image := range images {
+		requests[i] = imageToCodeGeneratorRequest(
+			image,
+			parameter,
+			compilerVersion,
+			includeImports,
+			includeWellKnownTypes,
+			alreadyUsedPaths,
+			nonImportPaths,
+		)
+	}
+	return requests
+}
+
+// ProtoImageToFileDescriptors returns the FileDescriptors for the proto Image.
+func ProtoImageToFileDescriptors(protoImage *imagev1.Image) []protodescriptor.FileDescriptor {
+	return protoImageFilesToFileDescriptors(protoImage.File)
+}
+
+type newImageForProtoOptions struct {
+	noReparse bool
+}
+
+func reparseImageProto(protoImage *imagev1.Image) error {
+	// TODO right now, NewResolver sets AllowUnresolvable to true all the time
+	// we want to make this into a check, and we verify if we need this for the individual command
+	resolver := protoencoding.NewLazyResolver(
+		ProtoImageToFileDescriptors(
+			protoImage,
+		)...,
+	)
+	if err := protoencoding.ReparseUnrecognized(resolver, protoImage.ProtoReflect()); err != nil {
+		return fmt.Errorf("could not reparse image: %v", err)
+	}
+	return nil
+}
