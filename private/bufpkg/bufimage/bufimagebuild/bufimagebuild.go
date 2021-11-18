@@ -50,4 +50,8 @@ func NewBuilder(logger *zap.Logger) Builder {
 type BuildOption func(*buildOptions)
 
 // WithExcludeSourceCodeInfo returns a BuildOption that excludes sourceCodeInfo.
-func WithExcludeSourceC
+func WithExcludeSourceCodeInfo() BuildOption {
+	return func(buildOptions *buildOptions) {
+		buildOptions.excludeSourceCodeInfo = true
+	}
+}
