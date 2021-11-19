@@ -223,4 +223,25 @@ func (f *fuzzResult) error(ctx context.Context) error {
 	if f.bufErr != nil {
 		return fmt.Errorf("buf has error but protoc does not: %v", f.bufErr)
 	}
-	if len(f.bufAnnotation
+	if len(f.bufAnnotations) > 0 {
+		return fmt.Errorf("buf has file annotations but protoc has no error: %v", f.bufAnnotations)
+	}
+	image := bufimage.ImageWithoutImports(f.image)
+	fileDescriptorSet := bufimage.ImageToFileDescriptorSet(image)
+
+	diff, err := prototesting.DiffFileDescriptorSetsJSON(
+		ctx,
+		f.runner,
+		fileDescriptorSet,
+		f.actualProtocFileDescriptorSet,
+		"buf",
+		"protoc",
+	)
+	if err != nil {
+		return fmt.Errorf("error diffing results: %v", err)
+	}
+	if strings.TrimSpace(diff) != "" {
+		return fmt.Errorf("protoc and buf have different results: %v", diff)
+	}
+	return nil
+}
