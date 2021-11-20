@@ -9,4 +9,5 @@ message Sensor {
     CLOSED = 0;
     OPEN = 1;
   }
-  required SwitchLe
+  required SwitchLevel door = 5;
+}
