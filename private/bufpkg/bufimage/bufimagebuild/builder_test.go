@@ -128,4 +128,123 @@ func TestGoogleapis(t *testing.T) {
 			"google/type/latlng.proto",
 			"google/type/money.proto",
 			"google/type/postal_address.proto",
-			"google/type/quaternion.
+			"google/type/quaternion.proto",
+			"google/type/timeofday.proto",
+		},
+		testGetImageFilePaths(imageWithSpecificNames),
+	)
+	imageWithoutImports = bufimage.ImageWithoutImports(imageWithSpecificNames)
+	assert.Equal(
+		t,
+		[]string{
+			"google/protobuf/api.proto",
+			"google/protobuf/descriptor.proto",
+			"google/type/calendar_period.proto",
+			"google/type/color.proto",
+			"google/type/date.proto",
+			"google/type/dayofweek.proto",
+			"google/type/expr.proto",
+			"google/type/fraction.proto",
+			"google/type/latlng.proto",
+			"google/type/money.proto",
+			"google/type/postal_address.proto",
+			"google/type/quaternion.proto",
+			"google/type/timeofday.proto",
+		},
+		testGetImageFilePaths(imageWithoutImports),
+	)
+	_, err = bufimage.ImageWithOnlyPaths(
+		image,
+		[]string{
+			"google/protobuf/descriptor.proto",
+			"google/protobuf/api.proto",
+			"google/type/date.proto",
+			"google/foo/nonsense.proto",
+		},
+		nil,
+	)
+	assert.Equal(t, errors.New(`path "google/foo/nonsense.proto" has no matching file in the image`), err)
+	_, err = bufimage.ImageWithOnlyPaths(
+		image,
+		[]string{
+			"google/protobuf/descriptor.proto",
+			"google/protobuf/api.proto",
+			"google/type/date.proto",
+			"google/foo",
+		},
+		nil,
+	)
+	assert.Equal(t, errors.New(`path "google/foo" has no matching file in the image`), err)
+
+	imageWithPathsAndExcludes, err := bufimage.ImageWithOnlyPaths(
+		image,
+		[]string{
+			"google/type",
+		},
+		[]string{
+			"google/type/calendar_period.proto",
+			"google/type/date.proto",
+		},
+	)
+	assert.NoError(t, err)
+	assert.Equal(t,
+		[]string{
+			"google/protobuf/wrappers.proto",
+			"google/type/color.proto",
+			"google/type/dayofweek.proto",
+			"google/type/expr.proto",
+			"google/type/fraction.proto",
+			"google/type/latlng.proto",
+			"google/type/money.proto",
+			"google/type/postal_address.proto",
+			"google/type/quaternion.proto",
+			"google/type/timeofday.proto",
+		},
+		testGetImageFilePaths(imageWithPathsAndExcludes),
+	)
+
+	excludePaths := []string{
+		"google/type/calendar_period.proto",
+		"google/type/quaternion.proto",
+		"google/type/money.proto",
+		"google/type/color.proto",
+		"google/type/date.proto",
+	}
+	imageWithExcludes, err := bufimage.ImageWithOnlyPaths(image, []string{}, excludePaths)
+	assert.NoError(t, err)
+	testImageWithExcludedFilePaths(t, imageWithExcludes, excludePaths)
+
+	assert.Equal(t, buftesting.NumGoogleapisFilesWithImports, len(image.Files()))
+	// basic check to make sure there is no error at this scale
+	_, err = protosource.NewFilesUnstable(context.Background(), bufimageutil.NewInputFiles(image.Files())...)
+	assert.NoError(t, err)
+}
+
+func TestCompareCustomOptions1(t *testing.T) {
+	t.Parallel()
+	runner := command.NewRunner()
+	testCompare(t, runner, "customoptions1")
+}
+
+func TestCompareProto3Optional1(t *testing.T) {
+	t.Parallel()
+	runner := command.NewRunner()
+	testCompare(t, runner, "proto3optional1")
+}
+
+func TestCompareTrailingComments(t *testing.T) {
+	t.Parallel()
+	runner := command.NewRunner()
+	testCompare(t, runner, "trailingcomments")
+}
+
+func TestCustomOptionsError1(t *testing.T) {
+	t.Parallel()
+	testFileAnnotations(
+		t,
+		"customoptionserror1",
+		filepath.FromSlash("testdata/customoptionserror1/b.proto:9:27:field a.Baz.bat: option (a.foo).bat: field bat of a.Foo does not exist"),
+	)
+}
+
+func TestNotAMessageType(t *testing
