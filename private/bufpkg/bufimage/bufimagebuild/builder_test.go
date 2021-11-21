@@ -23,4 +23,109 @@ import (
 	"strings"
 	"testing"
 
-	"github.com/bufbuil
+	"github.com/bufbuild/buf/private/bufpkg/bufanalysis"
+	"github.com/bufbuild/buf/private/bufpkg/bufimage"
+	"github.com/bufbuild/buf/private/bufpkg/bufimage/bufimageutil"
+	"github.com/bufbuild/buf/private/bufpkg/bufmodule"
+	"github.com/bufbuild/buf/private/bufpkg/bufmodule/bufmodulebuild"
+	"github.com/bufbuild/buf/private/bufpkg/bufmodule/bufmoduleconfig"
+	"github.com/bufbuild/buf/private/bufpkg/buftesting"
+	"github.com/bufbuild/buf/private/pkg/command"
+	"github.com/bufbuild/buf/private/pkg/normalpath"
+	"github.com/bufbuild/buf/private/pkg/protosource"
+	"github.com/bufbuild/buf/private/pkg/prototesting"
+	"github.com/bufbuild/buf/private/pkg/storage/storageos"
+	"github.com/bufbuild/buf/private/pkg/testingextended"
+	"github.com/bufbuild/buf/private/pkg/thread"
+	"github.com/stretchr/testify/assert"
+	"github.com/stretchr/testify/require"
+	"go.uber.org/zap"
+)
+
+var buftestingDirPath = filepath.Join(
+	"..",
+	"..",
+	"buftesting",
+)
+
+func TestGoogleapis(t *testing.T) {
+	testingextended.SkipIfShort(t)
+	t.Parallel()
+	image := testBuildGoogleapis(t, true)
+	assert.Equal(t, buftesting.NumGoogleapisFilesWithImports, len(image.Files()))
+	assert.Equal(
+		t,
+		[]string{
+			"google/protobuf/any.proto",
+			"google/protobuf/api.proto",
+			"google/protobuf/descriptor.proto",
+			"google/protobuf/duration.proto",
+			"google/protobuf/empty.proto",
+			"google/protobuf/field_mask.proto",
+			"google/protobuf/source_context.proto",
+			"google/protobuf/struct.proto",
+			"google/protobuf/timestamp.proto",
+			"google/protobuf/type.proto",
+			"google/protobuf/wrappers.proto",
+		},
+		testGetImageImportPaths(image),
+	)
+
+	imageWithoutImports := bufimage.ImageWithoutImports(image)
+	assert.Equal(t, buftesting.NumGoogleapisFiles, len(imageWithoutImports.Files()))
+	imageWithoutImports = bufimage.ImageWithoutImports(imageWithoutImports)
+	assert.Equal(t, buftesting.NumGoogleapisFiles, len(imageWithoutImports.Files()))
+
+	imageWithSpecificNames, err := bufimage.ImageWithOnlyPathsAllowNotExist(
+		image,
+		[]string{
+			"google/protobuf/descriptor.proto",
+			"google/protobuf/api.proto",
+			"google/type/date.proto",
+			"google/foo/nonsense.proto",
+		},
+		nil,
+	)
+	assert.NoError(t, err)
+	assert.Equal(
+		t,
+		[]string{
+			"google/protobuf/any.proto",
+			"google/protobuf/api.proto",
+			"google/protobuf/descriptor.proto",
+			"google/protobuf/source_context.proto",
+			"google/protobuf/type.proto",
+			"google/type/date.proto",
+		},
+		testGetImageFilePaths(imageWithSpecificNames),
+	)
+	imageWithSpecificNames, err = bufimage.ImageWithOnlyPathsAllowNotExist(
+		image,
+		[]string{
+			"google/protobuf/descriptor.proto",
+			"google/protobuf/api.proto",
+			"google/type",
+			"google/foo",
+		},
+		nil,
+	)
+	assert.NoError(t, err)
+	assert.Equal(
+		t,
+		[]string{
+			"google/protobuf/any.proto",
+			"google/protobuf/api.proto",
+			"google/protobuf/descriptor.proto",
+			"google/protobuf/source_context.proto",
+			"google/protobuf/type.proto",
+			"google/protobuf/wrappers.proto",
+			"google/type/calendar_period.proto",
+			"google/type/color.proto",
+			"google/type/date.proto",
+			"google/type/dayofweek.proto",
+			"google/type/expr.proto",
+			"google/type/fraction.proto",
+			"google/type/latlng.proto",
+			"google/type/money.proto",
+			"google/type/postal_address.proto",
+			"google/type/quaternion.
