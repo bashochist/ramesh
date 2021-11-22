@@ -247,4 +247,83 @@ func TestCustomOptionsError1(t *testing.T) {
 	)
 }
 
-func TestNotAMessageType(t *testing
+func TestNotAMessageType(t *testing.T) {
+	t.Parallel()
+	testFileAnnotations(
+		t,
+		"notamessagetype",
+		filepath.FromSlash("testdata/notamessagetype/a.proto:9:11:method a.MyService.Foo: invalid request type: a.MyService.Foo is a method, not a message"),
+	)
+}
+
+func TestSpaceBetweenNumberAndID(t *testing.T) {
+	t.Parallel()
+	testFileAnnotations(
+		t,
+		"spacebetweennumberandid",
+		filepath.FromSlash("testdata/spacebetweennumberandid/a.proto:6:14:invalid syntax in integer value: 10to"),
+		filepath.FromSlash("testdata/spacebetweennumberandid/a.proto:6:14:syntax error: unexpected error, expecting int literal"),
+	)
+}
+
+func TestCyclicImport(t *testing.T) {
+	t.Parallel()
+	testFileAnnotations(
+		t,
+		"cyclicimport",
+		// Since the compiler is multi-threaded, order of file compilation can happen one of two ways
+		fmt.Sprintf(`%s:5:8:cycle found in imports: "a/a.proto" -> "b/b.proto" -> "a/a.proto"
+				|| %s:5:8:cycle found in imports: "b/b.proto" -> "a/a.proto" -> "b/b.proto"`,
+			filepath.FromSlash("testdata/cyclicimport/a/a.proto"),
+			filepath.FromSlash("testdata/cyclicimport/b/b.proto"),
+		),
+	)
+}
+
+func TestDuplicateSyntheticOneofs(t *testing.T) {
+	// https://github.com/bufbuild/buf/issues/1071
+	t.Parallel()
+	testFileAnnotations(
+		t,
+		"duplicatesyntheticoneofs",
+		// Since the compiler is multi-threaded, order of file compilation can happen one of two ways
+		filepath.FromSlash(`testdata/duplicatesyntheticoneofs/a1.proto:5:9:symbol "a.Foo" already defined at a2.proto:5:9
+				|| testdata/duplicatesyntheticoneofs/a2.proto:5:9:symbol "a.Foo" already defined at a1.proto:5:9`),
+		filepath.FromSlash(`testdata/duplicatesyntheticoneofs/a1.proto:6:19:symbol "a.Foo._bar" already defined at a2.proto:6:19
+				|| testdata/duplicatesyntheticoneofs/a2.proto:6:19:symbol "a.Foo._bar" already defined at a1.proto:6:19`),
+		filepath.FromSlash(`testdata/duplicatesyntheticoneofs/a1.proto:6:19:symbol "a.Foo.bar" already defined at a2.proto:6:19
+				|| testdata/duplicatesyntheticoneofs/a2.proto:6:19:symbol "a.Foo.bar" already defined at a1.proto:6:19`),
+	)
+}
+
+func TestOptionPanic(t *testing.T) {
+	t.Parallel()
+	require.NotPanics(t, func() {
+		moduleFileSet := testGetModuleFileSet(t, filepath.Join("testdata", "optionpanic"))
+		_, _, err := NewBuilder(zap.NewNop()).Build(
+			context.Background(),
+			moduleFileSet,
+		)
+		require.NoError(t, err)
+	})
+}
+
+func TestCompareSemicolons(t *testing.T) {
+	t.Parallel()
+	runner := command.NewRunner()
+	testCompare(t, runner, "semicolons")
+}
+
+func testCompare(t *testing.T, runner command.Runner, relDirPath string) {
+	dirPath := filepath.Join("testdata", relDirPath)
+	image, fileAnnotations := testBuild(t, false, dirPath)
+	require.Equal(t, 0, len(fileAnnotations), fileAnnotations)
+	image = bufimage.ImageWithoutImports(image)
+	fileDescriptorSet := bufimage.ImageToFileDescriptorSet(image)
+	filePaths := buftesting.GetProtocFilePaths(t, dirPath, 0)
+	actualProtocFileDescriptorSet := buftesting.GetActualProtocFileDescriptorSet(t, runner, false, false, dirPath, filePaths)
+	prototesting.AssertFileDescriptorSetsEqual(t, runner, fileDescriptorSet, actualProtocFileDescriptorSet)
+}
+
+func testBuildGoogleapis(t *testing.T, includeSourceInfo bool) bufimage.Image {
+	googleapisDirPath := buftesting.GetGoogleapisDirPath(t, buftes
