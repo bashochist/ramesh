@@ -326,4 +326,110 @@ func testCompare(t *testing.T, runner command.Runner, relDirPath string) {
 }
 
 func testBuildGoogleapis(t *testing.T, includeSourceInfo bool) bufimage.Image {
-	googleapisDirPath := buftesting.GetGoogleapisDirPath(t, buftes
+	googleapisDirPath := buftesting.GetGoogleapisDirPath(t, buftestingDirPath)
+	image, fileAnnotations := testBuild(t, includeSourceInfo, googleapisDirPath)
+	require.Equal(t, 0, len(fileAnnotations), fileAnnotations)
+	return image
+}
+
+func testBuild(t *testing.T, includeSourceInfo bool, dirPath string) (bufimage.Image, []bufanalysis.FileAnnotation) {
+	moduleFileSet := testGetModuleFileSet(t, dirPath)
+	var options []BuildOption
+	if !includeSourceInfo {
+		options = append(options, WithExcludeSourceCodeInfo())
+	}
+	image, fileAnnotations, err := NewBuilder(zap.NewNop()).Build(
+		context.Background(),
+		moduleFileSet,
+		options...,
+	)
+	require.NoError(t, err)
+	return image, fileAnnotations
+}
+
+func testGetModuleFileSet(t *testing.T, dirPath string) bufmodule.ModuleFileSet {
+	storageosProvider := storageos.NewProvider(storageos.ProviderWithSymlinks())
+	readWriteBucket, err := storageosProvider.NewReadWriteBucket(
+		dirPath,
+		storageos.ReadWriteBucketWithSymlinksIfSupported(),
+	)
+	require.NoError(t, err)
+	config, err := bufmoduleconfig.NewConfigV1(bufmoduleconfig.ExternalConfigV1{})
+	require.NoError(t, err)
+	module, err := bufmodulebuild.BuildForBucket(
+		context.Background(),
+		readWriteBucket,
+		config,
+	)
+	require.NoError(t, err)
+	moduleFileSet, err := bufmodulebuild.NewModuleFileSetBuilder(
+		zap.NewNop(),
+		bufmodule.NewNopModuleReader(),
+	).Build(
+		context.Background(),
+		module,
+	)
+	require.NoError(t, err)
+	return moduleFileSet
+}
+
+func testGetImageFilePaths(image bufimage.Image) []string {
+	var fileNames []string
+	for _, file := range image.Files() {
+		fileNames = append(fileNames, file.Path())
+	}
+	sort.Strings(fileNames)
+	return fileNames
+}
+
+func testGetImageImportPaths(image bufimage.Image) []string {
+	var importNames []string
+	for _, file := range image.Files() {
+		if file.IsImport() {
+			importNames = append(importNames, file.Path())
+		}
+	}
+	sort.Strings(importNames)
+	return importNames
+}
+
+func testFileAnnotations(t *testing.T, relDirPath string, want ...string) {
+	t.Helper()
+
+	// Allowing real parallelism makes some test expectations too complicated to express and assert
+	previousParallelism := thread.Parallelism()
+	thread.SetParallelism(1)
+	defer func() {
+		thread.SetParallelism(previousParallelism)
+	}()
+
+	_, fileAnnotations := testBuild(t, false, filepath.Join("testdata", filepath.FromSlash(relDirPath)))
+	got := make([]string, len(fileAnnotations))
+	for i, annotation := range fileAnnotations {
+		got[i] = annotation.String()
+	}
+	require.Equal(t, len(want), len(got))
+	for i := range want {
+		options := strings.Split(want[i], "||")
+		matched := false
+		for _, option := range options {
+			option = strings.TrimSpace(option)
+			if got[i] == option {
+				matched = true
+				break
+			}
+		}
+		require.True(t, matched, "annotation at index %d: wanted %q ; got %q", i, want[i], got[i])
+	}
+}
+
+func testImageWithExcludedFilePaths(t *testing.T, image bufimage.Image, excludePaths []string) {
+	t.Helper()
+	for _, imageFile := range image.Files() {
+		if !imageFile.IsImport() {
+			for _, excludePath := range excludePaths {
+				assert.False(t, normalpath.EqualsOrContainsPath(excludePath, imageFile.Path(), normalpath.Relative), "paths: %s, %s", imageFile.Path(), excludePath)
+			}
+		}
+	}
+}
