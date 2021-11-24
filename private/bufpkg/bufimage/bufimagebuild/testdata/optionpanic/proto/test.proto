@@ -2,4 +2,11 @@ syntax = "proto3";
 
 package proto;
 
-import "options/
+import "options/option.proto";
+
+option (options.my_option) = {
+  my_array: {
+    my_map: {
+    }
+  }
+};
