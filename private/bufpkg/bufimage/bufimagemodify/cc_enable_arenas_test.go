@@ -280,4 +280,106 @@ func TestCcEnableArenasCcOptions(t *testing.T) {
 
 		for _, imageFile := range image.Files() {
 			descriptor := imageFile.Proto()
-			assert.True(t, descriptor.GetOptio
+			assert.True(t, descriptor.GetOptions().GetCcEnableArenas())
+		}
+		assertFileOptionSourceCodeInfoEmpty(t, image, ccEnableArenasPath, false)
+	})
+
+	t.Run("with SourceCodeInfo and per-file overrides", func(t *testing.T) {
+		t.Parallel()
+		image := testGetImage(t, dirPath, true)
+		assertFileOptionSourceCodeInfoNotEmpty(t, image, ccEnableArenasPath)
+
+		sweeper := NewFileOptionSweeper()
+		ccEnableArenasModifier, err := CcEnableArenas(zap.NewNop(), sweeper, true, map[string]string{"a.proto": "false"})
+		require.NoError(t, err)
+		modifier := NewMultiModifier(
+			ccEnableArenasModifier,
+			ModifierFunc(sweeper.Sweep),
+		)
+		err = modifier.Modify(
+			context.Background(),
+			image,
+		)
+		require.NoError(t, err)
+
+		for _, imageFile := range image.Files() {
+			descriptor := imageFile.Proto()
+			if imageFile.Path() == "a.proto" {
+				assert.False(t, descriptor.GetOptions().GetCcEnableArenas())
+				continue
+			}
+			assert.True(t, descriptor.GetOptions().GetCcEnableArenas())
+		}
+	})
+
+	t.Run("without SourceCodeInfo and with per-file overrides", func(t *testing.T) {
+		t.Parallel()
+		image := testGetImage(t, dirPath, false)
+		assertFileOptionSourceCodeInfoEmpty(t, image, ccEnableArenasPath, false)
+
+		sweeper := NewFileOptionSweeper()
+		ccEnableArenasModifier, err := CcEnableArenas(zap.NewNop(), sweeper, true, map[string]string{"a.proto": "false"})
+		require.NoError(t, err)
+		err = ccEnableArenasModifier.Modify(
+			context.Background(),
+			image,
+		)
+		require.NoError(t, err)
+		assert.NotEqual(t, testGetImage(t, dirPath, true), image)
+
+		for _, imageFile := range image.Files() {
+			descriptor := imageFile.Proto()
+			if imageFile.Path() == "a.proto" {
+				assert.False(t, descriptor.GetOptions().GetCcEnableArenas())
+				continue
+			}
+			assert.True(t, descriptor.GetOptions().GetCcEnableArenas())
+		}
+		assertFileOptionSourceCodeInfoEmpty(t, image, ccEnableArenasPath, false)
+	})
+}
+
+func TestCcEnableArenasWellKnownTypes(t *testing.T) {
+	t.Parallel()
+	dirPath := filepath.Join("testdata", "wktimport")
+	t.Run("with SourceCodeInfo", func(t *testing.T) {
+		t.Parallel()
+		image := testGetImage(t, dirPath, true)
+
+		sweeper := NewFileOptionSweeper()
+		ccEnableArenasModifier, err := CcEnableArenas(zap.NewNop(), sweeper, true, nil)
+		require.NoError(t, err)
+		modifier := NewMultiModifier(
+			ccEnableArenasModifier,
+			ModifierFunc(sweeper.Sweep),
+		)
+		err = modifier.Modify(
+			context.Background(),
+			image,
+		)
+		require.NoError(t, err)
+
+		for _, imageFile := range image.Files() {
+			assert.True(t, imageFile.Proto().GetOptions().GetCcEnableArenas())
+		}
+	})
+
+	t.Run("without SourceCodeInfo", func(t *testing.T) {
+		t.Parallel()
+		image := testGetImage(t, dirPath, false)
+
+		sweeper := NewFileOptionSweeper()
+		ccEnableArenasModifier, err := CcEnableArenas(zap.NewNop(), sweeper, true, nil)
+		require.NoError(t, err)
+		err = ccEnableArenasModifier.Modify(
+			context.Background(),
+			image,
+		)
+		require.NoError(t, err)
+
+		for _, imageFile := range image.Files() {
+			assert.True(t, imageFile.Proto().GetOptions().GetCcEnableArenas())
+		}
+	})
+}
