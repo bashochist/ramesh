@@ -195,4 +195,88 @@ func TestCsharpNamespaceAllOptions(t *testing.T) {
 func TestCsharpNamespaceOptions(t *testing.T) {
 	t.Parallel()
 	testCsharpNamespaceOptions(t, filepath.Join("testdata", "csharpoptions", "single"), "Acme.V1")
-	testCsharpNamespaceOptions(t, filepath.Join("testdata", "csharpoptions", "double"), "
+	testCsharpNamespaceOptions(t, filepath.Join("testdata", "csharpoptions", "double"), "Acme.Weather.V1")
+	testCsharpNamespaceOptions(t, filepath.Join("testdata", "csharpoptions", "triple"), "Acme.Weather.Data.V1")
+	testCsharpNamespaceOptions(t, filepath.Join("testdata", "csharpoptions", "underscore"), "Acme.Weather.FooBar.V1")
+}
+
+func testCsharpNamespaceOptions(t *testing.T, dirPath string, classPrefix string) {
+	t.Run("with SourceCodeInfo", func(t *testing.T) {
+		t.Parallel()
+		image := testGetImage(t, dirPath, true)
+		assertFileOptionSourceCodeInfoNotEmpty(t, image, csharpNamespacePath)
+
+		sweeper := NewFileOptionSweeper()
+		csharpNamespaceModifier := CsharpNamespace(zap.NewNop(), sweeper, nil, nil, nil)
+
+		modifier := NewMultiModifier(csharpNamespaceModifier, ModifierFunc(sweeper.Sweep))
+		err := modifier.Modify(
+			context.Background(),
+			image,
+		)
+		require.NoError(t, err)
+		assert.NotEqual(t, testGetImage(t, dirPath, true), image)
+
+		for _, imageFile := range image.Files() {
+			descriptor := imageFile.Proto()
+			assert.Equal(t, classPrefix, descriptor.GetOptions().GetCsharpNamespace())
+		}
+		assertFileOptionSourceCodeInfoEmpty(t, image, csharpNamespacePath, true)
+	})
+
+	t.Run("without SourceCodeInfo", func(t *testing.T) {
+		t.Parallel()
+		image := testGetImage(t, dirPath, false)
+		assertFileOptionSourceCodeInfoEmpty(t, image, csharpNamespacePath, false)
+
+		sweeper := NewFileOptionSweeper()
+		modifier := CsharpNamespace(zap.NewNop(), sweeper, nil, nil, nil)
+		err := modifier.Modify(
+			context.Background(),
+			image,
+		)
+		require.NoError(t, err)
+		assert.NotEqual(t, testGetImage(t, dirPath, false), image)
+
+		for _, imageFile := range image.Files() {
+			descriptor := imageFile.Proto()
+			assert.Equal(t, classPrefix, descriptor.GetOptions().GetCsharpNamespace())
+		}
+		assertFileOptionSourceCodeInfoEmpty(t, image, csharpNamespacePath, false)
+	})
+
+	t.Run("with SourceCodeInfo and per-file options", func(t *testing.T) {
+		t.Parallel()
+		image := testGetImage(t, dirPath, true)
+		assertFileOptionSourceCodeInfoNotEmpty(t, image, csharpNamespacePath)
+
+		sweeper := NewFileOptionSweeper()
+		csharpNamespaceModifier := CsharpNamespace(zap.NewNop(), sweeper, nil, nil, map[string]string{"override.proto": "Acme.Override.V1"})
+
+		modifier := NewMultiModifier(csharpNamespaceModifier, ModifierFunc(sweeper.Sweep))
+		err := modifier.Modify(
+			context.Background(),
+			image,
+		)
+		require.NoError(t, err)
+		assert.NotEqual(t, testGetImage(t, dirPath, true), image)
+
+		for _, imageFile := range image.Files() {
+			descriptor := imageFile.Proto()
+			if imageFile.Path() == "override.proto" {
+				assert.Equal(t, "Acme.Override.V1", descriptor.GetOptions().GetCsharpNamespace())
+				continue
+			}
+			assert.Equal(t, classPrefix, descriptor.GetOptions().GetCsharpNamespace())
+		}
+		assertFileOptionSourceCodeInfoEmpty(t, image, csharpNamespacePath, true)
+	})
+
+	t.Run("without SourceCodeInfo", func(t *testing.T) {
+		t.Parallel()
+		image := testGetImage(t, dirPath, false)
+		assertFileOptionSourceCodeInfoEmpty(t, image, csharpNamespacePath, false)
+
+		sweeper := NewFileOptionSweeper()
+		modifier := CsharpNamespace(zap.NewNop(), sweeper, nil, nil, map[string]string{"override.proto": "Acme.Override.V1"})
+		err := modifier.Modify
