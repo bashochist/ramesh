@@ -612,4 +612,16 @@ func TestCsharpNamespaceWithOverride(t *testing.T) {
 		assert.NotEqual(t, testGetImage(t, dirPath, false), image)
 
 		for _, imageFile := range image.Files() {
-			descriptor := i
+			descriptor := imageFile.Proto()
+			if imageFile.Proto().Name != nil && *imageFile.Proto().Name == "a.proto" {
+				assert.Equal(t, "override", descriptor.GetOptions().GetCsharpNamespace())
+				continue
+			}
+			assert.Equal(t,
+				strings.ReplaceAll(normalpath.Dir(imageFile.Path()), "/", "."),
+				descriptor.GetOptions().GetCsharpNamespace(),
+			)
+		}
+		assertFileOptionSourceCodeInfoEmpty(t, image, goPackagePath, false)
+	})
+}
