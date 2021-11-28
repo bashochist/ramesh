@@ -1,3 +1,4 @@
+
 // Copyright 2020-2023 Buf Technologies, Inc.
 //
 // Licensed under the Apache License, Version 2.0 (the "License");
@@ -18,41 +19,40 @@ import (
 	"context"
 
 	"github.com/bufbuild/buf/private/bufpkg/bufimage"
-	"github.com/bufbuild/buf/private/pkg/normalpath"
-	"github.com/bufbuild/buf/private/pkg/stringutil"
 	"go.uber.org/zap"
 	"google.golang.org/protobuf/proto"
 	"google.golang.org/protobuf/types/descriptorpb"
 )
 
-// JavaOuterClassNameID is the ID for the java_outer_classname modifier.
-const JavaOuterClassNameID = "JAVA_OUTER_CLASSNAME"
+// JavaStringCheckUtf8ID is the ID of the java_string_check_utf8 modifier.
+const JavaStringCheckUtf8ID = "JAVA_STRING_CHECK_UTF8"
 
-// javaOuterClassnamePath is the SourceCodeInfo path for the java_outer_classname option.
-// https://github.com/protocolbuffers/protobuf/blob/87d140f851131fb8a6e8a80449cf08e73e568259/src/google/protobuf/descriptor.proto#L356
-var javaOuterClassnamePath = []int32{8, 8}
+// javaStringCheckUtf8Path is the SourceCodeInfo path for the java_string_check_utf8 option.
+// https://github.com/protocolbuffers/protobuf/blob/61689226c0e3ec88287eaed66164614d9c4f2bf7/src/google/protobuf/descriptor.proto#L375
+var javaStringCheckUtf8Path = []int32{8, 27}
 
-func javaOuterClassname(
+func javaStringCheckUtf8(
 	logger *zap.Logger,
 	sweeper Sweeper,
-	overrides map[string]string,
+	value bool,
+	overrides map[string]bool,
 ) Modifier {
 	return ModifierFunc(
 		func(ctx context.Context, image bufimage.Image) error {
 			seenOverrideFiles := make(map[string]struct{}, len(overrides))
 			for _, imageFile := range image.Files() {
-				javaOuterClassnameValue := javaOuterClassnameValue(imageFile)
+				modifierValue := value
 				if overrideValue, ok := overrides[imageFile.Path()]; ok {
-					javaOuterClassnameValue = overrideValue
+					modifierValue = overrideValue
 					seenOverrideFiles[imageFile.Path()] = struct{}{}
 				}
-				if err := javaOuterClassnameForFile(ctx, sweeper, imageFile, javaOuterClassnameValue); err != nil {
+				if err := javaStringCheckUtf8ForFile(ctx, sweeper, imageFile, modifierValue); err != nil {
 					return err
 				}
 			}
 			for overrideFile := range overrides {
 				if _, ok := seenOverrideFiles[overrideFile]; !ok {
-					logger.Sugar().Warnf("%s override for %q was unused", JavaOuterClassNameID, overrideFile)
+					logger.Sugar().Warnf("%s override for %q was unused", JavaStringCheckUtf8ID, overrideFile)
 				}
 			}
 			return nil
@@ -60,28 +60,32 @@ func javaOuterClassname(
 	)
 }
 
-func javaOuterClassnameForFile(
+func javaStringCheckUtf8ForFile(
 	ctx context.Context,
 	sweeper Sweeper,
 	imageFile bufimage.ImageFile,
-	javaOuterClassnameValue string,
+	value bool,
 ) error {
 	descriptor := imageFile.Proto()
-	if options := descriptor.GetOptions(); isWellKnownType(ctx, imageFile) || (options != nil && options.GetJavaOuterClassname() == javaOuterClassnameValue) {
-		// The file is a well-known type or already defines the java_outer_classname
-		// option with the given value, so this is a no-op.
+	options := descriptor.GetOptions()
+	switch {
+	case isWellKnownType(ctx, imageFile):
+		// The file is a well-known type, don't do anything.
+		return nil
+	case options != nil && options.GetJavaStringCheckUtf8() == value:
+		// The option is already set to the same value, don't do anything.
+		return nil
+	case options == nil && descriptorpb.Default_FileOptions_JavaStringCheckUtf8 == value:
+		// The option is not set, but the value we want to set is the
+		// same as the default, don't do anything.
 		return nil
 	}
-	if descriptor.Options == nil {
+	if options == nil {
 		descriptor.Options = &descriptorpb.FileOptions{}
 	}
-	descriptor.Options.JavaOuterClassname = proto.String(javaOuterClassnameValue)
+	descriptor.Options.JavaStringCheckUtf8 = proto.Bool(value)
 	if sweeper != nil {
-		sweeper.mark(imageFile.Path(), javaOuterClassnamePath)
+		sweeper.mark(imageFile.Path(), javaStringCheckUtf8Path)
 	}
 	return nil
-}
-
-func javaOuterClassnameValue(imageFile bufimage.ImageFile) string {
-	return stringutil.ToPascalCase(normalpath.Base(imageFile.Path()))
 }
