@@ -205,4 +205,101 @@ func TestJavaStringCheckUtf8JavaOptions(t *testing.T) {
 		assertFileOptionSourceCodeInfoNotEmpty(t, image, javaStringCheckUtf8Path)
 
 		sweeper := NewFileOptionSweeper()
-		JavaStringCheckUtf8Modifier, err :
+		JavaStringCheckUtf8Modifier, err := JavaStringCheckUtf8(zap.NewNop(), sweeper, true, nil)
+		require.NoError(t, err)
+		modifier := NewMultiModifier(JavaStringCheckUtf8Modifier, ModifierFunc(sweeper.Sweep))
+		err = modifier.Modify(
+			context.Background(),
+			image,
+		)
+		require.NoError(t, err)
+		assert.NotEqual(t, testGetImage(t, dirPath, true), image)
+
+		for _, imageFile := range image.Files() {
+			descriptor := imageFile.Proto()
+			assert.True(t, descriptor.GetOptions().GetJavaStringCheckUtf8())
+		}
+		assertFileOptionSourceCodeInfoEmpty(t, image, javaStringCheckUtf8Path, true)
+	})
+
+	t.Run("without SourceCodeInfo", func(t *testing.T) {
+		t.Parallel()
+		image := testGetImage(t, dirPath, false)
+		assertFileOptionSourceCodeInfoEmpty(t, image, javaStringCheckUtf8Path, false)
+
+		sweeper := NewFileOptionSweeper()
+		modifier, err := JavaStringCheckUtf8(zap.NewNop(), sweeper, true, nil)
+		require.NoError(t, err)
+		err = modifier.Modify(
+			context.Background(),
+			image,
+		)
+		require.NoError(t, err)
+		assert.NotEqual(t, testGetImage(t, dirPath, false), image)
+
+		for _, imageFile := range image.Files() {
+			descriptor := imageFile.Proto()
+			assert.True(t, descriptor.GetOptions().GetJavaStringCheckUtf8())
+		}
+		assertFileOptionSourceCodeInfoEmpty(t, image, javaStringCheckUtf8Path, false)
+	})
+
+	t.Run("with SourceCodeInfo and per-file overrides", func(t *testing.T) {
+		t.Parallel()
+		image := testGetImage(t, dirPath, true)
+		assertFileOptionSourceCodeInfoNotEmpty(t, image, javaStringCheckUtf8Path)
+
+		sweeper := NewFileOptionSweeper()
+		JavaStringCheckUtf8Modifier, err := JavaStringCheckUtf8(zap.NewNop(), sweeper, true, map[string]string{"override.proto": "false"})
+		require.NoError(t, err)
+		modifier := NewMultiModifier(JavaStringCheckUtf8Modifier, ModifierFunc(sweeper.Sweep))
+		err = modifier.Modify(
+			context.Background(),
+			image,
+		)
+		require.NoError(t, err)
+
+		for _, imageFile := range image.Files() {
+			descriptor := imageFile.Proto()
+			if imageFile.Path() == "override.proto" {
+				assert.False(t, descriptor.GetOptions().GetJavaStringCheckUtf8())
+				continue
+			}
+			assert.True(t, descriptor.GetOptions().GetJavaStringCheckUtf8())
+		}
+	})
+
+	t.Run("without SourceCodeInfo and with per-file overrides", func(t *testing.T) {
+		t.Parallel()
+		image := testGetImage(t, dirPath, false)
+		assertFileOptionSourceCodeInfoEmpty(t, image, javaStringCheckUtf8Path, false)
+
+		sweeper := NewFileOptionSweeper()
+		modifier, err := JavaStringCheckUtf8(zap.NewNop(), sweeper, true, map[string]string{"override.proto": "false"})
+		require.NoError(t, err)
+		err = modifier.Modify(
+			context.Background(),
+			image,
+		)
+		require.NoError(t, err)
+
+		for _, imageFile := range image.Files() {
+			descriptor := imageFile.Proto()
+			if imageFile.Path() == "override.proto" {
+				assert.False(t, descriptor.GetOptions().GetJavaStringCheckUtf8())
+				continue
+			}
+			assert.True(t, descriptor.GetOptions().GetJavaStringCheckUtf8())
+		}
+	})
+}
+
+func TestJavaStringCheckUtf8WellKnownTypes(t *testing.T) {
+	t.Parallel()
+	dirPath := filepath.Join("testdata", "wktimport")
+	t.Run("with SourceCodeInfo", func(t *testing.T) {
+		t.Parallel()
+		image := testGetImage(t, dirPath, true)
+
+		sweeper := NewFileOptionSweeper()
+		JavaStringCheckUtf8M
