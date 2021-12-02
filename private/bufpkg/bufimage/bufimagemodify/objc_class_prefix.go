@@ -27,4 +27,86 @@ import (
 	"google.golang.org/protobuf/types/descriptorpb"
 )
 
-//
+// ObjcClassPrefixID is the ID of the objc_class_prefix modifier.
+const ObjcClassPrefixID = "OBJC_CLASS_PREFIX"
+
+// objcClassPrefixPath is the SourceCodeInfo path for the objc_class_prefix option.
+// https://github.com/protocolbuffers/protobuf/blob/61689226c0e3ec88287eaed66164614d9c4f2bf7/src/google/protobuf/descriptor.proto#L425
+var objcClassPrefixPath = []int32{8, 36}
+
+func objcClassPrefix(
+	logger *zap.Logger,
+	sweeper Sweeper,
+	defaultPrefix string,
+	except []bufmoduleref.ModuleIdentity,
+	moduleOverrides map[bufmoduleref.ModuleIdentity]string,
+	overrides map[string]string,
+) Modifier {
+	// Convert the bufmoduleref.ModuleIdentity types into
+	// strings so that they're comparable.
+	exceptModuleIdentityStrings := make(map[string]struct{}, len(except))
+	for _, moduleIdentity := range except {
+		exceptModuleIdentityStrings[moduleIdentity.IdentityString()] = struct{}{}
+	}
+	overrideModuleIdentityStrings := make(map[string]string, len(moduleOverrides))
+	for moduleIdentity, goPackagePrefix := range moduleOverrides {
+		overrideModuleIdentityStrings[moduleIdentity.IdentityString()] = goPackagePrefix
+	}
+	return ModifierFunc(
+		func(ctx context.Context, image bufimage.Image) error {
+			seenModuleIdentityStrings := make(map[string]struct{}, len(overrideModuleIdentityStrings))
+			seenOverrideFiles := make(map[string]struct{}, len(overrides))
+			for _, imageFile := range image.Files() {
+				objcClassPrefixValue := objcClassPrefixValue(imageFile)
+				if defaultPrefix != "" {
+					objcClassPrefixValue = defaultPrefix
+				}
+				if moduleIdentity := imageFile.ModuleIdentity(); moduleIdentity != nil {
+					moduleIdentityString := moduleIdentity.IdentityString()
+					if modulePrefixOverride, ok := overrideModuleIdentityStrings[moduleIdentityString]; ok {
+						objcClassPrefixValue = modulePrefixOverride
+						seenModuleIdentityStrings[moduleIdentityString] = struct{}{}
+					}
+				}
+				if overrideValue, ok := overrides[imageFile.Path()]; ok {
+					objcClassPrefixValue = overrideValue
+					seenOverrideFiles[imageFile.Path()] = struct{}{}
+				}
+				if err := objcClassPrefixForFile(ctx, sweeper, imageFile, objcClassPrefixValue, exceptModuleIdentityStrings); err != nil {
+					return err
+				}
+			}
+			for moduleIdentityString := range overrideModuleIdentityStrings {
+				if _, ok := seenModuleIdentityStrings[moduleIdentityString]; !ok {
+					logger.Sugar().Warnf("%s override for %q was unused", ObjcClassPrefixID, moduleIdentityString)
+				}
+			}
+			for overrideFile := range overrides {
+				if _, ok := seenOverrideFiles[overrideFile]; !ok {
+					logger.Sugar().Warnf("%s override for %q was unused", ObjcClassPrefixID, overrideFile)
+				}
+			}
+			return nil
+		},
+	)
+}
+
+func objcClassPrefixForFile(
+	ctx context.Context,
+	sweeper Sweeper,
+	imageFile bufimage.ImageFile,
+	objcClassPrefixValue string,
+	exceptModuleIdentityStrings map[string]struct{},
+) error {
+	descriptor := imageFile.Proto()
+	if isWellKnownType(ctx, imageFile) || objcClassPrefixValue == "" {
+		// This is a well-known type or we could not resolve a non-empty objc_class_prefix
+		// value, so this is a no-op.
+		return nil
+	}
+	if moduleIdentity := imageFile.ModuleIdentity(); moduleIdentity != nil {
+		if _, ok := exceptModuleIdentityStrings[moduleIdentity.IdentityString()]; ok {
+			return nil
+		}
+	}
+	if descriptor.Op
