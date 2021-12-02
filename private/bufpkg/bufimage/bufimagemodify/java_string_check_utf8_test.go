@@ -302,4 +302,45 @@ func TestJavaStringCheckUtf8WellKnownTypes(t *testing.T) {
 		image := testGetImage(t, dirPath, true)
 
 		sweeper := NewFileOptionSweeper()
-		JavaStringCheckUtf8M
+		JavaStringCheckUtf8Modifier, err := JavaStringCheckUtf8(zap.NewNop(), sweeper, true, nil)
+		require.NoError(t, err)
+		modifier := NewMultiModifier(JavaStringCheckUtf8Modifier, ModifierFunc(sweeper.Sweep))
+		err = modifier.Modify(
+			context.Background(),
+			image,
+		)
+		require.NoError(t, err)
+
+		for _, imageFile := range image.Files() {
+			descriptor := imageFile.Proto()
+			if isWellKnownType(context.Background(), imageFile) {
+				assert.False(t, descriptor.GetOptions().GetJavaStringCheckUtf8())
+				continue
+			}
+			assert.True(t, descriptor.GetOptions().GetJavaStringCheckUtf8())
+		}
+	})
+
+	t.Run("without SourceCodeInfo", func(t *testing.T) {
+		t.Parallel()
+		image := testGetImage(t, dirPath, false)
+
+		sweeper := NewFileOptionSweeper()
+		modifier, err := JavaStringCheckUtf8(zap.NewNop(), sweeper, true, nil)
+		require.NoError(t, err)
+		err = modifier.Modify(
+			context.Background(),
+			image,
+		)
+		require.NoError(t, err)
+
+		for _, imageFile := range image.Files() {
+			descriptor := imageFile.Proto()
+			if isWellKnownType(context.Background(), imageFile) {
+				assert.False(t, descriptor.GetOptions().GetJavaStringCheckUtf8())
+				continue
+			}
+			assert.True(t, descriptor.GetOptions().GetJavaStringCheckUtf8())
+		}
+	})
+}
