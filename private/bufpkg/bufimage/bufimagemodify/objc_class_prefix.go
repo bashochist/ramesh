@@ -109,4 +109,43 @@ func objcClassPrefixForFile(
 			return nil
 		}
 	}
-	if descriptor.Op
+	if descriptor.Options == nil {
+		descriptor.Options = &descriptorpb.FileOptions{}
+	}
+	descriptor.Options.ObjcClassPrefix = proto.String(objcClassPrefixValue)
+	if sweeper != nil {
+		sweeper.mark(imageFile.Path(), objcClassPrefixPath)
+	}
+	return nil
+}
+
+// objcClassPrefixValue returns the objc_class_prefix for the given ImageFile based on its
+// package declaration. If the image file doesn't have a package declaration, an
+// empty string is returned.
+func objcClassPrefixValue(imageFile bufimage.ImageFile) string {
+	pkg := imageFile.Proto().GetPackage()
+	if pkg == "" {
+		return ""
+	}
+	_, hasPackageVersion := protoversion.NewPackageVersionForPackage(pkg)
+	packageParts := strings.Split(pkg, ".")
+	var prefixParts []rune
+	for i, part := range packageParts {
+		// Check if last part is a version before appending.
+		if i == len(packageParts)-1 && hasPackageVersion {
+			continue
+		}
+		// Probably should never be a non-ASCII character,
+		// but why not support it just in case?
+		runeSlice := []rune(part)
+		prefixParts = append(prefixParts, unicode.ToUpper(runeSlice[0]))
+	}
+	for len(prefixParts) < 3 {
+		prefixParts = append(prefixParts, 'X')
+	}
+	prefix := string(prefixParts)
+	if prefix == "GPB" {
+		prefix = "GPX"
+	}
+	return prefix
+}
