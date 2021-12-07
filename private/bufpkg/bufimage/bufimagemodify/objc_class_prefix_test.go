@@ -666,4 +666,53 @@ func TestObjcClassPrefixWithOverride(t *testing.T) {
 			defaultClassPrefix,
 			nil,
 			map[bufmoduleref.ModuleIdentity]string{testModuleIdentity: overrideClassPrefix},
-			map[string]string{"override.proto": "override"}
+			map[string]string{"override.proto": "override"},
+		)
+		modifier := NewMultiModifier(objcClassPrefixModifier, ModifierFunc(sweeper.Sweep))
+		err := modifier.Modify(
+			context.Background(),
+			image,
+		)
+		require.NoError(t, err)
+		for _, imageFile := range image.Files() {
+			descriptor := imageFile.Proto()
+			if imageFile.Path() == "override.proto" {
+				assert.Equal(t, "override", descriptor.GetOptions().GetObjcClassPrefix())
+				continue
+			}
+			assert.Equal(t, overrideClassPrefix, descriptor.GetOptions().GetObjcClassPrefix())
+		}
+		assertFileOptionSourceCodeInfoEmpty(t, image, objcClassPrefixPath, true)
+	})
+
+	t.Run("without SourceCodeInfo and with per-file overrides", func(t *testing.T) {
+		t.Parallel()
+		image := testGetImage(t, dirPath, false)
+		assertFileOptionSourceCodeInfoEmpty(t, image, objcClassPrefixPath, false)
+
+		sweeper := NewFileOptionSweeper()
+		objcClassPrefixModifier := ObjcClassPrefix(
+			zap.NewNop(),
+			sweeper,
+			defaultClassPrefix,
+			nil,
+			map[bufmoduleref.ModuleIdentity]string{testModuleIdentity: overrideClassPrefix},
+			map[string]string{"override.proto": "override"},
+		)
+		modifier := NewMultiModifier(objcClassPrefixModifier, ModifierFunc(sweeper.Sweep))
+		err := modifier.Modify(
+			context.Background(),
+			image,
+		)
+		require.NoError(t, err)
+		for _, imageFile := range image.Files() {
+			descriptor := imageFile.Proto()
+			if imageFile.Path() == "override.proto" {
+				assert.Equal(t, "override", descriptor.GetOptions().GetObjcClassPrefix())
+				continue
+			}
+			assert.Equal(t, overrideClassPrefix, descriptor.GetOptions().GetObjcClassPrefix())
+		}
+		assertFileOptionSourceCodeInfoEmpty(t, image, objcClassPrefixPath, false)
+	})
+}
