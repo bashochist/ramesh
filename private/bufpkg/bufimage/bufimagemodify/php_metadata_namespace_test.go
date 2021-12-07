@@ -27,4 +27,98 @@ import (
 func TestPhpMetadataNamespaceEmptyOptions(t *testing.T) {
 	t.Parallel()
 	dirPath := filepath.Join("testdata", "emptyoptions")
-	t
+	t.Run("with SourceCodeInfo", func(t *testing.T) {
+		t.Parallel()
+		image := testGetImage(t, dirPath, true)
+		assertFileOptionSourceCodeInfoEmpty(t, image, phpMetadataNamespacePath, true)
+
+		sweeper := NewFileOptionSweeper()
+		phpMetadataNamespaceModifier := PhpMetadataNamespace(zap.NewNop(), sweeper, nil)
+
+		modifier := NewMultiModifier(phpMetadataNamespaceModifier, ModifierFunc(sweeper.Sweep))
+		err := modifier.Modify(
+			context.Background(),
+			image,
+		)
+		require.NoError(t, err)
+		assert.Equal(t, testGetImage(t, dirPath, true), image)
+	})
+
+	t.Run("without SourceCodeInfo", func(t *testing.T) {
+		t.Parallel()
+		image := testGetImage(t, dirPath, false)
+		assertFileOptionSourceCodeInfoEmpty(t, image, phpMetadataNamespacePath, false)
+
+		sweeper := NewFileOptionSweeper()
+		modifier := PhpMetadataNamespace(zap.NewNop(), sweeper, nil)
+		err := modifier.Modify(
+			context.Background(),
+			image,
+		)
+		require.NoError(t, err)
+		assert.Equal(t, testGetImage(t, dirPath, false), image)
+	})
+
+	t.Run("with SourceCodeInfo and per-file overrides", func(t *testing.T) {
+		t.Parallel()
+		image := testGetImage(t, dirPath, true)
+		assertFileOptionSourceCodeInfoEmpty(t, image, phpMetadataNamespacePath, true)
+
+		sweeper := NewFileOptionSweeper()
+		phpMetadataNamespaceModifier := PhpMetadataNamespace(zap.NewNop(), sweeper, map[string]string{"a.proto": "override"})
+
+		modifier := NewMultiModifier(phpMetadataNamespaceModifier, ModifierFunc(sweeper.Sweep))
+		err := modifier.Modify(
+			context.Background(),
+			image,
+		)
+		require.NoError(t, err)
+		require.Equal(t, 1, len(image.Files()))
+		descriptor := image.Files()[0].Proto()
+		require.Equal(t, "override", descriptor.GetOptions().GetPhpMetadataNamespace())
+	})
+
+	t.Run("without SourceCodeInfo and with per-file overrides", func(t *testing.T) {
+		t.Parallel()
+		image := testGetImage(t, dirPath, false)
+		assertFileOptionSourceCodeInfoEmpty(t, image, phpMetadataNamespacePath, false)
+
+		sweeper := NewFileOptionSweeper()
+		modifier := PhpMetadataNamespace(zap.NewNop(), sweeper, map[string]string{"a.proto": "override"})
+		err := modifier.Modify(
+			context.Background(),
+			image,
+		)
+		require.NoError(t, err)
+		require.Equal(t, 1, len(image.Files()))
+		descriptor := image.Files()[0].Proto()
+		require.Equal(t, "override", descriptor.GetOptions().GetPhpMetadataNamespace())
+	})
+}
+
+func TestPhpMetadataNamespaceAllOptions(t *testing.T) {
+	t.Parallel()
+	dirPath := filepath.Join("testdata", "alloptions")
+	t.Run("with SourceCodeInfo", func(t *testing.T) {
+		t.Parallel()
+		image := testGetImage(t, dirPath, true)
+		assertFileOptionSourceCodeInfoNotEmpty(t, image, phpMetadataNamespacePath)
+
+		sweeper := NewFileOptionSweeper()
+		phpMetadataNamespaceModifier := PhpMetadataNamespace(zap.NewNop(), sweeper, nil)
+
+		modifier := NewMultiModifier(phpMetadataNamespaceModifier, ModifierFunc(sweeper.Sweep))
+		err := modifier.Modify(
+			context.Background(),
+			image,
+		)
+		require.NoError(t, err)
+
+		for _, imageFile := range image.Files() {
+			descriptor := imageFile.Proto()
+			assert.Equal(t, "foo", descriptor.GetOptions().GetPhpMetadataNamespace())
+		}
+		assertFileOptionSourceCodeInfoNotEmpty(t, image, phpMetadataNamespacePath)
+	})
+
+	t.Run("without 
