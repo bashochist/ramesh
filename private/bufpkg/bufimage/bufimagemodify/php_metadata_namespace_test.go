@@ -300,4 +300,59 @@ func testPhpMetadataNamespaceOptions(t *testing.T, dirPath string, classPrefix s
 
 func TestPhpMetadataNamespaceWellKnownTypes(t *testing.T) {
 	t.Parallel()
-	dirPath := filepath.Joi
+	dirPath := filepath.Join("testdata", "wktimport")
+	modifiedPhpMetadataNamespace := `Acme\Weather\V1alpha1\GPBMetadata`
+	t.Run("with SourceCodeInfo", func(t *testing.T) {
+		t.Parallel()
+		image := testGetImage(t, dirPath, true)
+
+		sweeper := NewFileOptionSweeper()
+		phpMetadataNamespaceModifier := PhpMetadataNamespace(zap.NewNop(), sweeper, nil)
+
+		modifier := NewMultiModifier(phpMetadataNamespaceModifier, ModifierFunc(sweeper.Sweep))
+		err := modifier.Modify(
+			context.Background(),
+			image,
+		)
+		require.NoError(t, err)
+
+		for _, imageFile := range image.Files() {
+			descriptor := imageFile.Proto()
+			if isWellKnownType(context.Background(), imageFile) {
+				// php_namespace is unset for the well-known types
+				assert.Empty(t, descriptor.GetOptions().GetPhpMetadataNamespace())
+				continue
+			}
+			assert.Equal(t,
+				modifiedPhpMetadataNamespace,
+				descriptor.GetOptions().GetPhpMetadataNamespace(),
+			)
+		}
+	})
+
+	t.Run("without SourceCodeInfo", func(t *testing.T) {
+		t.Parallel()
+		image := testGetImage(t, dirPath, false)
+
+		sweeper := NewFileOptionSweeper()
+		modifier := PhpMetadataNamespace(zap.NewNop(), sweeper, nil)
+		err := modifier.Modify(
+			context.Background(),
+			image,
+		)
+		require.NoError(t, err)
+
+		for _, imageFile := range image.Files() {
+			descriptor := imageFile.Proto()
+			if isWellKnownType(context.Background(), imageFile) {
+				// php_namespace is unset for the well-known types
+				assert.Empty(t, descriptor.GetOptions().GetPhpMetadataNamespace())
+				continue
+			}
+			assert.Equal(t,
+				modifiedPhpMetadataNamespace,
+				descriptor.GetOptions().GetPhpMetadataNamespace(),
+			)
+		}
+	})
+}
