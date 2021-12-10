@@ -168,4 +168,36 @@ func phpNamespaceForFile(
 ) error {
 	descriptor := imageFile.Proto()
 	if isWellKnownType(ctx, imageFile) || phpNamespaceValue == "" {
-		// T
+		// This is a well-known type or we could not resolve a non-empty php_namespace
+		// value, so this is a no-op.
+		return nil
+	}
+	if descriptor.Options == nil {
+		descriptor.Options = &descriptorpb.FileOptions{}
+	}
+	descriptor.Options.PhpNamespace = proto.String(phpNamespaceValue)
+	if sweeper != nil {
+		sweeper.mark(imageFile.Path(), phpNamespacePath)
+	}
+	return nil
+}
+
+// phpNamespaceValue returns the php_namespace for the given ImageFile based on its
+// package declaration. If the image file doesn't have a package declaration, an
+// empty string is returned.
+func phpNamespaceValue(imageFile bufimage.ImageFile) string {
+	pkg := imageFile.Proto().GetPackage()
+	if pkg == "" {
+		return ""
+	}
+	packageParts := strings.Split(pkg, ".")
+	for i, part := range packageParts {
+		packagePart := stringutil.ToPascalCase(part)
+		if _, ok := phpReservedKeywords[strings.ToLower(part)]; ok {
+			// Append _ to the package part if it is a reserved keyword.
+			packagePart += "_"
+		}
+		packageParts[i] = packagePart
+	}
+	return strings.Join(packageParts, `\`)
+}
