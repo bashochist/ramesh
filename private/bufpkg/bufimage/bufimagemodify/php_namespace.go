@@ -41,4 +41,131 @@ var (
 		"directory":           {},
 		"exception":           {},
 		"errorexception":      {},
-		"closure":   
+		"closure":             {},
+		"generator":           {},
+		"arithmeticerror":     {},
+		"assertionerror":      {},
+		"divisionbyzeroerror": {},
+		"error":               {},
+		"throwable":           {},
+		"parseerror":          {},
+		"typeerror":           {},
+		// Keywords avoided by protoc.
+		// Ref: https://github.com/protocolbuffers/protobuf/blob/66d749188ff2a2e30e932110222d58da7c6a8d49/src/google/protobuf/compiler/php/php_generator.cc#L50-L66
+		"abstract":     {},
+		"and":          {},
+		"array":        {},
+		"as":           {},
+		"break":        {},
+		"callable":     {},
+		"case":         {},
+		"catch":        {},
+		"class":        {},
+		"clone":        {},
+		"const":        {},
+		"continue":     {},
+		"declare":      {},
+		"default":      {},
+		"die":          {},
+		"do":           {},
+		"echo":         {},
+		"else":         {},
+		"elseif":       {},
+		"empty":        {},
+		"enddeclare":   {},
+		"endfor":       {},
+		"endforeach":   {},
+		"endif":        {},
+		"endswitch":    {},
+		"endwhile":     {},
+		"eval":         {},
+		"exit":         {},
+		"extends":      {},
+		"final":        {},
+		"finally":      {},
+		"fn":           {},
+		"for":          {},
+		"foreach":      {},
+		"function":     {},
+		"global":       {},
+		"goto":         {},
+		"if":           {},
+		"implements":   {},
+		"include":      {},
+		"include_once": {},
+		"instanceof":   {},
+		"insteadof":    {},
+		"interface":    {},
+		"isset":        {},
+		"list":         {},
+		"match":        {},
+		"namespace":    {},
+		"new":          {},
+		"or":           {},
+		"print":        {},
+		"private":      {},
+		"protected":    {},
+		"public":       {},
+		"require":      {},
+		"require_once": {},
+		"return":       {},
+		"static":       {},
+		"switch":       {},
+		"throw":        {},
+		"trait":        {},
+		"try":          {},
+		"unset":        {},
+		"use":          {},
+		"var":          {},
+		"while":        {},
+		"xor":          {},
+		"yield":        {},
+		"int":          {},
+		"float":        {},
+		"bool":         {},
+		"string":       {},
+		"true":         {},
+		"false":        {},
+		"null":         {},
+		"void":         {},
+		"iterable":     {},
+	}
+)
+
+func phpNamespace(
+	logger *zap.Logger,
+	sweeper Sweeper,
+	overrides map[string]string,
+) Modifier {
+	return ModifierFunc(
+		func(ctx context.Context, image bufimage.Image) error {
+			seenOverrideFiles := make(map[string]struct{}, len(overrides))
+			for _, imageFile := range image.Files() {
+				phpNamespaceValue := phpNamespaceValue(imageFile)
+				if overrideValue, ok := overrides[imageFile.Path()]; ok {
+					phpNamespaceValue = overrideValue
+					seenOverrideFiles[imageFile.Path()] = struct{}{}
+				}
+				if err := phpNamespaceForFile(ctx, sweeper, imageFile, phpNamespaceValue); err != nil {
+					return err
+				}
+			}
+			for overrideFile := range overrides {
+				if _, ok := seenOverrideFiles[overrideFile]; !ok {
+					logger.Sugar().Warnf("%s override for %q was unused", PhpNamespaceID, overrideFile)
+				}
+			}
+			return nil
+		},
+	)
+}
+
+func phpNamespaceForFile(
+	ctx context.Context,
+	sweeper Sweeper,
+	imageFile bufimage.ImageFile,
+	phpNamespaceValue string,
+) error {
+	descriptor := imageFile.Proto()
+	if isWellKnownType(ctx, imageFile) || phpNamespaceValue == "" {
+		// T
