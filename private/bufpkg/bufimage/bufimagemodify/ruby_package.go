@@ -92,4 +92,45 @@ func rubyPackage(
 	)
 }
 
-func rubyP
+func rubyPackageForFile(
+	ctx context.Context,
+	sweeper Sweeper,
+	imageFile bufimage.ImageFile,
+	rubyPackageValue string,
+	exceptModuleIdentityStrings map[string]struct{},
+) error {
+	descriptor := imageFile.Proto()
+	if isWellKnownType(ctx, imageFile) || rubyPackageValue == "" {
+		// This is a well-known type or we could not resolve a non-empty ruby_package
+		// value, so this is a no-op.
+		return nil
+	}
+	if moduleIdentity := imageFile.ModuleIdentity(); moduleIdentity != nil {
+		if _, ok := exceptModuleIdentityStrings[moduleIdentity.IdentityString()]; ok {
+			return nil
+		}
+	}
+	if descriptor.Options == nil {
+		descriptor.Options = &descriptorpb.FileOptions{}
+	}
+	descriptor.Options.RubyPackage = proto.String(rubyPackageValue)
+	if sweeper != nil {
+		sweeper.mark(imageFile.Path(), rubyPackagePath)
+	}
+	return nil
+}
+
+// rubyPackageValue returns the ruby_package for the given ImageFile based on its
+// package declaration. If the image file doesn't have a package declaration, an
+// empty string is returned.
+func rubyPackageValue(imageFile bufimage.ImageFile) string {
+	pkg := imageFile.Proto().GetPackage()
+	if pkg == "" {
+		return ""
+	}
+	packageParts := strings.Split(pkg, ".")
+	for i, part := range packageParts {
+		packageParts[i] = stringutil.ToPascalCase(part)
+	}
+	return strings.Join(packageParts, "::")
+}
