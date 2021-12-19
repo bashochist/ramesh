@@ -54,4 +54,64 @@ func NewImageFile(
 
 // NewProtoImageFile returns a new *imagev1.ImageFile for testing.
 //
-// This is also a protodescriptor.
+// This is also a protodescriptor.FileDescriptor.
+func NewProtoImageFile(
+	t testing.TB,
+	path string,
+	importPaths ...string,
+) *imagev1.ImageFile {
+	return &imagev1.ImageFile{
+		Name:       proto.String(path),
+		Dependency: importPaths,
+		BufExtension: &imagev1.ImageFileExtension{
+			IsImport:            proto.Bool(false),
+			IsSyntaxUnspecified: proto.Bool(false),
+		},
+	}
+}
+
+// NewProtoImageFileIsImport returns a new *imagev1.ImageFile for testing that is an import.
+//
+// This is also a protodescriptor.FileDescriptor.
+func NewProtoImageFileIsImport(
+	t testing.TB,
+	path string,
+	importPaths ...string,
+) *imagev1.ImageFile {
+	return &imagev1.ImageFile{
+		Name:       proto.String(path),
+		Dependency: importPaths,
+		BufExtension: &imagev1.ImageFileExtension{
+			IsImport:            proto.Bool(true),
+			IsSyntaxUnspecified: proto.Bool(false),
+		},
+	}
+}
+
+// AssertImageFilesEqual asserts the expected ImageFiles equal the actual ImageFiles.
+func AssertImageFilesEqual(t testing.TB, expected []bufimage.ImageFile, actual []bufimage.ImageFile) {
+	expectedNormalizedImageFiles := normalizeImageFiles(t, expected)
+	actualNormalizedImageFiles := normalizeImageFiles(t, actual)
+	assert.Equal(t, expectedNormalizedImageFiles, actualNormalizedImageFiles)
+}
+
+func normalizeImageFiles(t testing.TB, imageFiles []bufimage.ImageFile) []bufimage.ImageFile {
+	normalizedImageFiles := make([]bufimage.ImageFile, len(imageFiles))
+	for i, imageFile := range imageFiles {
+		normalizedImageFiles[i] = NewImageFile(
+			t,
+			NewProtoImageFile(
+				t,
+				imageFile.FileDescriptor().GetName(),
+				imageFile.FileDescriptor().GetDependency()...,
+			),
+			imageFile.ModuleIdentity(),
+			imageFile.Commit(),
+			imageFile.ExternalPath(),
+			imageFile.IsImport(),
+			imageFile.IsSyntaxUnspecified(),
+			imageFile.UnusedDependencyIndexes(),
+		)
+	}
+	return normalizedImageFiles
+}
