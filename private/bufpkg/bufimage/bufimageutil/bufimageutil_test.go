@@ -229,3 +229,104 @@ func runDiffTest(t *testing.T, testdataDir string, typenames []string, expectedF
 
 	filteredImage, err := ImageFilteredByTypesWithOptions(image, typenames, opts...)
 	require.NoError(t, err)
+	assert.NotNil(t, image)
+	assert.True(t, imageIsDependencyOrdered(filteredImage), "image files not in dependency order")
+
+	// We may have filtered out custom options from the set in the step above. However, the options messages
+	// still contain extension fields that refer to the custom options, as a result of building the image.
+	// So we serialize and then de-serialize, and use only the filtered results to parse extensions. That
+	// way, the result will omit custom options that aren't present in the filtered set (as they will be
+	// considered unrecognized fields).
+	resolver, err := protoencoding.NewResolver(bufimage.ImageToFileDescriptors(filteredImage)...)
+	require.NoError(t, err)
+	data, err := proto.Marshal(bufimage.ImageToFileDescriptorSet(filteredImage))
+	require.NoError(t, err)
+	fileDescriptorSet := &descriptorpb.FileDescriptorSet{}
+	err = proto.UnmarshalOptions{Resolver: resolver}.Unmarshal(data, fileDescriptorSet)
+	require.NoError(t, err)
+
+	reflectDescriptors, err := desc.CreateFileDescriptorsFromSet(fileDescriptorSet)
+	require.NoError(t, err)
+	archive := &txtar.Archive{}
+	printer := protoprint.Printer{
+		SortElements: true,
+		Compact:      true,
+	}
+	for fname, d := range reflectDescriptors {
+		fileBuilder := &bytes.Buffer{}
+		require.NoError(t, printer.PrintProtoFile(d, fileBuilder), "expected no error while printing %q", fname)
+		archive.Files = append(
+			archive.Files,
+			txtar.File{
+				Name: fname,
+				Data: fileBuilder.Bytes(),
+			},
+		)
+	}
+	sort.SliceStable(archive.Files, func(i, j int) bool {
+		return archive.Files[i].Name < archive.Files[j].Name
+	})
+	generated := txtar.Format(archive)
+
+	expectedReader, err := bucket.Get(ctx, expectedFile)
+	require.NoError(t, err)
+	expected, err := io.ReadAll(expectedReader)
+	require.NoError(t, err)
+	assert.Equal(t, string(expected), string(generated))
+
+	if shouldUpdateExpectations {
+		writer, err := bucket.Put(ctx, expectedFile)
+		require.NoError(t, err)
+		_, err = writer.Write(generated)
+		require.NoError(t, err)
+		require.NoError(t, writer.Close())
+	}
+}
+
+func imageIsDependencyOrdered(image bufimage.Image) bool {
+	seen := make(map[string]struct{})
+	for _, file := range image.Files() {
+		for _, importName := range file.Proto().Dependency {
+			if _, ok := seen[importName]; !ok {
+				return false
+			}
+		}
+		seen[file.Path()] = struct{}{}
+	}
+	return true
+}
+
+func BenchmarkFilterImage(b *testing.B) {
+	benchmarkCases := []*struct {
+		folder string
+		image  bufimage.Image
+		types  []string
+	}{
+		{
+			folder: "testdata/extensions",
+			types:  []string{"pkg.Foo"},
+		},
+		{
+			folder: "testdata/importmods",
+			types:  []string{"ImportRegular", "ImportWeak", "ImportPublic", "NoImports"},
+		},
+		{
+			folder: "testdata/nesting",
+			types:  []string{"pkg.Foo", "pkg.Foo.NestedFoo.NestedNestedFoo", "pkg.Baz", "pkg.FooEnum"},
+		},
+		{
+			folder: "testdata/options",
+			types:  []string{"pkg.Foo", "pkg.FooEnum", "pkg.FooService", "pkg.FooService.Do"},
+		},
+	}
+	ctx := context.Background()
+	for _, benchmarkCase := range benchmarkCases {
+		_, image, err := getImage(ctx, zaptest.NewLogger(b), benchmarkCase.folder)
+		require.NoError(b, err)
+		benchmarkCase.image = image
+	}
+	b.ResetTimer()
+
+	i := 0
+	for {
+		for _, benchmarkCase := range benchmark
