@@ -137,4 +137,95 @@ func TestTransitivePublic(t *testing.T) {
 		"c.proto": []byte(`syntax = "proto3";package c;import "b.proto";message Baz{ a.Foo foo = 1; }`),
 	})
 	require.NoError(t, err)
-	module, er
+	module, err := bufmodule.NewModuleForBucket(ctx, bucket)
+	require.NoError(t, err)
+	image, analysis, err := bufimagebuild.NewBuilder(zaptest.NewLogger(t)).Build(
+		ctx,
+		bufmodule.NewModuleFileSet(module, nil),
+		bufimagebuild.WithExcludeSourceCodeInfo(),
+	)
+	require.NoError(t, err)
+	require.Empty(t, analysis)
+
+	filteredImage, err := ImageFilteredByTypes(image, "c.Baz")
+	require.NoError(t, err)
+
+	_, err = desc.CreateFileDescriptorsFromSet(bufimage.ImageToFileDescriptorSet(filteredImage))
+	require.NoError(t, err)
+}
+
+func TestTypesFromMainModule(t *testing.T) {
+	t.Parallel()
+
+	ctx := context.Background()
+	bucket, err := storagemem.NewReadBucket(map[string][]byte{
+		"a.proto": []byte(`syntax = "proto3";import "b.proto";package pkg;message Foo { dependency.Dep bar = 1;}`),
+	})
+	require.NoError(t, err)
+	moduleIdentity, err := bufmoduleref.NewModuleIdentity("buf.build", "repo", "main")
+	require.NoError(t, err)
+	module, err := bufmodule.NewModuleForBucket(ctx, bucket, bufmodule.ModuleWithModuleIdentity(moduleIdentity))
+	require.NoError(t, err)
+	bucketDep, err := storagemem.NewReadBucket(map[string][]byte{
+		"b.proto": []byte(`syntax = "proto3";package dependency; message Dep{}`),
+	})
+	require.NoError(t, err)
+	moduleIdentityDep, err := bufmoduleref.NewModuleIdentity("buf.build", "repo", "dep")
+	require.NoError(t, err)
+	moduleDep, err := bufmodule.NewModuleForBucket(ctx, bucketDep, bufmodule.ModuleWithModuleIdentity(moduleIdentityDep))
+	require.NoError(t, err)
+	image, analysis, err := bufimagebuild.NewBuilder(zaptest.NewLogger(t)).Build(
+		ctx,
+		bufmodule.NewModuleFileSet(module, []bufmodule.Module{moduleDep}),
+		bufimagebuild.WithExcludeSourceCodeInfo(),
+	)
+	require.NoError(t, err)
+	require.Empty(t, analysis)
+
+	_, err = ImageFilteredByTypes(image, "dependency.Dep")
+	require.Error(t, err)
+	assert.ErrorIs(t, err, ErrImageFilterTypeIsImport)
+
+	// allowed if we specify option
+	_, err = ImageFilteredByTypesWithOptions(image, []string{"dependency.Dep"}, WithAllowFilterByImportedType())
+	require.NoError(t, err)
+
+	_, err = ImageFilteredByTypes(image, "nonexisting")
+	require.Error(t, err)
+	assert.ErrorIs(t, err, ErrImageFilterTypeNotFound)
+}
+
+func getImage(ctx context.Context, logger *zap.Logger, testdataDir string) (storage.ReadWriteBucket, bufimage.Image, error) {
+	bucket, err := storageos.NewProvider().NewReadWriteBucket(testdataDir)
+	if err != nil {
+		return nil, nil, err
+	}
+	module, err := bufmodule.NewModuleForBucket(
+		ctx,
+		storage.MapReadBucket(bucket, storage.MatchPathExt(".proto")),
+	)
+	if err != nil {
+		return nil, nil, err
+	}
+	builder := bufimagebuild.NewBuilder(logger)
+	image, analysis, err := builder.Build(
+		ctx,
+		bufmodule.NewModuleFileSet(module, nil),
+		bufimagebuild.WithExcludeSourceCodeInfo(),
+	)
+	if err != nil {
+		return nil, nil, err
+	}
+	if len(analysis) > 0 {
+		return nil, nil, fmt.Errorf("%d errors in source when building", len(analysis))
+	}
+	return bucket, image, nil
+}
+
+func runDiffTest(t *testing.T, testdataDir string, typenames []string, expectedFile string, opts ...ImageFilterOption) {
+	ctx := context.Background()
+	bucket, image, err := getImage(ctx, zaptest.NewLogger(t), testdataDir)
+	require.NoError(t, err)
+
+	filteredImage, err := ImageFilteredByTypesWithOptions(image, typenames, opts...)
+	require.NoError(t, err)
