@@ -1,0 +1,6 @@
+-- a.proto --
+syntax = "proto3";
+package pkg;
+message Foo {
+  message NestedFoo {
+    me
