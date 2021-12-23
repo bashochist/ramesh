@@ -329,4 +329,29 @@ func BenchmarkFilterImage(b *testing.B) {
 
 	i := 0
 	for {
-		for _, benchmarkCase := range benchmark
+		for _, benchmarkCase := range benchmarkCases {
+			for _, typeName := range benchmarkCase.types {
+				// filtering is destructive, so we have to make a copy
+				b.StopTimer()
+				imageFiles := make([]bufimage.ImageFile, len(benchmarkCase.image.Files()))
+				for j, file := range benchmarkCase.image.Files() {
+					clone, ok := proto.Clone(file.Proto()).(*descriptorpb.FileDescriptorProto)
+					require.True(b, ok)
+					var err error
+					imageFiles[j], err = bufimage.NewImageFile(clone, nil, "", "", false, false, nil)
+					require.NoError(b, err)
+				}
+				image, err := bufimage.NewImage(imageFiles)
+				require.NoError(b, err)
+				b.StartTimer()
+
+				_, err = ImageFilteredByTypes(image, typeName)
+				require.NoError(b, err)
+				i++
+				if i == b.N {
+					return
+				}
+			}
+		}
+	}
+}
