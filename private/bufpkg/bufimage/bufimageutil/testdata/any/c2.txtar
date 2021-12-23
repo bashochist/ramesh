@@ -1,9 +1,13 @@
+
 -- a.proto --
 syntax = "proto3";
 import "google/protobuf/any.proto";
 import "google/protobuf/descriptor.proto";
+message AnyInField {
+  google.protobuf.Any any = 1;
+}
 extend google.protobuf.MessageOptions {
-  google.protobuf.Any extra = 10101;
+  AnyInField extra_in_field = 10102;
 }
 -- b.proto --
 syntax = "proto3";
@@ -12,13 +16,15 @@ message Foo {
   string name = 1;
   int32 id = 2;
 }
--- c1.proto --
+-- c2.proto --
 syntax = "proto3";
 import "a.proto";
 import "b.proto";
-message ExtendedAnySyntax {
-  option (extra) = {
-    [type.googleapis.com/foo.bar.baz.Foo]: { name: "Bob Loblaw", id: 42 }
+message ExtendedAnySyntax_InField {
+  option (extra_in_field) = {
+    any: {
+      [type.googleapis.com/foo.bar.baz.Foo]: { name: "Bob Loblaw", id: 42 }
+    }
   };
 }
 -- google/protobuf/any.proto --
