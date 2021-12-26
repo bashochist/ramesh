@@ -104,4 +104,100 @@ message FieldOptions {
   optional CType ctype = 1 [default = STRING];
   optional bool packed = 2;
   optional bool deprecated = 3 [default = false];
-  optio
+  optional bool lazy = 5 [default = false];
+  optional JSType jstype = 6 [default = JS_NORMAL];
+  optional bool weak = 10 [default = false];
+  optional bool unverified_lazy = 15 [default = false];
+  optional bool debug_redact = 16 [default = false];
+  optional OptionRetention retention = 17;
+  optional OptionTargetType target = 18;
+  repeated UninterpretedOption uninterpreted_option = 999;
+  enum CType {
+    STRING = 0;
+    CORD = 1;
+    STRING_PIECE = 2;
+  }
+  enum JSType {
+    JS_NORMAL = 0;
+    JS_STRING = 1;
+    JS_NUMBER = 2;
+  }
+  enum OptionRetention {
+    RETENTION_UNKNOWN = 0;
+    RETENTION_RUNTIME = 1;
+    RETENTION_SOURCE = 2;
+  }
+  enum OptionTargetType {
+    TARGET_TYPE_UNKNOWN = 0;
+    TARGET_TYPE_FILE = 1;
+    TARGET_TYPE_EXTENSION_RANGE = 2;
+    TARGET_TYPE_MESSAGE = 3;
+    TARGET_TYPE_FIELD = 4;
+    TARGET_TYPE_ONEOF = 5;
+    TARGET_TYPE_ENUM = 6;
+    TARGET_TYPE_ENUM_ENTRY = 7;
+    TARGET_TYPE_SERVICE = 8;
+    TARGET_TYPE_METHOD = 9;
+  }
+  extensions 1000 to max;
+  reserved 4;
+}
+message FileDescriptorProto {
+  optional string name = 1;
+  optional string package = 2;
+  repeated string dependency = 3;
+  repeated DescriptorProto message_type = 4;
+  repeated EnumDescriptorProto enum_type = 5;
+  repeated ServiceDescriptorProto service = 6;
+  repeated FieldDescriptorProto extension = 7;
+  optional FileOptions options = 8;
+  optional SourceCodeInfo source_code_info = 9;
+  repeated int32 public_dependency = 10;
+  repeated int32 weak_dependency = 11;
+  optional string syntax = 12;
+  optional string edition = 13;
+}
+message FileDescriptorSet {
+  repeated FileDescriptorProto file = 1;
+}
+message FileOptions {
+  optional string java_package = 1;
+  optional string java_outer_classname = 8;
+  optional OptimizeMode optimize_for = 9 [default = SPEED];
+  optional bool java_multiple_files = 10 [default = false];
+  optional string go_package = 11;
+  optional bool cc_generic_services = 16 [default = false];
+  optional bool java_generic_services = 17 [default = false];
+  optional bool py_generic_services = 18 [default = false];
+  optional bool java_generate_equals_and_hash = 20 [deprecated = true];
+  optional bool deprecated = 23 [default = false];
+  optional bool java_string_check_utf8 = 27 [default = false];
+  optional bool cc_enable_arenas = 31 [default = true];
+  optional string objc_class_prefix = 36;
+  optional string csharp_namespace = 37;
+  optional string swift_prefix = 39;
+  optional string php_class_prefix = 40;
+  optional string php_namespace = 41;
+  optional bool php_generic_services = 42 [default = false];
+  optional string php_metadata_namespace = 44;
+  optional string ruby_package = 45;
+  repeated UninterpretedOption uninterpreted_option = 999;
+  enum OptimizeMode {
+    SPEED = 1;
+    CODE_SIZE = 2;
+    LITE_RUNTIME = 3;
+  }
+  extensions 1000 to max;
+  reserved 38;
+}
+message MessageOptions {
+  optional bool message_set_wire_format = 1 [default = false];
+  optional bool no_standard_descriptor_accessor = 2 [default = false];
+  optional bool deprecated = 3 [default = false];
+  optional bool map_entry = 7;
+  optional bool deprecated_legacy_json_field_conflicts = 11 [deprecated = true];
+  repeated UninterpretedOption uninterpreted_option = 999;
+  extensions 1000 to max;
+  reserved 4, 5, 6, 8, 9;
+}
+m
