@@ -3,4 +3,8 @@ syntax = "proto3";
 package pkg;
 message Foo {
   message NestedFoo {
-    me
+    message NestedNestedFoo {
+      string nested_nested_x = 1;
+    }
+  }
+}
