@@ -85,4 +85,10 @@ func (f *imageFile) UnusedDependencyIndexes() []int32 {
 
 func (f *imageFile) withIsImport(isImport bool) ImageFile {
 	return &imageFile{
-		File
+		FileInfo:            f.FileInfo.WithIsImport(isImport),
+		fileDescriptorProto: f.fileDescriptorProto,
+		isSyntaxUnspecified: f.isSyntaxUnspecified,
+	}
+}
+
+func (*imageFile) isImageFile() {}
