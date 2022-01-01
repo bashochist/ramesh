@@ -1,18 +1,23 @@
+
 -- a.proto --
 syntax = "proto2";
 package pkg;
 import "options.proto";
 option (UsedOption.file_baz) = "str";
 option (UsedOption.file_foo) = { foo: "str" };
-enum FooEnum {
-  option deprecated = true;
-  option (enum_baz) = "str";
-  option (enum_foo) = { foo: "str" };
-  FOO_ENUM_X = 0;
-  FOO_ENUM_Y = 1 [
-    (enum_value_baz) = "str",
-    (enum_value_foo) = { foo: "str" }
-  ];
+message Empty {
+}
+service FooService {
+  option (service_baz) = "str";
+  option (service_foo) = { foo: "str" };
+  rpc Do ( Empty ) returns ( Empty ) {
+    option (method_baz) = "str";
+    option (method_foo) = { foo: "str" };
+  }
+  rpc DoNot ( Empty ) returns ( Empty ) {
+    option (method_baz) = "str";
+    option (method_foo) = { foo: "str" };
+  }
 }
 -- google/protobuf/descriptor.proto --
 syntax = "proto2";
@@ -24,19 +29,6 @@ option java_outer_classname = "DescriptorProtos";
 option java_package = "com.google.protobuf";
 option objc_class_prefix = "GPB";
 option optimize_for = SPEED;
-message EnumOptions {
-  optional bool allow_alias = 2;
-  optional bool deprecated = 3 [default = false];
-  optional bool deprecated_legacy_json_field_conflicts = 6 [deprecated = true];
-  repeated UninterpretedOption uninterpreted_option = 999;
-  extensions 1000 to max;
-  reserved 5;
-}
-message EnumValueOptions {
-  optional bool deprecated = 1 [default = false];
-  repeated UninterpretedOption uninterpreted_option = 999;
-  extensions 1000 to max;
-}
 message FileOptions {
   optional string java_package = 1;
   optional string java_outer_classname = 8;
@@ -67,6 +59,22 @@ message FileOptions {
   extensions 1000 to max;
   reserved 38;
 }
+message MethodOptions {
+  optional bool deprecated = 33 [default = false];
+  optional IdempotencyLevel idempotency_level = 34 [default = IDEMPOTENCY_UNKNOWN];
+  repeated UninterpretedOption uninterpreted_option = 999;
+  enum IdempotencyLevel {
+    IDEMPOTENCY_UNKNOWN = 0;
+    NO_SIDE_EFFECTS = 1;
+    IDEMPOTENT = 2;
+  }
+  extensions 1000 to max;
+}
+message ServiceOptions {
+  optional bool deprecated = 33 [default = false];
+  repeated UninterpretedOption uninterpreted_option = 999;
+  extensions 1000 to max;
+}
 message UninterpretedOption {
   repeated NamePart name = 2;
   optional string identifier_value = 3;
@@ -90,11 +98,11 @@ message UsedOption {
     optional string file_baz = 50002;
   }
 }
-extend google.protobuf.EnumOptions {
-  optional UsedOption enum_foo = 50000;
-  optional string enum_baz = 50002;
+extend google.protobuf.MethodOptions {
+  optional UsedOption method_foo = 50000;
+  optional string method_baz = 50002;
 }
-extend google.protobuf.EnumValueOptions {
-  optional UsedOption enum_value_foo = 50000;
-  optional string enum_value_baz = 50002;
+extend google.protobuf.ServiceOptions {
+  optional UsedOption service_foo = 50000;
+  optional string service_baz = 50002;
 }
