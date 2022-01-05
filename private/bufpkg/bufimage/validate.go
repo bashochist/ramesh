@@ -40,4 +40,34 @@ func validateProtoImage(protoImage *imagev1.Image) error {
 func validateProtoImageFile(protoImageFile *imagev1.ImageFile) error {
 	if protoImageFileExtension := protoImageFile.GetBufExtension(); protoImageFileExtension != nil {
 		lenDependencies := len(protoImageFile.GetDependency())
-		fo
+		for _, index := range protoImageFileExtension.GetUnusedDependency() {
+			if int(index) >= lenDependencies || int(index) < 0 {
+				return fmt.Errorf("unused dependency index %d is out of range", index)
+			}
+		}
+		if protoModuleInfo := protoImageFileExtension.GetModuleInfo(); protoModuleInfo != nil {
+			return validateProtoModuleInfo(protoModuleInfo)
+		}
+	}
+	return nil
+}
+
+func validateProtoModuleInfo(protoModuleInfo *imagev1.ModuleInfo) error {
+	if protoModuleName := protoModuleInfo.GetName(); protoModuleName != nil {
+		return validateProtoModuleName(protoModuleInfo.Name)
+	}
+	return nil
+}
+
+func validateProtoModuleName(protoModuleName *imagev1.ModuleName) error {
+	if protoModuleName.GetRemote() == "" {
+		return errors.New("empty ModuleName.Remote")
+	}
+	if protoModuleName.GetOwner() == "" {
+		return errors.New("empty ModuleName.Owner")
+	}
+	if protoModuleName.GetRepository() == "" {
+		return errors.New("empty ModuleName.Repository")
+	}
+	return nil
+}
