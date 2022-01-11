@@ -137,4 +137,10 @@ func ToProtoManifestAndBlobs(ctx context.Context, manifest *manifest.Manifest, b
 	filesProtoBlobs := make([]*modulev1alpha1.Blob, len(filesBlobs))
 	for i, b := range filesBlobs {
 		pb, err := AsProtoBlob(ctx, b)
-		if err
+		if err != nil {
+			return nil, nil, err
+		}
+		filesProtoBlobs[i] = pb
+	}
+	return manifestProtoBlob, filesProtoBlobs, nil
+}
