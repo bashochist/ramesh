@@ -61,4 +61,95 @@ func newModuleCacher(
 func (m *moduleCacher) GetModule(
 	ctx context.Context,
 	modulePin bufmoduleref.ModulePin,
-) (b
+) (bufmodule.Module, error) {
+	modulePath := newCacheKey(modulePin)
+	// Explicitly assign the variable as a storage.ReadBucket so
+	// that we can easily transform it with storage.NoExternalPathReadBucket
+	// below.
+	var dataReadWriteBucket storage.ReadBucket = storage.MapReadWriteBucket(
+		m.dataReadWriteBucket,
+		storage.MapOnPrefix(modulePath),
+	)
+	if !m.allowCacheExternalPaths {
+		// In general, we do not want the external path of the cache to be propagated to the user.
+		dataReadWriteBucket = storage.NoExternalPathReadBucket(dataReadWriteBucket)
+	}
+	exists, err := storage.Exists(ctx, dataReadWriteBucket, buflock.ExternalConfigFilePath)
+	if err != nil {
+		return nil, err
+	}
+	if !exists {
+		return nil, storage.NewErrNotExist(modulePath)
+	}
+	module, err := bufmodule.NewModuleForBucket(
+		ctx,
+		dataReadWriteBucket,
+		bufmodule.ModuleWithModuleIdentityAndCommit(modulePin, modulePin.Commit()),
+	)
+	if err != nil {
+		return nil, err
+	}
+	storedDigestData, err := storage.ReadPath(ctx, m.sumReadWriteBucket, modulePath)
+	if err != nil {
+		// This can happen if we couldn't find the sum file, which means
+		// we are in an invalid state
+		if storage.IsNotExist(err) {
+			m.logger.Sugar().Warnf(
+				"Module %q has invalid cache state: no stored digest could be found. The cache will attempt to self-correct.",
+				modulePin.String(),
+			)
+			// We want to return ErrNotExist so that the ModuleReader can re-download
+			return nil, storage.NewErrNotExist(modulePath)
+		}
+		return nil, err
+	}
+	storedDigest := string(storedDigestData)
+	// This can happen if we couldn't find the sum file, which means
+	// we are in an invalid state
+	if storedDigest == "" {
+		m.logger.Sugar().Warnf(
+			"Module %q has invalid cache state: no stored digest could be found. The cache will attempt to self-correct.",
+			modulePin.String(),
+		)
+		// We want to return ErrNotExist so that the ModuleReader can re-download
+		// Note that we deal with invalid data in the cache at the ModuleReader level by overwriting via PutModule
+		return nil, storage.NewErrNotExist(modulePath)
+	}
+	digest, err := bufmodule.ModuleDigestB3(ctx, module)
+	if err != nil {
+		return nil, err
+	}
+	if digest != storedDigest {
+		m.logger.Sugar().Warnf(
+			"Module %q has invalid cache state: calculated digest %q does not match stored digest %q. The cache will attempt to self-correct.",
+			modulePin.String(),
+			digest,
+			storedDigest,
+		)
+		// We want to return ErrNotExist so that the ModuleReader can re-download
+		// Note that we deal with invalid data in the cache at the ModuleReader level by overwriting via PutModule
+		return nil, storage.NewErrNotExist(modulePath)
+	}
+	return module, nil
+}
+
+func (m *moduleCacher) PutModule(
+	ctx context.Context,
+	modulePin bufmoduleref.ModulePin,
+	module bufmodule.Module,
+) error {
+	modulePath := newCacheKey(modulePin)
+	digest, err := bufmodule.ModuleDigestB3(ctx, module)
+	if err != nil {
+		return err
+	}
+	dataReadWriteBucket := storage.MapReadWriteBucket(
+		m.dataReadWriteBucket,
+		storage.MapOnPrefix(modulePath),
+	)
+	exists, err := storage.Exists(ctx, dataReadWriteBucket, buflock.ExternalConfigFilePath)
+	if err != nil {
+		return err
+	}
+	if exists {
+		// If the mod
