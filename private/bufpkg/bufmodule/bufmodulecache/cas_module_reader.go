@@ -77,4 +77,33 @@ func (c *casModuleReader) GetModule(
 		c.stats.MarkHit()
 		return cachedModule, nil
 	}
-	c.logger.Debug("module cache m
+	c.logger.Debug("module cache miss", zap.Error(err))
+	c.stats.MarkMiss()
+	remoteModule, err := c.delegate.GetModule(ctx, modulePin)
+	if err != nil {
+		return nil, err
+	}
+	// Manifest and BlobSet should always be set if tamper proofing is enabled.
+	// If not, the BSR doesn't support tamper proofing while the CLI feature is enabled.
+	if remoteModule.Manifest() == nil || remoteModule.BlobSet() == nil {
+		return nil, fmt.Errorf("required manifest/blobSet not set on module")
+	}
+	if modulePinDigest != nil {
+		manifestBlob, err := remoteModule.Manifest().Blob()
+		if err != nil {
+			return nil, err
+		}
+		manifestDigest := manifestBlob.Digest()
+		if !modulePinDigest.Equal(*manifestDigest) {
+			// buf.lock module digest and BSR module don't match - fail without overwriting cache
+			return nil, fmt.Errorf("module digest mismatch - expected: %q, found: %q", modulePinDigest, manifestDigest)
+		}
+	}
+	if err := c.cache.PutModule(ctx, modulePin, remoteModule); err != nil {
+		return nil, err
+	}
+	if err := warnIfDeprecated(ctx, c.repositoryClientFactory, modulePin, c.logger); err != nil {
+		return nil, err
+	}
+	return remoteModule, nil
+}
