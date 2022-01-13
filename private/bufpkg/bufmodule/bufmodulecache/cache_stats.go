@@ -9,4 +9,40 @@
 // Unless required by applicable law or agreed to in writing, software
 // distributed under the License is distributed on an "AS IS" BASIS,
 // WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
-// See the L
+// See the License for the specific language governing permissions and
+// limitations under the License.
+
+package bufmodulecache
+
+import "sync"
+
+type cacheStats struct {
+	lock  sync.RWMutex
+	count int
+	hits  int
+}
+
+func (s *cacheStats) MarkHit() {
+	s.lock.Lock()
+	defer s.lock.Unlock()
+	s.count++
+	s.hits++
+}
+
+func (s *cacheStats) MarkMiss() {
+	s.lock.Lock()
+	defer s.lock.Unlock()
+	s.count++
+}
+
+func (s *cacheStats) Count() int {
+	s.lock.RLock()
+	defer s.lock.RUnlock()
+	return s.count
+}
+
+func (s *cacheStats) Hits() int {
+	s.lock.RLock()
+	defer s.lock.RUnlock()
+	return s.hits
+}
