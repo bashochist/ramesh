@@ -152,4 +152,22 @@ func (m *moduleCacher) PutModule(
 		return err
 	}
 	if exists {
-		// If the mod
+		// If the module already exists in the cache, we want to make sure we delete it
+		// before putting new data
+		if err := dataReadWriteBucket.DeleteAll(ctx, ""); err != nil {
+			return err
+		}
+	}
+	if err := bufmodule.ModuleToBucket(ctx, module, dataReadWriteBucket); err != nil {
+		return err
+	}
+	// This will overwrite if necessary
+	if err := storage.PutPath(ctx, m.sumReadWriteBucket, modulePath, []byte(digest)); err != nil {
+		return multierr.Append(
+			err,
+			// Try to clean up after ourselves.
+			dataReadWriteBucket.DeleteAll(ctx, ""),
+		)
+	}
+	return nil
+}
