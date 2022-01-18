@@ -85,4 +85,58 @@ func (m *moduleReader) GetModule(
 			"cache_hit",
 			zap.String("module_pin", modulePin.String()),
 		)
-		m.stats.Ma
+		m.stats.MarkHit()
+		return module, nil
+	}
+	if !storage.IsNotExist(err) {
+		return nil, err
+	}
+
+	// We now had a IsNotExist error, so we do a write lock and check again (double locking).
+	// If we still have an error, we do a GetModule from the delegate, and put the result.
+	//
+	// Note that IsNotExist will happen if there was a checksum mismatch as well, in which case
+	// we want to overwrite whatever is actually in the cache and self-correct the issue
+	unlocker, err := m.fileLocker.Lock(ctx, cacheKey)
+	if err != nil {
+		return nil, err
+	}
+	defer func() {
+		retErr = multierr.Append(retErr, unlocker.Unlock())
+	}()
+	module, err = m.cache.GetModule(ctx, modulePin)
+	if err == nil {
+		m.logger.Debug(
+			"cache_hit",
+			zap.String("module_pin", modulePin.String()),
+		)
+		m.stats.MarkHit()
+		return module, nil
+	}
+	if !storage.IsNotExist(err) {
+		return nil, err
+	}
+	m.stats.MarkMiss()
+
+	// We now had a IsNotExist error within a write lock, so go to the delegate and then put.
+	m.logger.Debug(
+		"cache_miss",
+		zap.String("module_pin", modulePin.String()),
+	)
+	m.verbosePrinter.Printf("downloading " + modulePin.String())
+	module, err = m.delegate.GetModule(ctx, modulePin)
+	if err != nil {
+		return nil, err
+	}
+	if err := m.cache.PutModule(
+		ctx,
+		modulePin,
+		module,
+	); err != nil {
+		return nil, err
+	}
+	if err := warnIfDeprecated(ctx, m.repositoryClientFactory, modulePin, m.logger); err != nil {
+		return nil, err
+	}
+	return module, nil
+}
