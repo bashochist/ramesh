@@ -118,4 +118,44 @@ func newConfigV1(externalConfig ExternalConfigV1, deps ...string) (*Config, erro
 		return nil, err
 	}
 	// this also verifies that the excludes are unique, normalized, and validated
-	excludes, err := internal.NormalizeAndCheckPaths(externalConfig.Excludes, "exclude", normalpath.Relative, true
+	excludes, err := internal.NormalizeAndCheckPaths(externalConfig.Excludes, "exclude", normalpath.Relative, true)
+	if err != nil {
+		return nil, err
+	}
+	for _, exclude := range excludes {
+		if normalpath.Ext(exclude) == ".proto" {
+			return nil, fmt.Errorf("excludes can only be directories but file %s discovered", exclude)
+		}
+	}
+	uniqueSortedExcludes := stringutil.SliceToUniqueSortedSliceFilterEmptyStrings(excludes)
+	if len(excludes) != len(uniqueSortedExcludes) {
+		// this should never happen, but just in case
+		return nil, fmt.Errorf("excludes %v are not unique (system error)", excludes)
+	}
+	rootToExcludes := map[string][]string{
+		".": excludes, // all excludes are relative to the root
+	}
+	return &Config{
+		RootToExcludes:             rootToExcludes,
+		DependencyModuleReferences: dependencyModuleReferences,
+	}, nil
+}
+
+func parseDependencyModuleReferences(deps ...string) ([]bufmoduleref.ModuleReference, error) {
+	if len(deps) == 0 {
+		return nil, nil
+	}
+	moduleReferences := make([]bufmoduleref.ModuleReference, 0, len(deps))
+	for _, dep := range deps {
+		dep := strings.TrimSpace(dep)
+		moduleReference, err := bufmoduleref.ModuleReferenceForString(dep)
+		if err != nil {
+			return nil, err
+		}
+		moduleReferences = append(moduleReferences, moduleReference)
+	}
+	if err := bufmoduleref.ValidateModuleReferencesUniqueByIdentity(moduleReferences); err != nil {
+		return nil, err
+	}
+	return moduleReferences, nil
+}
