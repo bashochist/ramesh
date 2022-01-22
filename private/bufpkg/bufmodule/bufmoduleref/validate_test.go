@@ -46,4 +46,25 @@ func TestValidateRemoteHasNoPaths(t *testing.T) {
 		},
 		{
 			Name:        "Remote with a single path and trailing slash",
-			Input:       "buf.b
+			Input:       "buf.build/path1/",
+			InvalidPath: "/path1/",
+		},
+		{
+			Name:        "Remote with two paths",
+			Input:       "buf.build/path1/path2",
+			InvalidPath: "/path1/path2",
+		},
+	}
+
+	for _, testCase := range testCases {
+		testCase := testCase
+		t.Run(testCase.Name, func(t *testing.T) {
+			t.Parallel()
+			err := ValidateRemoteHasNoPaths(testCase.Input)
+			require.Equal(t, fmt.Sprintf(`invalid remote address, must not contain any paths. Try removing "%s" from the address.`, testCase.InvalidPath), err.Error())
+		})
+	}
+	require.NoError(t, ValidateRemoteHasNoPaths(""))
+	require.NoError(t, ValidateRemoteHasNoPaths("buf.build"))
+	require.NoError(t, ValidateRemoteHasNoPaths("buf.build/"))
+}
