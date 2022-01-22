@@ -71,4 +71,61 @@ func newModulePinForProto(
 		branch:     protoModulePin.Branch,
 		commit:     protoModulePin.Commit,
 		digest:     protoModulePin.ManifestDigest,
-		createTime: protoModulePin.
+		createTime: protoModulePin.CreateTime.AsTime(),
+	}, nil
+}
+
+func newProtoModulePinForModulePin(
+	modulePin ModulePin,
+) *modulev1alpha1.ModulePin {
+	return &modulev1alpha1.ModulePin{
+		Remote:         modulePin.Remote(),
+		Owner:          modulePin.Owner(),
+		Repository:     modulePin.Repository(),
+		Branch:         modulePin.Branch(),
+		Commit:         modulePin.Commit(),
+		ManifestDigest: modulePin.Digest(),
+		// no need to validate as we already know this is valid
+		CreateTime: timestamppb.New(modulePin.CreateTime()),
+	}
+}
+
+func (m *modulePin) Remote() string {
+	return m.remote
+}
+
+func (m *modulePin) Owner() string {
+	return m.owner
+}
+
+func (m *modulePin) Repository() string {
+	return m.repository
+}
+
+func (m *modulePin) Branch() string {
+	return m.branch
+}
+
+func (m *modulePin) Commit() string {
+	return m.commit
+}
+
+func (m *modulePin) Digest() string {
+	return m.digest
+}
+
+func (m *modulePin) CreateTime() time.Time {
+	return m.createTime
+}
+
+func (m *modulePin) String() string {
+	return m.remote + "/" + m.owner + "/" + m.repository + ":" + m.commit
+}
+
+func (m *modulePin) IdentityString() string {
+	return m.remote + "/" + m.owner + "/" + m.repository
+}
+
+func (*modulePin) isModuleOwner()    {}
+func (*modulePin) isModuleIdentity() {}
+func (*modulePin) isModulePin()      {}
