@@ -45,4 +45,9 @@ func (f *fileWalker) Walk(ctx context.Context, fu func(io.Reader) error) error {
 		if err := fu(moduleFile); err != nil {
 			return multierr.Append(err, moduleFile.Close())
 		}
-		if err := moduleFile.Close(); err != 
+		if err := moduleFile.Close(); err != nil {
+			return err
+		}
+	}
+	return nil
+}
