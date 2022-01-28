@@ -213,4 +213,96 @@ func TestNormalizeAndCheckPathsAbsSuccessAbs1(t *testing.T) {
 	)
 }
 
-func TestNormalizeAndCheckPathsAbsErrorAbs
+func TestNormalizeAndCheckPathsAbsErrorAbs1(t *testing.T) {
+	t.Parallel()
+	testNormalizeAndCheckPathsAbsError(
+		t,
+		[]string{
+			"/a/b",
+			"/a/b",
+		},
+	)
+}
+
+func TestNormalizeAndCheckPathsAbsErrorAbs2(t *testing.T) {
+	t.Parallel()
+	testNormalizeAndCheckPathsAbsError(
+		t,
+		[]string{
+			"/a/b",
+			"/a/b/c",
+		},
+	)
+}
+
+func TestNormalizeAndCheckPathsAbsErrorAbs3(t *testing.T) {
+	t.Parallel()
+	testNormalizeAndCheckPathsAbsError(
+		t,
+		[]string{
+			"/",
+			"/a",
+		},
+	)
+}
+
+func TestNormalizeAndCheckPathsAbsEqualAbs1(t *testing.T) {
+	t.Parallel()
+	absA, err := filepath.Abs("/a")
+	require.NoError(t, err)
+	absA = filepath.ToSlash(absA)
+	absB, err := filepath.Abs("/b")
+	require.NoError(t, err)
+	absB = filepath.ToSlash(absB)
+	testNormalizeAndCheckPathsAbsEqual(
+		t,
+		[]string{
+			"/b",
+			"/a/../a",
+		},
+		[]string{
+			absA,
+			absB,
+		},
+	)
+}
+
+func testNormalizeAndCheckPathsRelSuccess(t *testing.T, paths []string) {
+	_, err := NormalizeAndCheckPaths(paths, "test", normalpath.Relative, true)
+	assert.NoError(t, err, paths)
+}
+
+func testNormalizeAndCheckPathsRelError(t *testing.T, paths []string) {
+	_, err := NormalizeAndCheckPaths(paths, "test", normalpath.Relative, true)
+	assert.Error(t, err, paths)
+}
+
+func testNormalizeAndCheckPathsRelEqual(
+	t *testing.T,
+	paths []string,
+	expected []string,
+) {
+	actual, err := NormalizeAndCheckPaths(paths, "test", normalpath.Relative, true)
+	assert.NoError(t, err, paths)
+	assert.Equal(t, expected, actual)
+}
+
+func testNormalizeAndCheckPathsAbsSuccess(t *testing.T, paths []string) {
+	_, err := NormalizeAndCheckPaths(paths, "test", normalpath.Absolute, true)
+	assert.NoError(t, err, paths)
+}
+
+func testNormalizeAndCheckPathsAbsError(t *testing.T, paths []string) {
+	_, err := NormalizeAndCheckPaths(paths, "test", normalpath.Absolute, true)
+	assert.Error(t, err, paths)
+}
+
+func testNormalizeAndCheckPathsAbsEqual(
+	t *testing.T,
+	paths []string,
+	expected []string,
+) {
+	actual, err := NormalizeAndCheckPaths(paths, "test", normalpath.Absolute, true)
+	assert.NoError(t, err, paths)
+	assert.Equal(t, expected, actual)
+}
