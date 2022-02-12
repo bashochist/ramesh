@@ -205,4 +205,123 @@ func newModule(
 	sourceReadBucket storage.ReadBucket,
 	dependencyModulePins []bufmoduleref.ModulePin,
 	moduleIdentity bufmoduleref.ModuleIdentity,
-	documentation
+	documentation string,
+	license string,
+	breakingConfig *bufbreakingconfig.Config,
+	lintConfig *buflintconfig.Config,
+	options ...ModuleOption,
+) (_ *module, retErr error) {
+	if err := bufmoduleref.ValidateModulePinsUniqueByIdentity(dependencyModulePins); err != nil {
+		return nil, err
+	}
+	// we rely on this being sorted here
+	bufmoduleref.SortModulePins(dependencyModulePins)
+	module := &module{
+		sourceReadBucket:     sourceReadBucket,
+		dependencyModulePins: dependencyModulePins,
+		moduleIdentity:       moduleIdentity,
+		documentation:        documentation,
+		license:              license,
+		breakingConfig:       breakingConfig,
+		lintConfig:           lintConfig,
+	}
+	for _, option := range options {
+		option(module)
+	}
+	return module, nil
+}
+
+func (m *module) TargetFileInfos(ctx context.Context) ([]bufmoduleref.FileInfo, error) {
+	return m.SourceFileInfos(ctx)
+}
+
+func (m *module) SourceFileInfos(ctx context.Context) ([]bufmoduleref.FileInfo, error) {
+	var fileInfos []bufmoduleref.FileInfo
+	if walkErr := m.sourceReadBucket.Walk(ctx, "", func(objectInfo storage.ObjectInfo) error {
+		// super overkill but ok
+		if err := bufmoduleref.ValidateModuleFilePath(objectInfo.Path()); err != nil {
+			return err
+		}
+		fileInfo, err := bufmoduleref.NewFileInfo(
+			objectInfo.Path(),
+			objectInfo.ExternalPath(),
+			false,
+			m.moduleIdentity,
+			m.commit,
+		)
+		if err != nil {
+			return err
+		}
+		fileInfos = append(fileInfos, fileInfo)
+		return nil
+	}); walkErr != nil {
+		return nil, fmt.Errorf("failed to enumerate module files: %w", walkErr)
+	}
+	bufmoduleref.SortFileInfos(fileInfos)
+	return fileInfos, nil
+}
+
+func (m *module) GetModuleFile(ctx context.Context, path string) (ModuleFile, error) {
+	// super overkill but ok
+	if err := bufmoduleref.ValidateModuleFilePath(path); err != nil {
+		return nil, err
+	}
+	readObjectCloser, err := m.sourceReadBucket.Get(ctx, path)
+	if err != nil {
+		return nil, err
+	}
+	fileInfo, err := bufmoduleref.NewFileInfo(
+		readObjectCloser.Path(),
+		readObjectCloser.ExternalPath(),
+		false,
+		m.moduleIdentity,
+		m.commit,
+	)
+	if err != nil {
+		return nil, err
+	}
+	return newModuleFile(fileInfo, readObjectCloser), nil
+}
+
+func (m *module) DependencyModulePins() []bufmoduleref.ModulePin {
+	// already sorted in constructor
+	return m.dependencyModulePins
+}
+
+func (m *module) Documentation() string {
+	return m.documentation
+}
+
+func (m *module) License() string {
+	return m.license
+}
+
+func (m *module) BreakingConfig() *bufbreakingconfig.Config {
+	return m.breakingConfig
+}
+
+func (m *module) LintConfig() *buflintconfig.Config {
+	return m.lintConfig
+}
+
+func (m *module) Manifest() *manifest.Manifest {
+	return m.manifest
+}
+
+func (m *module) BlobSet() *manifest.BlobSet {
+	return m.blobSet
+}
+
+func (m *module) getModuleIdentity() bufmoduleref.ModuleIdentity {
+	return m.moduleIdentity
+}
+
+func (m *module) getSourceReadBucket() storage.ReadBucket {
+	return m.sourceReadBucket
+}
+
+func (m *module) getCommit() string {
+	return m.commit
+}
+
+func (m *module) isModule() {}
