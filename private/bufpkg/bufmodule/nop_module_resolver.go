@@ -15,23 +15,18 @@
 package bufmodule
 
 import (
-	"io"
+	"context"
 
 	"github.com/bufbuild/buf/private/bufpkg/bufmodule/bufmoduleref"
+	"github.com/bufbuild/buf/private/pkg/storage"
 )
 
-var _ ModuleFile = &moduleFile{}
+type nopModuleResolver struct{}
 
-type moduleFile struct {
-	bufmoduleref.FileInfo
-	io.ReadCloser
+func newNopModuleResolver() *nopModuleResolver {
+	return &nopModuleResolver{}
 }
 
-func newModuleFile(fileInfo bufmoduleref.FileInfo, readCloser io.ReadCloser) moduleFile {
-	return moduleFile{
-		FileInfo:   fileInfo,
-		ReadCloser: readCloser,
-	}
+func (*nopModuleResolver) GetModulePin(_ context.Context, moduleReference bufmoduleref.ModuleReference) (bufmoduleref.ModulePin, error) {
+	return nil, storage.NewErrNotExist(moduleReference.String())
 }
-
-func (moduleFile) isModuleFile() {}

@@ -1,3 +1,4 @@
+
 // Copyright 2020-2023 Buf Technologies, Inc.
 //
 // Licensed under the Apache License, Version 2.0 (the "License");
@@ -15,23 +16,18 @@
 package bufmodule
 
 import (
-	"io"
+	"context"
 
 	"github.com/bufbuild/buf/private/bufpkg/bufmodule/bufmoduleref"
+	"github.com/bufbuild/buf/private/pkg/storage"
 )
 
-var _ ModuleFile = &moduleFile{}
+type nopModuleReader struct{}
 
-type moduleFile struct {
-	bufmoduleref.FileInfo
-	io.ReadCloser
+func newNopModuleReader() *nopModuleReader {
+	return &nopModuleReader{}
 }
 
-func newModuleFile(fileInfo bufmoduleref.FileInfo, readCloser io.ReadCloser) moduleFile {
-	return moduleFile{
-		FileInfo:   fileInfo,
-		ReadCloser: readCloser,
-	}
+func (*nopModuleReader) GetModule(_ context.Context, modulePin bufmoduleref.ModulePin) (Module, error) {
+	return nil, storage.NewErrNotExist(modulePin.String())
 }
-
-func (moduleFile) isModuleFile() {}

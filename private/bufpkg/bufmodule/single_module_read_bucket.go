@@ -15,23 +15,18 @@
 package bufmodule
 
 import (
-	"io"
+	"context"
 
 	"github.com/bufbuild/buf/private/bufpkg/bufmodule/bufmoduleref"
+	"github.com/bufbuild/buf/private/pkg/storage"
 )
 
-var _ ModuleFile = &moduleFile{}
+type singleModuleReadBucket struct {
+	storage.ReadBucket
 
-type moduleFile struct {
-	bufmoduleref.FileInfo
-	io.ReadCloser
+	moduleIdentity bufmoduleref.ModuleIdentity
+	commit         string
 }
 
-func newModuleFile(fileInfo bufmoduleref.FileInfo, readCloser io.ReadCloser) moduleFile {
-	return moduleFile{
-		FileInfo:   fileInfo,
-		ReadCloser: readCloser,
-	}
-}
-
-func (moduleFile) isModuleFile() {}
+func newSingleModuleReadBucket(
+	sourceReadBucke

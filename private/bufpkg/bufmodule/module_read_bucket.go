@@ -1,3 +1,4 @@
+
 // Copyright 2020-2023 Buf Technologies, Inc.
 //
 // Licensed under the Apache License, Version 2.0 (the "License");
@@ -15,23 +16,21 @@
 package bufmodule
 
 import (
-	"io"
+	"context"
 
-	"github.com/bufbuild/buf/private/bufpkg/bufmodule/bufmoduleref"
+	"github.com/bufbuild/buf/private/pkg/storage"
 )
 
-var _ ModuleFile = &moduleFile{}
+// moduleReadBucket is a ReadBucket that has associated module information.
+//
+// this is a helper type used in moduleFileSet.
+type moduleReadBucket interface {
+	storage.ReadBucket
 
-type moduleFile struct {
-	bufmoduleref.FileInfo
-	io.ReadCloser
+	// StatModuleFile gets info in the object, including info
+	// specific to the file's module.
+	StatModuleFile(ctx context.Context, path string) (*moduleObjectInfo, error)
+	// WalkModuleFiles walks the bucket with the prefix, calling f on
+	// each path. If the prefix doesn't exist, this is a no-op.
+	WalkModuleFiles(ctx context.Context, path string, f func(*moduleObjectInfo) error) error
 }
-
-func newModuleFile(fileInfo bufmoduleref.FileInfo, readCloser io.ReadCloser) moduleFile {
-	return moduleFile{
-		FileInfo:   fileInfo,
-		ReadCloser: readCloser,
-	}
-}
-
-func (moduleFile) isModuleFile() {}

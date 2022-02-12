@@ -1,3 +1,4 @@
+
 // Copyright 2020-2023 Buf Technologies, Inc.
 //
 // Licensed under the Apache License, Version 2.0 (the "License");
@@ -15,23 +16,34 @@
 package bufmodule
 
 import (
-	"io"
-
 	"github.com/bufbuild/buf/private/bufpkg/bufmodule/bufmoduleref"
+	"github.com/bufbuild/buf/private/pkg/storage"
 )
 
-var _ ModuleFile = &moduleFile{}
+// moduleObjectInfo is used in moduleReadBucket.
+type moduleObjectInfo struct {
+	storage.ObjectInfo
 
-type moduleFile struct {
-	bufmoduleref.FileInfo
-	io.ReadCloser
+	moduleIdentity bufmoduleref.ModuleIdentity
+	commit         string
 }
 
-func newModuleFile(fileInfo bufmoduleref.FileInfo, readCloser io.ReadCloser) moduleFile {
-	return moduleFile{
-		FileInfo:   fileInfo,
-		ReadCloser: readCloser,
+func newModuleObjectInfo(
+	storageObjectInfo storage.ObjectInfo,
+	moduleIdentity bufmoduleref.ModuleIdentity,
+	commit string,
+) *moduleObjectInfo {
+	return &moduleObjectInfo{
+		ObjectInfo:     storageObjectInfo,
+		moduleIdentity: moduleIdentity,
+		commit:         commit,
 	}
 }
 
-func (moduleFile) isModuleFile() {}
+func (o *moduleObjectInfo) ModuleIdentity() bufmoduleref.ModuleIdentity {
+	return o.moduleIdentity
+}
+
+func (o *moduleObjectInfo) Commit() string {
+	return o.commit
+}
