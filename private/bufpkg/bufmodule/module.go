@@ -98,4 +98,111 @@ func configsForProto(
 	var lintConfigVersion string
 	if protoLintConfig != nil {
 		lintConfig = buflintconfig.ConfigForProto(protoLintConfig)
-		lintConfigVersi
+		lintConfigVersion = lintConfig.Version
+	}
+	if lintConfigVersion != breakingConfigVersion {
+		return nil, nil, fmt.Errorf("mismatched breaking config version %q and lint config version %q found", breakingConfigVersion, lintConfigVersion)
+	}
+	// If there is no breaking and lint configs, we want to default to the v1 version.
+	if breakingConfig == nil && lintConfig == nil {
+		breakingConfig = &bufbreakingconfig.Config{
+			Version: bufconfig.V1Version,
+		}
+		lintConfig = &buflintconfig.Config{
+			Version: bufconfig.V1Version,
+		}
+	} else if breakingConfig == nil {
+		// In the case that only breaking config is nil, we'll use generated an empty default config
+		// using the lint config version.
+		breakingConfig = &bufbreakingconfig.Config{
+			Version: lintConfigVersion,
+		}
+	} else if lintConfig == nil {
+		// In the case that only lint config is nil, we'll use generated an empty default config
+		// using the breaking config version.
+		lintConfig = &buflintconfig.Config{
+			Version: breakingConfigVersion,
+		}
+	}
+	// Finally, validate the config versions are valid. This should always pass in the case of
+	// the default values.
+	if err := bufconfig.ValidateVersion(breakingConfig.Version); err != nil {
+		return nil, nil, err
+	}
+	if err := bufconfig.ValidateVersion(lintConfig.Version); err != nil {
+		return nil, nil, err
+	}
+	return breakingConfig, lintConfig, nil
+}
+
+func newModuleForBucket(
+	ctx context.Context,
+	sourceReadBucket storage.ReadBucket,
+	options ...ModuleOption,
+) (*module, error) {
+	dependencyModulePins, err := bufmoduleref.DependencyModulePinsForBucket(ctx, sourceReadBucket)
+	if err != nil {
+		return nil, err
+	}
+	documentation, err := getFileContentForBucket(ctx, sourceReadBucket, DocumentationFilePath)
+	if err != nil {
+		return nil, err
+	}
+	license, err := getFileContentForBucket(ctx, sourceReadBucket, LicenseFilePath)
+	if err != nil {
+		return nil, err
+	}
+	moduleConfig, err := bufconfig.GetConfigForBucket(ctx, sourceReadBucket)
+	if err != nil {
+		return nil, err
+	}
+	var moduleIdentity bufmoduleref.ModuleIdentity
+	// if the module config has an identity, set the module identity
+	if moduleConfig.ModuleIdentity != nil {
+		moduleIdentity = moduleConfig.ModuleIdentity
+	}
+	return newModule(
+		ctx,
+		storage.MapReadBucket(sourceReadBucket, storage.MatchPathExt(".proto")),
+		dependencyModulePins,
+		moduleIdentity,
+		documentation,
+		license,
+		moduleConfig.Breaking,
+		moduleConfig.Lint,
+		options...,
+	)
+}
+
+func newModuleForManifestAndBlobSet(
+	ctx context.Context,
+	moduleManifest *manifest.Manifest,
+	blobSet *manifest.BlobSet,
+	options ...ModuleOption,
+) (*module, error) {
+	bucket, err := manifest.NewBucket(
+		*moduleManifest,
+		*blobSet,
+		manifest.BucketWithAllManifestBlobsValidation(),
+		manifest.BucketWithNoExtraBlobsValidation(),
+	)
+	if err != nil {
+		return nil, err
+	}
+	module, err := newModuleForBucket(ctx, bucket, options...)
+	if err != nil {
+		return nil, err
+	}
+	module.manifest = moduleManifest
+	module.blobSet = blobSet
+	return module, nil
+}
+
+// this should only be called by other newModule constructors
+func newModule(
+	ctx context.Context,
+	// must only contain .proto files
+	sourceReadBucket storage.ReadBucket,
+	dependencyModulePins []bufmoduleref.ModulePin,
+	moduleIdentity bufmoduleref.ModuleIdentity,
+	documentation
