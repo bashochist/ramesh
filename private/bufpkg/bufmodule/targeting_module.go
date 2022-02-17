@@ -149,4 +149,95 @@ func (m *targetingModule) TargetFileInfos(ctx context.Context) (fileInfos []bufm
 	}
 	// We have potential directory paths, do the expensive operation to
 	// make a map of the directory paths.
-	potentialDirPathMap := stringutil.SliceToMap(poten
+	potentialDirPathMap := stringutil.SliceToMap(potentialDirPaths)
+	// The map of paths within potentialDirPath that matches a file.
+	// This needs to contain all paths in potentialDirPathMap at the end for us to
+	// have had matches for every targetPath input.
+	matchingPotentialDirPathMap := make(map[string]struct{})
+	// The map of exclude paths that have a match on the walk. This is used to check against
+	// pathsAllowNotExistOnWalk.
+	matchingExcludePaths := make(map[string]struct{})
+	if walkErr := sourceReadBucket.Walk(
+		ctx,
+		"",
+		func(objectInfo storage.ObjectInfo) error {
+			path := objectInfo.Path()
+			fileMatchingExcludePathMap := normalpath.MapAllEqualOrContainingPathMap(
+				excludePathMap,
+				path,
+				normalpath.Relative,
+			)
+			for excludeMatchingPath := range fileMatchingExcludePathMap {
+				if _, ok := matchingExcludePaths[excludeMatchingPath]; !ok {
+					matchingExcludePaths[excludeMatchingPath] = struct{}{}
+				}
+			}
+			// get the paths in potentialDirPathMap that match this path
+			fileMatchingPathMap := normalpath.MapAllEqualOrContainingPathMap(
+				potentialDirPathMap,
+				path,
+				normalpath.Relative,
+			)
+			if shouldExcludeFile(fileMatchingPathMap, fileMatchingExcludePathMap) {
+				return nil
+			}
+			if m.targetPaths != nil {
+				// We had a match, this means that some path in potentialDirPaths matched
+				// the path, add all the paths in potentialDirPathMap that
+				// matched to matchingPotentialDirPathMap.
+				for key := range fileMatchingPathMap {
+					matchingPotentialDirPathMap[key] = struct{}{}
+				}
+			}
+			// then, add the file if it is not added
+			if _, ok := fileInfoPaths[path]; !ok {
+				fileInfoPaths[path] = struct{}{}
+				fileInfo, err := bufmoduleref.NewFileInfo(
+					objectInfo.Path(),
+					objectInfo.ExternalPath(),
+					false,
+					m.Module.getModuleIdentity(),
+					m.Module.getCommit(),
+				)
+				if err != nil {
+					return err
+				}
+				fileInfos = append(fileInfos, fileInfo)
+			}
+			return nil
+		},
+	); walkErr != nil {
+		return nil, walkErr
+	}
+	// if !allowNotExist, i.e. if all targetPaths must have a matching file,
+	// we check the matchingPotentialDirPathMap against the potentialDirPathMap
+	// to make sure that potentialDirPathMap is covered
+	if !m.pathsAllowNotExistOnWalk {
+		for potentialDirPath := range potentialDirPathMap {
+			if _, ok := matchingPotentialDirPathMap[potentialDirPath]; !ok {
+				// no match, this is an error given that allowNotExist is false
+				return nil, fmt.Errorf("path %q has no matching file in the module", potentialDirPath)
+			}
+		}
+		for excludePath := range excludePathMap {
+			if _, ok := matchingExcludePaths[excludePath]; !ok {
+				// no match, this is an error given that allowNotExist is false
+				return nil, fmt.Errorf("path %q has no matching file in the module", excludePath)
+			}
+		}
+	}
+	return fileInfos, nil
+}
+
+func shouldExcludeFile(
+	fileMatchingPathMap map[string]struct{},
+	fileMatchingExcludePathMap map[string]struct{},
+) bool {
+	if fileMatchingPathMap == nil {
+		return len(fileMatchingExcludePathMap) > 0
+	}
+	for fileMatchingPath := range fileMatchingPathMap {
+		for fileMatchingExcludePath := range fileMatchingExcludePathMap {
+			if normalpath.EqualsOrContainsPath(fileMatchingPath, fileMatchingExcludePath, normalpath.Relative) {
+				delete(fileMatchingPathMap, fileMatchingPath)
+				co
