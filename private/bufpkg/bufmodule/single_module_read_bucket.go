@@ -29,4 +29,31 @@ type singleModuleReadBucket struct {
 }
 
 func newSingleModuleReadBucket(
-	sourceReadBucke
+	sourceReadBucket storage.ReadBucket,
+	moduleIdentity bufmoduleref.ModuleIdentity,
+	commit string,
+) *singleModuleReadBucket {
+	return &singleModuleReadBucket{
+		ReadBucket:     sourceReadBucket,
+		moduleIdentity: moduleIdentity,
+		commit:         commit,
+	}
+}
+
+func (r *singleModuleReadBucket) StatModuleFile(ctx context.Context, path string) (*moduleObjectInfo, error) {
+	objectInfo, err := r.ReadBucket.Stat(ctx, path)
+	if err != nil {
+		return nil, err
+	}
+	return newModuleObjectInfo(objectInfo, r.moduleIdentity, r.commit), nil
+}
+
+func (r *singleModuleReadBucket) WalkModuleFiles(ctx context.Context, path string, f func(*moduleObjectInfo) error) error {
+	return r.ReadBucket.Walk(
+		ctx,
+		path,
+		func(objectInfo storage.ObjectInfo) error {
+			return f(newModuleObjectInfo(objectInfo, r.moduleIdentity, r.commit))
+		},
+	)
+}
