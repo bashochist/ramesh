@@ -69,4 +69,84 @@ func (m *targetingModule) TargetFileInfos(ctx context.Context) (fileInfos []bufm
 	// potentialDirPaths are paths that we need to check if they are directories.
 	// These are any files that do not end in .proto, as well as files that end in .proto, but
 	// do not have a corresponding file in the source ReadBucket.
-	// If there is not an f
+	// If there is not an file the path ending in .proto could be a directory
+	// that itself contains files, i.e. a/b.proto/c.proto is valid.
+	var potentialDirPaths []string
+	// fileInfoPaths are the paths that are files, so we return them as a separate set.
+	fileInfoPaths := make(map[string]struct{})
+	// If m.targetPaths == nil then we are accepting all paths and we only need to filter on
+	// the excluded paths.
+	//
+	// In the event that we do have target paths, we need first gather up all the target paths
+	// that are proto files. If all target paths proto files, we can return them first.
+	if m.targetPaths != nil {
+		for _, targetPath := range m.targetPaths {
+			if normalpath.Ext(targetPath) != ".proto" {
+				// not a .proto file, therefore must be a directory
+				potentialDirPaths = append(potentialDirPaths, targetPath)
+			} else {
+				objectInfo, err := sourceReadBucket.Stat(ctx, targetPath)
+				if err != nil {
+					if !storage.IsNotExist(err) {
+						return nil, err
+					}
+					// we do not have a file, so even though this path ends
+					// in .proto,  this could be a directory - we need to check it
+					potentialDirPaths = append(potentialDirPaths, targetPath)
+				} else {
+					// Since all of these are specific files to include, and we've already checked
+					// for duplicated excludes, we know that this file is not excluded.
+					// We have a file, therefore the targetPath was a file path
+					// add to the nonImportImageFiles if does not already exist
+					if _, ok := fileInfoPaths[targetPath]; !ok {
+						fileInfoPaths[targetPath] = struct{}{}
+						fileInfo, err := bufmoduleref.NewFileInfo(
+							objectInfo.Path(),
+							objectInfo.ExternalPath(),
+							false,
+							m.Module.getModuleIdentity(),
+							m.Module.getCommit(),
+						)
+						if err != nil {
+							return nil, err
+						}
+						fileInfos = append(fileInfos, fileInfo)
+					}
+				}
+			}
+		}
+		if len(potentialDirPaths) == 0 {
+			// We had no potential directory paths as we were able to get
+			// an file for all targetPaths, so we can return the FileInfos now
+			// this means we do not have to do the expensive O(sourceReadBucketSize) operation
+			// to check to see if each file is within a potential directory path.
+			if !m.pathsAllowNotExistOnWalk {
+				foundPathSentinelError := errors.New("sentinel")
+				for _, excludePath := range m.excludePaths {
+					var foundPath bool
+					if walkErr := sourceReadBucket.Walk(
+						ctx,
+						"",
+						func(objectInfo storage.ObjectInfo) error {
+							if normalpath.EqualsOrContainsPath(excludePath, objectInfo.Path(), normalpath.Relative) {
+								foundPath = true
+								// We return early using the sentinel error here, since we don't need to do
+								// the rest of the walk if the path is found.
+								return foundPathSentinelError
+							}
+							return nil
+						},
+					); walkErr != nil && !errors.Is(walkErr, foundPathSentinelError) {
+						return nil, walkErr
+					}
+					if !foundPath {
+						return nil, fmt.Errorf("path %q has no matching file in the image", excludePath)
+					}
+				}
+			}
+			return fileInfos, nil
+		}
+	}
+	// We have potential directory paths, do the expensive operation to
+	// make a map of the directory paths.
+	potentialDirPathMap := stringutil.SliceToMap(poten
