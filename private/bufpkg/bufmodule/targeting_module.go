@@ -240,4 +240,9 @@ func shouldExcludeFile(
 		for fileMatchingExcludePath := range fileMatchingExcludePathMap {
 			if normalpath.EqualsOrContainsPath(fileMatchingPath, fileMatchingExcludePath, normalpath.Relative) {
 				delete(fileMatchingPathMap, fileMatchingPath)
-				co
+				continue
+			}
+		}
+	}
+	return len(fileMatchingPathMap) == 0
+}
