@@ -135,4 +135,115 @@ func TestParsePluginConfigNPMYAML(t *testing.T) {
 		t,
 		&Config{
 			Name:            pluginIdentity,
-			PluginVer
+			PluginVersion:   "v1.0.0",
+			OutputLanguages: []string{"typescript"},
+			Registry: &RegistryConfig{
+				NPM: &NPMRegistryConfig{
+					ImportStyle: "commonjs",
+					Deps: []*NPMRegistryDependencyConfig{
+						{
+							Package: "grpc-web",
+							Version: "^1.3.1",
+						},
+						{
+							Package: "@types/google-protobuf",
+							Version: "^3.15.6",
+						},
+					},
+				},
+			},
+			SPDXLicenseID: "BSD-3-Clause",
+		},
+		pluginConfig,
+	)
+}
+
+func TestParsePluginConfigMavenYAML(t *testing.T) {
+	t.Parallel()
+	pluginConfig, err := ParseConfig(filepath.Join("testdata", "success", "maven", "buf.plugin.yaml"))
+	require.NoError(t, err)
+	pluginIdentity, err := bufpluginref.PluginIdentityForString("buf.build/grpc/java")
+	require.NoError(t, err)
+	require.Equal(
+		t,
+		&Config{
+			Name:            pluginIdentity,
+			PluginVersion:   "v1.0.0",
+			OutputLanguages: []string{"java"},
+			Registry: &RegistryConfig{
+				Maven: &MavenRegistryConfig{
+					Deps: []string{
+						"io.grpc:grpc-core:1.52.1",
+						"io.grpc:grpc-protobuf:1.52.1",
+						"io.grpc:grpc-stub:1.52.1",
+					},
+				},
+			},
+			SPDXLicenseID: "BSD-3-Clause",
+		},
+		pluginConfig,
+	)
+}
+
+func TestParsePluginConfigOptionsYAML(t *testing.T) {
+	t.Parallel()
+	pluginConfig, err := ParseConfig(filepath.Join("testdata", "success", "options", "buf.plugin.yaml"))
+	require.NoError(t, err)
+	pluginIdentity, err := bufpluginref.PluginIdentityForString("buf.build/protocolbuffers/java")
+	require.NoError(t, err)
+	require.Equal(
+		t,
+		&Config{
+			Name:          pluginIdentity,
+			PluginVersion: "v2.0.0",
+		},
+		pluginConfig,
+	)
+}
+
+func TestParsePluginConfigMultipleRegistryConfigsYAML(t *testing.T) {
+	t.Parallel()
+	_, err := ParseConfig(filepath.Join("testdata", "failure", "invalid-multiple-registries.yaml"))
+	require.Error(t, err)
+}
+
+func TestParsePluginConfigEmptyVersionYAML(t *testing.T) {
+	t.Parallel()
+	_, err := ParseConfig(filepath.Join("testdata", "failure", "invalid-empty-version.yaml"))
+	require.Error(t, err)
+}
+
+func TestParsePluginConfigGoNoDepsOrMinVersion(t *testing.T) {
+	t.Parallel()
+	cfg, err := ParseConfig(filepath.Join("testdata", "success", "go-empty-registry", "buf.plugin.yaml"))
+	require.NoError(t, err)
+	assert.NotNil(t, cfg.Registry)
+	assert.NotNil(t, cfg.Registry.Go)
+	assert.Equal(t, &GoRegistryConfig{}, cfg.Registry.Go)
+}
+
+func TestPluginOptionsRoundTrip(t *testing.T) {
+	assertPluginOptionsRoundTrip(t, nil)
+	assertPluginOptionsRoundTrip(t, map[string]string{})
+	assertPluginOptionsRoundTrip(t, map[string]string{
+		"option-1":          "value-1",
+		"option-2":          "value-2",
+		"option-no-value-3": "",
+	})
+}
+
+func assertPluginOptionsRoundTrip(t testing.TB, options map[string]string) {
+	optionsSlice := PluginOptionsToOptionsSlice(options)
+	assert.True(t, sort.SliceIsSorted(optionsSlice, func(i, j int) bool {
+		return optionsSlice[i] < optionsSlice[j]
+	}))
+	assert.Equal(t, options, OptionsSliceToPluginOptions(optionsSlice))
+}
+
+func TestGetConfigForDataInvalidDependency(t *testing.T) {
+	t.Parallel()
+	validConfig, err := os.ReadFile(filepath.Join("testdata", "success", "go", "buf.plugin.yaml"))
+	require.NoError(t, err)
+	// Valid dependencies
+	verifyDependencies(t, validConfig, false, ExternalDependency{Plugin: "buf.build/library/go:v1.27.1"})
+	verifyDependencies(t, validConfig, false, Ex
