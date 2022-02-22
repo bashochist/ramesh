@@ -1,3 +1,4 @@
+
 // Copyright 2020-2023 Buf Technologies, Inc.
 //
 // Licensed under the Apache License, Version 2.0 (the "License");
@@ -12,8 +13,8 @@
 // See the License for the specific language governing permissions and
 // limitations under the License.
 
-// Generated. DO NOT EDIT.
+// Package bufplugindocker contains utilities for building Buf plugins using the Docker API.
+package bufplugindocker
 
-package bufpluginconfig
-
-import _ "github.com/bufbuild/buf/private/usage"
+// ImagePath is the default location for the Docker image archive in a plugin zip file.
+const ImagePath = "image.tar"
