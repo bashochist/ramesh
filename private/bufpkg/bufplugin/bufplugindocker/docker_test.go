@@ -182,4 +182,108 @@ func newDockerServer(t testing.TB, version string) *dockerServer {
 			t.Fatalf("failed to encode response: %v", err)
 		}
 	})
-	dockerServer.h2Server = &ht
+	dockerServer.h2Server = &http2.Server{}
+	dockerServer.h2Handler = h2c.NewHandler(mux, dockerServer.h2Server)
+	dockerServer.httpServer = httptest.NewUnstartedServer(dockerServer.h2Handler)
+	dockerServer.httpServer.Start()
+	t.Cleanup(dockerServer.httpServer.Close)
+	return dockerServer
+}
+
+func (d *dockerServer) imagesHandler(w http.ResponseWriter, r *http.Request) {
+	if _, err := io.Copy(io.Discard, r.Body); err != nil {
+		d.t.Error("failed to discard body:", err)
+	}
+	pathSuffix := strings.TrimPrefix(r.URL.Path, d.versionPrefix+"/images/")
+	submatches := imagePattern.FindStringSubmatch(pathSuffix)
+	if len(submatches) == 0 {
+		w.WriteHeader(http.StatusBadRequest)
+		return
+	}
+	image, tag, operation := submatches[1], submatches[2], submatches[3]
+	// ImageInspectWithRaw
+	if r.Method == http.MethodGet && operation == "json" {
+		d.mu.RLock()
+		defer d.mu.RUnlock()
+		foundImageID := d.findImageIDFromName(image + ":" + tag)
+		if len(foundImageID) == 0 {
+			http.NotFound(w, r)
+			return
+		}
+		if err := json.NewEncoder(w).Encode(&types.ImageInspect{
+			ID:       "sha256:" + foundImageID,
+			RepoTags: d.pushedImages[foundImageID].tags,
+		}); err != nil {
+			d.t.Error("failed to encode image inspect response:", err)
+		}
+		return
+	}
+	// ImageRemove
+	if r.Method == http.MethodDelete {
+		d.mu.Lock()
+		defer d.mu.Unlock()
+		foundImageID := d.findImageIDFromName(image + ":" + tag)
+		if len(foundImageID) == 0 {
+			http.NotFound(w, r)
+			return
+		}
+		delete(d.pushedImages, foundImageID)
+		if err := json.NewEncoder(w).Encode([]types.ImageDeleteResponseItem{
+			{Deleted: "sha256:" + foundImageID},
+		}); err != nil {
+			d.t.Error("failed to encode image delete response:", err)
+		}
+		return
+	}
+	// ImagePush
+	w.WriteHeader(http.StatusOK)
+	if d.pushErr != nil {
+		d.writeError(w, d.pushErr)
+		return
+	}
+	d.mu.Lock()
+	defer d.mu.Unlock()
+	if _, ok := d.pushedImages[image]; !ok {
+		d.pushedImages[image] = &pushedImage{}
+	}
+	imageTag := r.URL.Query()["tag"][0]
+	d.pushedImages[image].tags = append(d.pushedImages[image].tags, imageTag)
+	auxJSON, err := json.Marshal(map[string]any{
+		"Tag":    imageTag,
+		"Digest": "sha256:" + stringid.GenerateRandomID(),
+		"Size":   123,
+	})
+	if err != nil {
+		d.writeError(w, err)
+		return
+	}
+	if err := json.NewEncoder(w).Encode(&jsonmessage.JSONMessage{
+		Progress: &jsonmessage.JSONProgress{},
+		Aux:      (*json.RawMessage)(&auxJSON),
+	}); err != nil {
+		d.t.Error("failed to write JSON:", err)
+	}
+	if _, err := w.Write([]byte("\r\n")); err != nil {
+		d.t.Error("failed to write CRLF:", err)
+	}
+}
+
+func (d *dockerServer) findImageIDFromName(name string) string {
+	for imageID, builtImageInfo := range d.pushedImages {
+		for _, imageTag := range builtImageInfo.tags {
+			if imageTag == name {
+				return imageID
+			}
+		}
+	}
+	return ""
+}
+
+func (d *dockerServer) writeError(w http.ResponseWriter, err error) {
+	if err := json.NewEncoder(w).Encode(&jsonmessage.JSONMessage{Error: &jsonmessage.JSONError{Message: err.Error()}}); err != nil {
+		d.t.Error("failed to write json message:", err)
+	}
+	if _, err := w.Write([]byte{'\r', '\n'}); err != nil {
+		d.t.Error("failed to write CRLF", err)
+	}
+}
