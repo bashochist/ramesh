@@ -75,4 +75,111 @@ func TestPushError(t *testing.T) {
 	dockerClient := createClient(t, WithHost("tcp://"+listenerAddr), WithVersion(dockerVersion))
 	image, err := buildDockerPlugin(t, "testdata/success/Dockerfile", listenerAddr+"/library/go")
 	require.Nilf(t, err, "failed to build docker plugin")
-	require.NotEmpty(
+	require.NotEmpty(t, image)
+	_, err = dockerClient.Push(context.Background(), image, &RegistryAuthConfig{})
+	require.NotNil(t, err, "expected error")
+	assert.Equal(t, server.pushErr.Error(), err.Error())
+}
+
+func TestMain(m *testing.M) {
+	var dockerEnabled bool
+	if cli, err := client.NewClientWithOpts(client.FromEnv, client.WithAPIVersionNegotiation()); err == nil {
+		ctx, cancel := context.WithTimeout(context.Background(), time.Second)
+		defer cancel()
+		if _, err := cli.Ping(ctx); err == nil {
+			dockerEnabled = true
+		}
+		_ = cli.Close()
+	}
+	if dockerEnabled && runtime.GOOS == "windows" {
+		// Windows runners don't support building Linux images - need to disable for now.
+		dockerEnabled = false
+	}
+	// call flag.Parse() here if TestMain uses flags
+	if dockerEnabled {
+		os.Exit(m.Run())
+	}
+}
+
+func createClient(t testing.TB, options ...ClientOption) Client {
+	t.Helper()
+	logger, err := zap.NewDevelopment()
+	require.Nilf(t, err, "failed to create zap logger")
+	dockerClient, err := NewClient(logger, "buf-cli-1.11.0", options...)
+	require.Nilf(t, err, "failed to create client")
+	t.Cleanup(func() {
+		if err := dockerClient.Close(); err != nil {
+			t.Errorf("failed to close client: %v", err)
+		}
+	})
+	return dockerClient
+}
+
+func buildDockerPlugin(t testing.TB, dockerfilePath string, pluginIdentity string) (string, error) {
+	t.Helper()
+	docker, err := exec.LookPath("docker")
+	if err != nil {
+		return "", err
+	}
+	imageName := fmt.Sprintf("%s:%s", pluginIdentity, stringid.GenerateRandomID())
+	cmd := command.NewRunner()
+	if err := cmd.Run(
+		context.Background(),
+		docker,
+		command.RunWithArgs("build", "-t", imageName, "."),
+		command.RunWithDir(filepath.Dir(dockerfilePath)),
+		command.RunWithStdout(os.Stdout),
+		command.RunWithStderr(os.Stderr),
+	); err != nil {
+		return "", err
+	}
+	t.Logf("created image: %s", imageName)
+	t.Cleanup(func() {
+		if err := cmd.Run(
+			context.Background(),
+			docker,
+			command.RunWithArgs("rmi", "--force", imageName),
+			command.RunWithDir(filepath.Dir(dockerfilePath)),
+			command.RunWithStdout(os.Stdout),
+			command.RunWithStderr(os.Stderr),
+		); err != nil {
+			t.Logf("failed to remove temporary docker image: %v", err)
+		}
+	})
+	return imageName, nil
+}
+
+// dockerServer allows testing some failure flows by simulating the responses to Docker CLI commands.
+type dockerServer struct {
+	httpServer    *httptest.Server
+	h2Server      *http2.Server
+	h2Handler     http.Handler
+	t             testing.TB
+	versionPrefix string
+	pushErr       error
+	// protects builtImages
+	mu           sync.RWMutex
+	pushedImages map[string]*pushedImage
+}
+
+type pushedImage struct {
+	tags []string
+}
+
+func newDockerServer(t testing.TB, version string) *dockerServer {
+	t.Helper()
+	versionPrefix := "/v" + version
+	dockerServer := &dockerServer{
+		t:             t,
+		pushedImages:  make(map[string]*pushedImage),
+		versionPrefix: versionPrefix,
+	}
+	mux := http.NewServeMux()
+	mux.HandleFunc(versionPrefix+"/images/", dockerServer.imagesHandler)
+	mux.HandleFunc("/_ping", func(w http.ResponseWriter, r *http.Request) {
+		w.Header().Add("Content-Type", "application/json")
+		if err := json.NewEncoder(w).Encode(&types.Ping{APIVersion: version}); err != nil {
+			t.Fatalf("failed to encode response: %v", err)
+		}
+	})
+	dockerServer.h2Server = &ht
