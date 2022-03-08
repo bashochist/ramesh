@@ -50,4 +50,68 @@ func TestGetFeatureProto3OptionalSupported(t *testing.T) {
 	assert.False(t, getFeatureProto3OptionalSupported(newVersion(3, 11, 4, "")))
 	assert.True(t, getFeatureProto3OptionalSupported(newVersion(3, 11, 1, "buf")))
 	assert.True(t, getFeatureProto3OptionalSupported(newVersion(3, 12, 1, "")))
-	assert.True(t, getFeatureProto3OptionalSupported(newVers
+	assert.True(t, getFeatureProto3OptionalSupported(newVersion(3, 14, 1, "")))
+	assert.True(t, getFeatureProto3OptionalSupported(newVersion(3, 15, 0, "")))
+	assert.True(t, getFeatureProto3OptionalSupported(newVersion(21, 0, 0, "")))
+}
+
+func TestGetKotlinSupportedAsBuiltin(t *testing.T) {
+	t.Parallel()
+	assert.True(t, getKotlinSupportedAsBuiltin(newVersion(3, 11, 1, "buf")))
+	assert.True(t, getKotlinSupportedAsBuiltin(newVersion(3, 17, 4, "")))
+	assert.True(t, getKotlinSupportedAsBuiltin(newVersion(21, 1, 0, "")))
+	assert.True(t, getKotlinSupportedAsBuiltin(newVersion(21, 1, 0, "buf")))
+	assert.False(t, getKotlinSupportedAsBuiltin(newVersion(3, 12, 1, "")))
+	assert.False(t, getKotlinSupportedAsBuiltin(newVersion(3, 14, 1, "")))
+}
+
+func TestGetJSSupportedAsBuiltin(t *testing.T) {
+	t.Parallel()
+	assert.False(t, getJSSupportedAsBuiltin(newVersion(2, 11, 1, "")))
+	assert.True(t, getJSSupportedAsBuiltin(newVersion(3, 11, 1, "buf")))
+	assert.True(t, getJSSupportedAsBuiltin(newVersion(3, 17, 4, "")))
+	assert.True(t, getJSSupportedAsBuiltin(newVersion(3, 20, 1, "")))
+	assert.False(t, getJSSupportedAsBuiltin(newVersion(3, 21, 1, "")))
+	assert.False(t, getJSSupportedAsBuiltin(newVersion(3, 22, 1, "")))
+	assert.False(t, getJSSupportedAsBuiltin(newVersion(21, 1, 0, "")))
+	assert.True(t, getJSSupportedAsBuiltin(newVersion(21, 1, 0, "buf")))
+}
+
+func TestParseVersionForCLIVersion(t *testing.T) {
+	t.Parallel()
+	testParseVersionForCLIVersionSuccess(t, "libprotoc 3.14.0", newVersion(3, 14, 0, ""))
+	testParseVersionForCLIVersionSuccess(t, "libprotoc 3.14.0-rc1", newVersion(3, 14, 0, "rc1"))
+	testParseVersionForCLIVersionSuccess(t, "libprotoc 3.14.0-rc-1", newVersion(3, 14, 0, "rc-1"))
+	testParseVersionForCLIVersionSuccess(t, "3.14.0", newVersion(3, 14, 0, ""))
+	testParseVersionForCLIVersionSuccess(t, "3.14.0-rc1", newVersion(3, 14, 0, "rc1"))
+	testParseVersionForCLIVersionSuccess(t, "3.14.0-buf", newVersion(3, 14, 0, "buf"))
+	testParseVersionForCLIVersionSuccess(t, "libprotoc 21.1", newVersion(21, 1, 0, ""))
+	testParseVersionForCLIVersionSuccess(t, "libprotoc 21.1-rc1", newVersion(21, 1, 0, "rc1"))
+	testParseVersionForCLIVersionSuccess(t, "libprotoc 21.1-rc-1", newVersion(21, 1, 0, "rc-1"))
+	testParseVersionForCLIVersionSuccess(t, "21.1", newVersion(21, 1, 0, ""))
+	testParseVersionForCLIVersionSuccess(t, "21.1-rc1", newVersion(21, 1, 0, "rc1"))
+	testParseVersionForCLIVersionSuccess(t, "21.1-rc-1", newVersion(21, 1, 0, "rc-1"))
+	testParseVersionForCLIVersionSuccess(t, "21.1-buf", newVersion(21, 1, 0, "buf"))
+	testParseVersionForCLIVersionError(t, "libprotoc3.14.0")
+	testParseVersionForCLIVersionError(t, "libprotoc 3.14.0.1")
+}
+
+func testParseVersionForCLIVersionSuccess(
+	t *testing.T,
+	value string,
+	expectedVersion *pluginpb.Version,
+) {
+	version, err := parseVersionForCLIVersion(value)
+	assert.NoError(t, err)
+	if err == nil {
+		assert.Equal(t, expectedVersion, version)
+	}
+}
+
+func testParseVersionForCLIVersionError(
+	t *testing.T,
+	value string,
+) {
+	_, err := parseVersionForCLIVersion(value)
+	assert.Error(t, err)
+}
