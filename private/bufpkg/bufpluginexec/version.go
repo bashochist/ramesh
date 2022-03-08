@@ -121,4 +121,34 @@ func getFeatureProto3OptionalSupported(version *pluginpb.Version) bool {
 }
 
 // Is kotlin supported as a builtin plugin?
-func getKotlinSupportedAsBuiltin(version *plugin
+func getKotlinSupportedAsBuiltin(version *pluginpb.Version) bool {
+	if version.GetSuffix() == "buf" {
+		return true
+	}
+	if version.GetMajor() < 3 {
+		return false
+	}
+	if version.GetMajor() == 3 {
+		return version.GetMinor() > 16
+	}
+	// version.GetMajor() > 3
+	return true
+}
+
+// Is js supported as a builtin plugin?
+func getJSSupportedAsBuiltin(version *pluginpb.Version) bool {
+	if version.GetSuffix() == "buf" {
+		return true
+	}
+	if version.GetMajor() < 3 {
+		return false
+	}
+	if version.GetMajor() == 3 {
+		// v21 and above of protoc still returns "3.MAJOR.Z" for version
+		return version.GetMinor() < 21
+	}
+	// version.GetMajor() > 3
+	// This will catch if they ever change protoc's returned version
+	// to the proper major version
+	return false
+}
