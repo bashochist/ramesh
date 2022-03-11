@@ -142,4 +142,97 @@ func ParseTemplateConfig(config string) (*TemplateConfig, error) {
 	}
 	switch version.Version {
 	case "":
-		return nil
+		return nil, errors.New("template config version is required")
+	case v1Version:
+	default:
+		return nil, fmt.Errorf("unknown template config version: %q", version.Version)
+	}
+	var externalConfig externalTemplateConfig
+	if err := encoding.UnmarshalJSONOrYAMLStrict(data, &externalConfig); err != nil {
+		return nil, fmt.Errorf("failed to unmarshal template config: %w", err)
+	}
+	templateConfig := &TemplateConfig{
+		Plugins: make([]PluginConfig, 0, len(externalConfig.Plugins)),
+	}
+	for _, plugin := range externalConfig.Plugins {
+		templatePlugin := PluginConfig{
+			Owner: plugin.Owner,
+			Name:  plugin.Name,
+		}
+		parameterString, err := encoding.InterfaceSliceOrStringToCommaSepString(plugin.Options)
+		if err != nil {
+			return nil, fmt.Errorf("failed to parse options: %w", err)
+		}
+		if parameterString != "" {
+			templatePlugin.Parameters = strings.Split(parameterString, ",")
+		}
+		templateConfig.Plugins = append(templateConfig.Plugins, templatePlugin)
+	}
+	return templateConfig, nil
+}
+
+// TemplateVersionConfig is the config used to describe the plugin
+// version of a new template version.
+type TemplateVersionConfig struct {
+	PluginVersions []PluginVersion
+}
+
+// TemplateVersionConfigToProtoPluginVersionMappings converts the template version config to a
+// slice of Plugin version mappings, suitable for use with the Plugin Service CreateTemplateVersion RPC.
+func TemplateVersionConfigToProtoPluginVersionMappings(
+	templateVersionConfig *TemplateVersionConfig,
+) []*registryv1alpha1.PluginVersionMapping {
+	pluginVersions := make([]*registryv1alpha1.PluginVersionMapping, 0, len(templateVersionConfig.PluginVersions))
+	for _, pluginVersion := range templateVersionConfig.PluginVersions {
+		pluginVersions = append(
+			pluginVersions,
+			&registryv1alpha1.PluginVersionMapping{
+				PluginOwner: pluginVersion.Owner,
+				PluginName:  pluginVersion.Name,
+				Version:     pluginVersion.Version,
+			},
+		)
+	}
+	return pluginVersions
+}
+
+// PluginVersion describes a version of a plugin for
+// use in a template version.
+type PluginVersion struct {
+	Owner   string
+	Name    string
+	Version string
+}
+
+// ParseTemplateVersionConfig parses the input template version config as a path or JSON/YAML literal.
+func ParseTemplateVersionConfig(config string) (*TemplateVersionConfig, error) {
+	var data []byte
+	var err error
+	switch filepath.Ext(config) {
+	case ".json", ".yaml", ".yml":
+		data, err = os.ReadFile(config)
+		if err != nil {
+			return nil, fmt.Errorf("could not read file: %v", err)
+		}
+	default:
+		data = []byte(config)
+	}
+	var version externalTemplateConfigVersion
+	if err := encoding.UnmarshalJSONOrYAMLNonStrict(data, &version); err != nil {
+		return nil, fmt.Errorf("failed to determine version of template version config: %w", err)
+	}
+	switch version.Version {
+	case "":
+		return nil, errors.New("template version config version is required")
+	case v1Version:
+	default:
+		return nil, fmt.Errorf("unknown template version config version: %q", version.Version)
+	}
+	var externalConfig externalTemplateVersionConfig
+	if err := encoding.UnmarshalJSONOrYAMLStrict(data, &externalConfig); err != nil {
+		return nil, fmt.Errorf("failed to unmarshal template version config: %w", err)
+	}
+	templateVersionConfig := &TemplateVersionConfig{
+		PluginVersions: make([]PluginVersion, 0, len(externalConfig.PluginVersions)),
+	}
+	for _, pluginVersion 
