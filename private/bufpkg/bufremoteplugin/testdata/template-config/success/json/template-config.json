@@ -1,0 +1,18 @@
+
+{
+    "version": "v1",
+    "plugins": [
+        {
+            "owner": "testowner",
+            "name": "testplugin",
+            "opt": [
+                "testparameter"
+            ]
+        },
+        {
+            "owner": "testowner2",
+            "name": "testplugin2",
+            "opt": "testparameter2"
+        }
+    ]
+}

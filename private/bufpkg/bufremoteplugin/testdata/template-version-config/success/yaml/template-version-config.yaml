@@ -1,0 +1,5 @@
+version: v1
+plugin_versions:
+  - owner: testowner
+    name: testplugin
+    

@@ -235,4 +235,34 @@ func ParseTemplateVersionConfig(config string) (*TemplateVersionConfig, error) {
 	templateVersionConfig := &TemplateVersionConfig{
 		PluginVersions: make([]PluginVersion, 0, len(externalConfig.PluginVersions)),
 	}
-	for _, pluginVersion 
+	for _, pluginVersion := range externalConfig.PluginVersions {
+		templateVersionConfig.PluginVersions = append(templateVersionConfig.PluginVersions, PluginVersion(pluginVersion))
+	}
+	return templateVersionConfig, nil
+}
+
+type externalTemplateConfig struct {
+	Version string                 `json:"version,omitempty" yaml:"version,omitempty"`
+	Plugins []externalPluginConfig `json:"plugins,omitempty" yaml:"plugins,omitempty"`
+}
+
+type externalPluginConfig struct {
+	Owner   string      `json:"owner,omitempty" yaml:"owner,omitempty"`
+	Name    string      `json:"name,omitempty" yaml:"name,omitempty"`
+	Options interface{} `json:"opt,omitempty" yaml:"opt,omitempty"`
+}
+
+type externalTemplateVersionConfig struct {
+	Version        string                  `json:"version,omitempty" yaml:"version,omitempty"`
+	PluginVersions []externalPluginVersion `json:"plugin_versions,omitempty" yaml:"plugin_versions,omitempty"`
+}
+
+type externalPluginVersion struct {
+	Owner   string `json:"owner,omitempty" yaml:"owner,omitempty"`
+	Name    string `json:"name,omitempty" yaml:"name,omitempty"`
+	Version string `json:"version,omitempty" yaml:"version,omitempty"`
+}
+
+type externalTemplateConfigVersion struct {
+	Version string `json:"version,omitempty" yaml:"version,omitempty"`
+}
