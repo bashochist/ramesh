@@ -238,4 +238,32 @@ func connectClientOptionsFromContentType(contentType string) ([]connect.ClientOp
 	}
 }
 
-func (i *plainPostHandler) writePro
+func (i *plainPostHandler) writeProtoMessage(w http.ResponseWriter, message proto.Message) {
+	responseProtoBytes, err := protoencoding.NewWireMarshaler().Marshal(message)
+	if err != nil {
+		http.Error(w, err.Error(), http.StatusInternalServerError)
+		return
+	}
+	responseB64Bytes := make([]byte, i.B64Encoding.EncodedLen(len(responseProtoBytes)))
+	i.B64Encoding.Encode(responseB64Bytes, responseProtoBytes)
+	w.Header().Set("Content-Type", "text/plain")
+	if n, err := w.Write(responseB64Bytes); n != len(responseB64Bytes) && err != nil {
+		i.Logger.Error(
+			"write_error",
+			zap.Int("expected_bytes", len(responseB64Bytes)),
+			zap.Int("actual_bytes", n),
+			zap.Error(err),
+		)
+	}
+}
+
+func goHeadersToProtoHeaders(in http.Header) []*studiov1alpha1.Headers {
+	var out []*studiov1alpha1.Headers
+	for k, v := range in {
+		out = append(out, &studiov1alpha1.Headers{
+			Key:   k,
+			Value: v,
+		})
+	}
+	return out
+}
