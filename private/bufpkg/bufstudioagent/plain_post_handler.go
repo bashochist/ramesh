@@ -144,4 +144,98 @@ func (i *plainPostHandler) ServeHTTP(w http.ResponseWriter, r *http.Request) {
 	}
 	targetURL, err := url.Parse(envelopeRequest.GetTarget())
 	if err != nil {
-		http.Er
+		http.Error(w, err.Error(), http.StatusBadRequest)
+		return
+	}
+	var httpClient *http.Client
+	switch targetURL.Scheme {
+	case "http":
+		httpClient = i.H2CClient
+	case "https":
+		httpClient = i.TLSClient
+	default:
+		http.Error(w, fmt.Sprintf("must specify http or https url scheme, got %q", targetURL.Scheme), http.StatusBadRequest)
+		return
+	}
+	clientOptions, err := connectClientOptionsFromContentType(request.Header().Get("Content-Type"))
+	if err != nil {
+		http.Error(w, err.Error(), http.StatusBadRequest)
+		return
+	}
+	client := connect.NewClient[bytes.Buffer, bytes.Buffer](
+		httpClient,
+		targetURL.String(),
+		clientOptions...,
+	)
+	// TODO(rvanginkel) should this context be cloned to remove attached values (but keep timeout)?
+	response, err := client.CallUnary(r.Context(), request)
+	if err != nil {
+		// We need to differentiate client errors from server errors. In the former,
+		// trigger a `StatusBadGateway` result, and in the latter surface whatever
+		// error information came back from the server.
+		//
+		// Any error here is expected to be wrapped in a `connect.Error` struct. We
+		// need to check *first* if it's not a wire error, so we can assume the
+		// request never left the client, or a response never arrived from the
+		// server. In those scenarios we trigger a `StatusBadGateway` to signal
+		// that the upstream server is unreachable or in a bad status...
+		if !connect.IsWireError(err) {
+			http.Error(w, err.Error(), http.StatusBadGateway)
+			return
+		}
+		// ... but if a response was received from the server, we assume there's
+		// error information from the server we can surface to the user by including
+		// it in the headers response, unless it is a `CodeUnknown` error. Connect
+		// marks any issues connecting with the `CodeUnknown` error.
+		if connectErr := new(connect.Error); errors.As(err, &connectErr) {
+			if connectErr.Code() == connect.CodeUnknown {
+				http.Error(w, err.Error(), http.StatusBadGateway)
+				return
+			}
+			i.writeProtoMessage(w, &studiov1alpha1.InvokeResponse{
+				// connectErr.Meta contains the trailers for the
+				// caller to find out the error details.
+				Headers: goHeadersToProtoHeaders(connectErr.Meta()),
+			})
+			return
+		}
+		i.Logger.Warn(
+			"non_connect_unary_error",
+			zap.Error(err),
+		)
+		http.Error(w, err.Error(), http.StatusBadGateway)
+		return
+	}
+	i.writeProtoMessage(w, &studiov1alpha1.InvokeResponse{
+		Headers:  goHeadersToProtoHeaders(response.Header()),
+		Body:     response.Msg.Bytes(),
+		Trailers: goHeadersToProtoHeaders(response.Trailer()),
+	})
+}
+
+func connectClientOptionsFromContentType(contentType string) ([]connect.ClientOption, error) {
+	switch contentType {
+	case "application/grpc", "application/grpc+proto":
+		return []connect.ClientOption{
+			connect.WithGRPC(),
+			connect.WithCodec(&bufferCodec{name: "proto"}),
+		}, nil
+	case "application/grpc+json":
+		return []connect.ClientOption{
+			connect.WithGRPC(),
+			connect.WithCodec(&bufferCodec{name: "json"}),
+		}, nil
+	case "application/json":
+		return []connect.ClientOption{
+			connect.WithCodec(&bufferCodec{name: "json"}),
+		}, nil
+	case "application/proto":
+		return []connect.ClientOption{
+			connect.WithCodec(&bufferCodec{name: "proto"}),
+		}, nil
+	default:
+		return nil, fmt.Errorf("unknown Content-Type: %q", contentType)
+	}
+}
+
+func (i *plainPostHandler) writePro
