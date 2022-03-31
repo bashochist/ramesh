@@ -95,4 +95,75 @@ func NewOrganizationServiceClient(httpClient connect_go.HTTPClient, baseURL stri
 			baseURL+"/buf.alpha.registry.v1alpha1.OrganizationService/GetOrganizationByName",
 			opts...,
 		),
-		listOrganizations
+		listOrganizations: connect_go.NewClient[v1alpha1.ListOrganizationsRequest, v1alpha1.ListOrganizationsResponse](
+			httpClient,
+			baseURL+"/buf.alpha.registry.v1alpha1.OrganizationService/ListOrganizations",
+			opts...,
+		),
+		listUserOrganizations: connect_go.NewClient[v1alpha1.ListUserOrganizationsRequest, v1alpha1.ListUserOrganizationsResponse](
+			httpClient,
+			baseURL+"/buf.alpha.registry.v1alpha1.OrganizationService/ListUserOrganizations",
+			opts...,
+		),
+		createOrganization: connect_go.NewClient[v1alpha1.CreateOrganizationRequest, v1alpha1.CreateOrganizationResponse](
+			httpClient,
+			baseURL+"/buf.alpha.registry.v1alpha1.OrganizationService/CreateOrganization",
+			opts...,
+		),
+		deleteOrganization: connect_go.NewClient[v1alpha1.DeleteOrganizationRequest, v1alpha1.DeleteOrganizationResponse](
+			httpClient,
+			baseURL+"/buf.alpha.registry.v1alpha1.OrganizationService/DeleteOrganization",
+			opts...,
+		),
+		deleteOrganizationByName: connect_go.NewClient[v1alpha1.DeleteOrganizationByNameRequest, v1alpha1.DeleteOrganizationByNameResponse](
+			httpClient,
+			baseURL+"/buf.alpha.registry.v1alpha1.OrganizationService/DeleteOrganizationByName",
+			opts...,
+		),
+		addOrganizationMember: connect_go.NewClient[v1alpha1.AddOrganizationMemberRequest, v1alpha1.AddOrganizationMemberResponse](
+			httpClient,
+			baseURL+"/buf.alpha.registry.v1alpha1.OrganizationService/AddOrganizationMember",
+			opts...,
+		),
+		updateOrganizationMember: connect_go.NewClient[v1alpha1.UpdateOrganizationMemberRequest, v1alpha1.UpdateOrganizationMemberResponse](
+			httpClient,
+			baseURL+"/buf.alpha.registry.v1alpha1.OrganizationService/UpdateOrganizationMember",
+			opts...,
+		),
+		removeOrganizationMember: connect_go.NewClient[v1alpha1.RemoveOrganizationMemberRequest, v1alpha1.RemoveOrganizationMemberResponse](
+			httpClient,
+			baseURL+"/buf.alpha.registry.v1alpha1.OrganizationService/RemoveOrganizationMember",
+			opts...,
+		),
+		setOrganizationMember: connect_go.NewClient[v1alpha1.SetOrganizationMemberRequest, v1alpha1.SetOrganizationMemberResponse](
+			httpClient,
+			baseURL+"/buf.alpha.registry.v1alpha1.OrganizationService/SetOrganizationMember",
+			opts...,
+		),
+		getOrganizationSettings: connect_go.NewClient[v1alpha1.GetOrganizationSettingsRequest, v1alpha1.GetOrganizationSettingsResponse](
+			httpClient,
+			baseURL+"/buf.alpha.registry.v1alpha1.OrganizationService/GetOrganizationSettings",
+			opts...,
+		),
+		updateOrganizationSettings: connect_go.NewClient[v1alpha1.UpdateOrganizationSettingsRequest, v1alpha1.UpdateOrganizationSettingsResponse](
+			httpClient,
+			baseURL+"/buf.alpha.registry.v1alpha1.OrganizationService/UpdateOrganizationSettings",
+			opts...,
+		),
+		addOrganizationGroup: connect_go.NewClient[v1alpha1.AddOrganizationGroupRequest, v1alpha1.AddOrganizationGroupResponse](
+			httpClient,
+			baseURL+"/buf.alpha.registry.v1alpha1.OrganizationService/AddOrganizationGroup",
+			opts...,
+		),
+		removeOrganizationGroup: connect_go.NewClient[v1alpha1.RemoveOrganizationGroupRequest, v1alpha1.RemoveOrganizationGroupResponse](
+			httpClient,
+			baseURL+"/buf.alpha.registry.v1alpha1.OrganizationService/RemoveOrganizationGroup",
+			opts...,
+		),
+	}
+}
+
+// organizationServiceClient implements OrganizationServiceClient.
+type organizationServiceClient struct {
+	getOrganization            *connect_go.Client[v1alpha1.GetOrganizationRequest, v1alpha1.GetOrganizationResponse]
+	getOrganizationByName      *connect_go.Client[v1alpha1.Get
