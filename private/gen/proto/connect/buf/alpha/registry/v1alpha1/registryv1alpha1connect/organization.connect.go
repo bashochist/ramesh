@@ -55,4 +55,44 @@ type OrganizationServiceClient interface {
 	// DeleteOrganization deletes a organization.
 	DeleteOrganization(context.Context, *connect_go.Request[v1alpha1.DeleteOrganizationRequest]) (*connect_go.Response[v1alpha1.DeleteOrganizationResponse], error)
 	// DeleteOrganizationByName deletes a organization by name.
-	DeleteOrganizationByName(context.Context, *connect_go.Request[v1alpha1.DeleteOrganizationByNameRequest]) (*connect_go.Response[v1alpha1.DeleteOrganizationByNam
+	DeleteOrganizationByName(context.Context, *connect_go.Request[v1alpha1.DeleteOrganizationByNameRequest]) (*connect_go.Response[v1alpha1.DeleteOrganizationByNameResponse], error)
+	// AddOrganizationMember add a role to an user in the organization.
+	AddOrganizationMember(context.Context, *connect_go.Request[v1alpha1.AddOrganizationMemberRequest]) (*connect_go.Response[v1alpha1.AddOrganizationMemberResponse], error)
+	// UpdateOrganizationMember update the user's membership information in the organization.
+	UpdateOrganizationMember(context.Context, *connect_go.Request[v1alpha1.UpdateOrganizationMemberRequest]) (*connect_go.Response[v1alpha1.UpdateOrganizationMemberResponse], error)
+	// RemoveOrganizationMember remove the role of an user in the organization.
+	RemoveOrganizationMember(context.Context, *connect_go.Request[v1alpha1.RemoveOrganizationMemberRequest]) (*connect_go.Response[v1alpha1.RemoveOrganizationMemberResponse], error)
+	// SetOrganizationMember sets the role of a user in the organization.
+	SetOrganizationMember(context.Context, *connect_go.Request[v1alpha1.SetOrganizationMemberRequest]) (*connect_go.Response[v1alpha1.SetOrganizationMemberResponse], error)
+	// GetOrganizationSettings gets the settings of an organization, including organization base roles.
+	GetOrganizationSettings(context.Context, *connect_go.Request[v1alpha1.GetOrganizationSettingsRequest]) (*connect_go.Response[v1alpha1.GetOrganizationSettingsResponse], error)
+	// UpdateOrganizationSettings update the organization settings including base roles.
+	UpdateOrganizationSettings(context.Context, *connect_go.Request[v1alpha1.UpdateOrganizationSettingsRequest]) (*connect_go.Response[v1alpha1.UpdateOrganizationSettingsResponse], error)
+	// AddOrganizationGroup adds an IdP Group to the organization.
+	AddOrganizationGroup(context.Context, *connect_go.Request[v1alpha1.AddOrganizationGroupRequest]) (*connect_go.Response[v1alpha1.AddOrganizationGroupResponse], error)
+	// RemoveOrganizationGroup removes an IdP Group from the organization.
+	RemoveOrganizationGroup(context.Context, *connect_go.Request[v1alpha1.RemoveOrganizationGroupRequest]) (*connect_go.Response[v1alpha1.RemoveOrganizationGroupResponse], error)
+}
+
+// NewOrganizationServiceClient constructs a client for the
+// buf.alpha.registry.v1alpha1.OrganizationService service. By default, it uses the Connect protocol
+// with the binary Protobuf Codec, asks for gzipped responses, and sends uncompressed requests. To
+// use the gRPC or gRPC-Web protocols, supply the connect.WithGRPC() or connect.WithGRPCWeb()
+// options.
+//
+// The URL supplied here should be the base URL for the Connect or gRPC server (for example,
+// http://api.acme.com or https://acme.com/grpc).
+func NewOrganizationServiceClient(httpClient connect_go.HTTPClient, baseURL string, opts ...connect_go.ClientOption) OrganizationServiceClient {
+	baseURL = strings.TrimRight(baseURL, "/")
+	return &organizationServiceClient{
+		getOrganization: connect_go.NewClient[v1alpha1.GetOrganizationRequest, v1alpha1.GetOrganizationResponse](
+			httpClient,
+			baseURL+"/buf.alpha.registry.v1alpha1.OrganizationService/GetOrganization",
+			opts...,
+		),
+		getOrganizationByName: connect_go.NewClient[v1alpha1.GetOrganizationByNameRequest, v1alpha1.GetOrganizationByNameResponse](
+			httpClient,
+			baseURL+"/buf.alpha.registry.v1alpha1.OrganizationService/GetOrganizationByName",
+			opts...,
+		),
+		listOrganizations
