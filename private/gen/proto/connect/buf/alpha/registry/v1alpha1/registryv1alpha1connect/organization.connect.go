@@ -205,4 +205,53 @@ func (c *organizationServiceClient) ListUserOrganizations(ctx context.Context, r
 }
 
 // CreateOrganization calls buf.alpha.registry.v1alpha1.OrganizationService.CreateOrganization.
-func (c *organizationServiceClient) CreateOrganization(ctx context
+func (c *organizationServiceClient) CreateOrganization(ctx context.Context, req *connect_go.Request[v1alpha1.CreateOrganizationRequest]) (*connect_go.Response[v1alpha1.CreateOrganizationResponse], error) {
+	return c.createOrganization.CallUnary(ctx, req)
+}
+
+// DeleteOrganization calls buf.alpha.registry.v1alpha1.OrganizationService.DeleteOrganization.
+func (c *organizationServiceClient) DeleteOrganization(ctx context.Context, req *connect_go.Request[v1alpha1.DeleteOrganizationRequest]) (*connect_go.Response[v1alpha1.DeleteOrganizationResponse], error) {
+	return c.deleteOrganization.CallUnary(ctx, req)
+}
+
+// DeleteOrganizationByName calls
+// buf.alpha.registry.v1alpha1.OrganizationService.DeleteOrganizationByName.
+func (c *organizationServiceClient) DeleteOrganizationByName(ctx context.Context, req *connect_go.Request[v1alpha1.DeleteOrganizationByNameRequest]) (*connect_go.Response[v1alpha1.DeleteOrganizationByNameResponse], error) {
+	return c.deleteOrganizationByName.CallUnary(ctx, req)
+}
+
+// AddOrganizationMember calls
+// buf.alpha.registry.v1alpha1.OrganizationService.AddOrganizationMember.
+func (c *organizationServiceClient) AddOrganizationMember(ctx context.Context, req *connect_go.Request[v1alpha1.AddOrganizationMemberRequest]) (*connect_go.Response[v1alpha1.AddOrganizationMemberResponse], error) {
+	return c.addOrganizationMember.CallUnary(ctx, req)
+}
+
+// UpdateOrganizationMember calls
+// buf.alpha.registry.v1alpha1.OrganizationService.UpdateOrganizationMember.
+func (c *organizationServiceClient) UpdateOrganizationMember(ctx context.Context, req *connect_go.Request[v1alpha1.UpdateOrganizationMemberRequest]) (*connect_go.Response[v1alpha1.UpdateOrganizationMemberResponse], error) {
+	return c.updateOrganizationMember.CallUnary(ctx, req)
+}
+
+// RemoveOrganizationMember calls
+// buf.alpha.registry.v1alpha1.OrganizationService.RemoveOrganizationMember.
+func (c *organizationServiceClient) RemoveOrganizationMember(ctx context.Context, req *connect_go.Request[v1alpha1.RemoveOrganizationMemberRequest]) (*connect_go.Response[v1alpha1.RemoveOrganizationMemberResponse], error) {
+	return c.removeOrganizationMember.CallUnary(ctx, req)
+}
+
+// SetOrganizationMember calls
+// buf.alpha.registry.v1alpha1.OrganizationService.SetOrganizationMember.
+func (c *organizationServiceClient) SetOrganizationMember(ctx context.Context, req *connect_go.Request[v1alpha1.SetOrganizationMemberRequest]) (*connect_go.Response[v1alpha1.SetOrganizationMemberResponse], error) {
+	return c.setOrganizationMember.CallUnary(ctx, req)
+}
+
+// GetOrganizationSettings calls
+// buf.alpha.registry.v1alpha1.OrganizationService.GetOrganizationSettings.
+func (c *organizationServiceClient) GetOrganizationSettings(ctx context.Context, req *connect_go.Request[v1alpha1.GetOrganizationSettingsRequest]) (*connect_go.Response[v1alpha1.GetOrganizationSettingsResponse], error) {
+	return c.getOrganizationSettings.CallUnary(ctx, req)
+}
+
+// UpdateOrganizationSettings calls
+// buf.alpha.registry.v1alpha1.OrganizationService.UpdateOrganizationSettings.
+func (c *organizationServiceClient) UpdateOrganizationSettings(ctx context.Context, req *connect_go.Request[v1alpha1.UpdateOrganizationSettingsRequest]) (*connect_go.Response[v1alpha1.UpdateOrganizationSettingsResponse], error) {
+	return c.updateOrganizationSettings.CallUnary(ctx, req)
+}
