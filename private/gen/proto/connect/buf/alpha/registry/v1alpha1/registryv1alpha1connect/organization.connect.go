@@ -291,4 +291,57 @@ type OrganizationServiceHandler interface {
 	// RemoveOrganizationMember remove the role of an user in the organization.
 	RemoveOrganizationMember(context.Context, *connect_go.Request[v1alpha1.RemoveOrganizationMemberRequest]) (*connect_go.Response[v1alpha1.RemoveOrganizationMemberResponse], error)
 	// SetOrganizationMember sets the role of a user in the organization.
-	SetOrganizationMember(co
+	SetOrganizationMember(context.Context, *connect_go.Request[v1alpha1.SetOrganizationMemberRequest]) (*connect_go.Response[v1alpha1.SetOrganizationMemberResponse], error)
+	// GetOrganizationSettings gets the settings of an organization, including organization base roles.
+	GetOrganizationSettings(context.Context, *connect_go.Request[v1alpha1.GetOrganizationSettingsRequest]) (*connect_go.Response[v1alpha1.GetOrganizationSettingsResponse], error)
+	// UpdateOrganizationSettings update the organization settings including base roles.
+	UpdateOrganizationSettings(context.Context, *connect_go.Request[v1alpha1.UpdateOrganizationSettingsRequest]) (*connect_go.Response[v1alpha1.UpdateOrganizationSettingsResponse], error)
+	// AddOrganizationGroup adds an IdP Group to the organization.
+	AddOrganizationGroup(context.Context, *connect_go.Request[v1alpha1.AddOrganizationGroupRequest]) (*connect_go.Response[v1alpha1.AddOrganizationGroupResponse], error)
+	// RemoveOrganizationGroup removes an IdP Group from the organization.
+	RemoveOrganizationGroup(context.Context, *connect_go.Request[v1alpha1.RemoveOrganizationGroupRequest]) (*connect_go.Response[v1alpha1.RemoveOrganizationGroupResponse], error)
+}
+
+// NewOrganizationServiceHandler builds an HTTP handler from the service implementation. It returns
+// the path on which to mount the handler and the handler itself.
+//
+// By default, handlers support the Connect, gRPC, and gRPC-Web protocols with the binary Protobuf
+// and JSON codecs. They also support gzip compression.
+func NewOrganizationServiceHandler(svc OrganizationServiceHandler, opts ...connect_go.HandlerOption) (string, http.Handler) {
+	mux := http.NewServeMux()
+	mux.Handle("/buf.alpha.registry.v1alpha1.OrganizationService/GetOrganization", connect_go.NewUnaryHandler(
+		"/buf.alpha.registry.v1alpha1.OrganizationService/GetOrganization",
+		svc.GetOrganization,
+		opts...,
+	))
+	mux.Handle("/buf.alpha.registry.v1alpha1.OrganizationService/GetOrganizationByName", connect_go.NewUnaryHandler(
+		"/buf.alpha.registry.v1alpha1.OrganizationService/GetOrganizationByName",
+		svc.GetOrganizationByName,
+		opts...,
+	))
+	mux.Handle("/buf.alpha.registry.v1alpha1.OrganizationService/ListOrganizations", connect_go.NewUnaryHandler(
+		"/buf.alpha.registry.v1alpha1.OrganizationService/ListOrganizations",
+		svc.ListOrganizations,
+		opts...,
+	))
+	mux.Handle("/buf.alpha.registry.v1alpha1.OrganizationService/ListUserOrganizations", connect_go.NewUnaryHandler(
+		"/buf.alpha.registry.v1alpha1.OrganizationService/ListUserOrganizations",
+		svc.ListUserOrganizations,
+		opts...,
+	))
+	mux.Handle("/buf.alpha.registry.v1alpha1.OrganizationService/CreateOrganization", connect_go.NewUnaryHandler(
+		"/buf.alpha.registry.v1alpha1.OrganizationService/CreateOrganization",
+		svc.CreateOrganization,
+		opts...,
+	))
+	mux.Handle("/buf.alpha.registry.v1alpha1.OrganizationService/DeleteOrganization", connect_go.NewUnaryHandler(
+		"/buf.alpha.registry.v1alpha1.OrganizationService/DeleteOrganization",
+		svc.DeleteOrganization,
+		opts...,
+	))
+	mux.Handle("/buf.alpha.registry.v1alpha1.OrganizationService/DeleteOrganizationByName", connect_go.NewUnaryHandler(
+		"/buf.alpha.registry.v1alpha1.OrganizationService/DeleteOrganizationByName",
+		svc.DeleteOrganizationByName,
+		opts...,
+	))
+	mux.Handle("/buf.al
