@@ -255,3 +255,40 @@ func (c *organizationServiceClient) GetOrganizationSettings(ctx context.Context,
 func (c *organizationServiceClient) UpdateOrganizationSettings(ctx context.Context, req *connect_go.Request[v1alpha1.UpdateOrganizationSettingsRequest]) (*connect_go.Response[v1alpha1.UpdateOrganizationSettingsResponse], error) {
 	return c.updateOrganizationSettings.CallUnary(ctx, req)
 }
+
+// AddOrganizationGroup calls buf.alpha.registry.v1alpha1.OrganizationService.AddOrganizationGroup.
+func (c *organizationServiceClient) AddOrganizationGroup(ctx context.Context, req *connect_go.Request[v1alpha1.AddOrganizationGroupRequest]) (*connect_go.Response[v1alpha1.AddOrganizationGroupResponse], error) {
+	return c.addOrganizationGroup.CallUnary(ctx, req)
+}
+
+// RemoveOrganizationGroup calls
+// buf.alpha.registry.v1alpha1.OrganizationService.RemoveOrganizationGroup.
+func (c *organizationServiceClient) RemoveOrganizationGroup(ctx context.Context, req *connect_go.Request[v1alpha1.RemoveOrganizationGroupRequest]) (*connect_go.Response[v1alpha1.RemoveOrganizationGroupResponse], error) {
+	return c.removeOrganizationGroup.CallUnary(ctx, req)
+}
+
+// OrganizationServiceHandler is an implementation of the
+// buf.alpha.registry.v1alpha1.OrganizationService service.
+type OrganizationServiceHandler interface {
+	// GetOrganization gets a organization by ID.
+	GetOrganization(context.Context, *connect_go.Request[v1alpha1.GetOrganizationRequest]) (*connect_go.Response[v1alpha1.GetOrganizationResponse], error)
+	// GetOrganizationByName gets a organization by name.
+	GetOrganizationByName(context.Context, *connect_go.Request[v1alpha1.GetOrganizationByNameRequest]) (*connect_go.Response[v1alpha1.GetOrganizationByNameResponse], error)
+	// ListOrganizations lists all organizations.
+	ListOrganizations(context.Context, *connect_go.Request[v1alpha1.ListOrganizationsRequest]) (*connect_go.Response[v1alpha1.ListOrganizationsResponse], error)
+	// ListUserOrganizations lists all organizations a user is member of.
+	ListUserOrganizations(context.Context, *connect_go.Request[v1alpha1.ListUserOrganizationsRequest]) (*connect_go.Response[v1alpha1.ListUserOrganizationsResponse], error)
+	// CreateOrganization creates a new organization.
+	CreateOrganization(context.Context, *connect_go.Request[v1alpha1.CreateOrganizationRequest]) (*connect_go.Response[v1alpha1.CreateOrganizationResponse], error)
+	// DeleteOrganization deletes a organization.
+	DeleteOrganization(context.Context, *connect_go.Request[v1alpha1.DeleteOrganizationRequest]) (*connect_go.Response[v1alpha1.DeleteOrganizationResponse], error)
+	// DeleteOrganizationByName deletes a organization by name.
+	DeleteOrganizationByName(context.Context, *connect_go.Request[v1alpha1.DeleteOrganizationByNameRequest]) (*connect_go.Response[v1alpha1.DeleteOrganizationByNameResponse], error)
+	// AddOrganizationMember add a role to an user in the organization.
+	AddOrganizationMember(context.Context, *connect_go.Request[v1alpha1.AddOrganizationMemberRequest]) (*connect_go.Response[v1alpha1.AddOrganizationMemberResponse], error)
+	// UpdateOrganizationMember update the user's membership information in the organization.
+	UpdateOrganizationMember(context.Context, *connect_go.Request[v1alpha1.UpdateOrganizationMemberRequest]) (*connect_go.Response[v1alpha1.UpdateOrganizationMemberResponse], error)
+	// RemoveOrganizationMember remove the role of an user in the organization.
+	RemoveOrganizationMember(context.Context, *connect_go.Request[v1alpha1.RemoveOrganizationMemberRequest]) (*connect_go.Response[v1alpha1.RemoveOrganizationMemberResponse], error)
+	// SetOrganizationMember sets the role of a user in the organization.
+	SetOrganizationMember(co
