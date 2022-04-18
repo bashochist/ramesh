@@ -435,4 +435,17 @@ func (UnimplementedOrganizationServiceHandler) SetOrganizationMember(context.Con
 }
 
 func (UnimplementedOrganizationServiceHandler) GetOrganizationSettings(context.Context, *connect_go.Request[v1alpha1.GetOrganizationSettingsRequest]) (*connect_go.Response[v1alpha1.GetOrganizationSettingsResponse], error) {
-	return nil, connect_go.NewError(connec
+	return nil, connect_go.NewError(connect_go.CodeUnimplemented, errors.New("buf.alpha.registry.v1alpha1.OrganizationService.GetOrganizationSettings is not implemented"))
+}
+
+func (UnimplementedOrganizationServiceHandler) UpdateOrganizationSettings(context.Context, *connect_go.Request[v1alpha1.UpdateOrganizationSettingsRequest]) (*connect_go.Response[v1alpha1.UpdateOrganizationSettingsResponse], error) {
+	return nil, connect_go.NewError(connect_go.CodeUnimplemented, errors.New("buf.alpha.registry.v1alpha1.OrganizationService.UpdateOrganizationSettings is not implemented"))
+}
+
+func (UnimplementedOrganizationServiceHandler) AddOrganizationGroup(context.Context, *connect_go.Request[v1alpha1.AddOrganizationGroupRequest]) (*connect_go.Response[v1alpha1.AddOrganizationGroupResponse], error) {
+	return nil, connect_go.NewError(connect_go.CodeUnimplemented, errors.New("buf.alpha.registry.v1alpha1.OrganizationService.AddOrganizationGroup is not implemented"))
+}
+
+func (UnimplementedOrganizationServiceHandler) RemoveOrganizationGroup(context.Context, *connect_go.Request[v1alpha1.RemoveOrganizationGroupRequest]) (*connect_go.Response[v1alpha1.RemoveOrganizationGroupResponse], error) {
+	return nil, connect_go.NewError(connect_go.CodeUnimplemented, errors.New("buf.alpha.registry.v1alpha1.OrganizationService.RemoveOrganizationGroup is not implemented"))
+}
