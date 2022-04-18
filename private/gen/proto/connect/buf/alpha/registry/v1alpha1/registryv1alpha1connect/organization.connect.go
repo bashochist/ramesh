@@ -344,4 +344,62 @@ func NewOrganizationServiceHandler(svc OrganizationServiceHandler, opts ...conne
 		svc.DeleteOrganizationByName,
 		opts...,
 	))
-	mux.Handle("/buf.al
+	mux.Handle("/buf.alpha.registry.v1alpha1.OrganizationService/AddOrganizationMember", connect_go.NewUnaryHandler(
+		"/buf.alpha.registry.v1alpha1.OrganizationService/AddOrganizationMember",
+		svc.AddOrganizationMember,
+		opts...,
+	))
+	mux.Handle("/buf.alpha.registry.v1alpha1.OrganizationService/UpdateOrganizationMember", connect_go.NewUnaryHandler(
+		"/buf.alpha.registry.v1alpha1.OrganizationService/UpdateOrganizationMember",
+		svc.UpdateOrganizationMember,
+		opts...,
+	))
+	mux.Handle("/buf.alpha.registry.v1alpha1.OrganizationService/RemoveOrganizationMember", connect_go.NewUnaryHandler(
+		"/buf.alpha.registry.v1alpha1.OrganizationService/RemoveOrganizationMember",
+		svc.RemoveOrganizationMember,
+		opts...,
+	))
+	mux.Handle("/buf.alpha.registry.v1alpha1.OrganizationService/SetOrganizationMember", connect_go.NewUnaryHandler(
+		"/buf.alpha.registry.v1alpha1.OrganizationService/SetOrganizationMember",
+		svc.SetOrganizationMember,
+		opts...,
+	))
+	mux.Handle("/buf.alpha.registry.v1alpha1.OrganizationService/GetOrganizationSettings", connect_go.NewUnaryHandler(
+		"/buf.alpha.registry.v1alpha1.OrganizationService/GetOrganizationSettings",
+		svc.GetOrganizationSettings,
+		opts...,
+	))
+	mux.Handle("/buf.alpha.registry.v1alpha1.OrganizationService/UpdateOrganizationSettings", connect_go.NewUnaryHandler(
+		"/buf.alpha.registry.v1alpha1.OrganizationService/UpdateOrganizationSettings",
+		svc.UpdateOrganizationSettings,
+		opts...,
+	))
+	mux.Handle("/buf.alpha.registry.v1alpha1.OrganizationService/AddOrganizationGroup", connect_go.NewUnaryHandler(
+		"/buf.alpha.registry.v1alpha1.OrganizationService/AddOrganizationGroup",
+		svc.AddOrganizationGroup,
+		opts...,
+	))
+	mux.Handle("/buf.alpha.registry.v1alpha1.OrganizationService/RemoveOrganizationGroup", connect_go.NewUnaryHandler(
+		"/buf.alpha.registry.v1alpha1.OrganizationService/RemoveOrganizationGroup",
+		svc.RemoveOrganizationGroup,
+		opts...,
+	))
+	return "/buf.alpha.registry.v1alpha1.OrganizationService/", mux
+}
+
+// UnimplementedOrganizationServiceHandler returns CodeUnimplemented from all methods.
+type UnimplementedOrganizationServiceHandler struct{}
+
+func (UnimplementedOrganizationServiceHandler) GetOrganization(context.Context, *connect_go.Request[v1alpha1.GetOrganizationRequest]) (*connect_go.Response[v1alpha1.GetOrganizationResponse], error) {
+	return nil, connect_go.NewError(connect_go.CodeUnimplemented, errors.New("buf.alpha.registry.v1alpha1.OrganizationService.GetOrganization is not implemented"))
+}
+
+func (UnimplementedOrganizationServiceHandler) GetOrganizationByName(context.Context, *connect_go.Request[v1alpha1.GetOrganizationByNameRequest]) (*connect_go.Response[v1alpha1.GetOrganizationByNameResponse], error) {
+	return nil, connect_go.NewError(connect_go.CodeUnimplemented, errors.New("buf.alpha.registry.v1alpha1.OrganizationService.GetOrganizationByName is not implemented"))
+}
+
+func (UnimplementedOrganizationServiceHandler) ListOrganizations(context.Context, *connect_go.Request[v1alpha1.ListOrganizationsRequest]) (*connect_go.Response[v1alpha1.ListOrganizationsResponse], error) {
+	return nil, connect_go.NewError(connect_go.CodeUnimplemented, errors.New("buf.alpha.registry.v1alpha1.OrganizationService.ListOrganizations is not implemented"))
+}
+
+func (UnimplementedOrganizationServiceHandler) ListUserOrganizations(context.Context, *connect_go
