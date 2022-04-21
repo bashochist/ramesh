@@ -106,4 +106,52 @@ func (c *recommendationServiceClient) RecommendedRepositories(ctx context.Contex
 // buf.alpha.registry.v1alpha1.RecommendationService.RecommendedTemplates.
 //
 // Deprecated: do not use.
-func (c *recommendationServiceClient) RecommendedTemplates(ctx contex
+func (c *recommendationServiceClient) RecommendedTemplates(ctx context.Context, req *connect_go.Request[v1alpha1.RecommendedTemplatesRequest]) (*connect_go.Response[v1alpha1.RecommendedTemplatesResponse], error) {
+	return c.recommendedTemplates.CallUnary(ctx, req)
+}
+
+// ListRecommendedResources calls
+// buf.alpha.registry.v1alpha1.RecommendationService.ListRecommendedResources.
+func (c *recommendationServiceClient) ListRecommendedResources(ctx context.Context, req *connect_go.Request[v1alpha1.ListRecommendedResourcesRequest]) (*connect_go.Response[v1alpha1.ListRecommendedResourcesResponse], error) {
+	return c.listRecommendedResources.CallUnary(ctx, req)
+}
+
+// SetRecommendedResources calls
+// buf.alpha.registry.v1alpha1.RecommendationService.SetRecommendedResources.
+func (c *recommendationServiceClient) SetRecommendedResources(ctx context.Context, req *connect_go.Request[v1alpha1.SetRecommendedResourcesRequest]) (*connect_go.Response[v1alpha1.SetRecommendedResourcesResponse], error) {
+	return c.setRecommendedResources.CallUnary(ctx, req)
+}
+
+// RecommendationServiceHandler is an implementation of the
+// buf.alpha.registry.v1alpha1.RecommendationService service.
+type RecommendationServiceHandler interface {
+	// RecommendedRepositories returns a list of recommended repositories.
+	RecommendedRepositories(context.Context, *connect_go.Request[v1alpha1.RecommendedRepositoriesRequest]) (*connect_go.Response[v1alpha1.RecommendedRepositoriesResponse], error)
+	// RecommendedTemplates returns a list of recommended templates.
+	//
+	// Deprecated: do not use.
+	RecommendedTemplates(context.Context, *connect_go.Request[v1alpha1.RecommendedTemplatesRequest]) (*connect_go.Response[v1alpha1.RecommendedTemplatesResponse], error)
+	// ListRecommendedResources returns a list of recommended resources.
+	ListRecommendedResources(context.Context, *connect_go.Request[v1alpha1.ListRecommendedResourcesRequest]) (*connect_go.Response[v1alpha1.ListRecommendedResourcesResponse], error)
+	// SetRecommendedResources set the list of recommended resources in the server.
+	SetRecommendedResources(context.Context, *connect_go.Request[v1alpha1.SetRecommendedResourcesRequest]) (*connect_go.Response[v1alpha1.SetRecommendedResourcesResponse], error)
+}
+
+// NewRecommendationServiceHandler builds an HTTP handler from the service implementation. It
+// returns the path on which to mount the handler and the handler itself.
+//
+// By default, handlers support the Connect, gRPC, and gRPC-Web protocols with the binary Protobuf
+// and JSON codecs. They also support gzip compression.
+func NewRecommendationServiceHandler(svc RecommendationServiceHandler, opts ...connect_go.HandlerOption) (string, http.Handler) {
+	mux := http.NewServeMux()
+	mux.Handle("/buf.alpha.registry.v1alpha1.RecommendationService/RecommendedRepositories", connect_go.NewUnaryHandler(
+		"/buf.alpha.registry.v1alpha1.RecommendationService/RecommendedRepositories",
+		svc.RecommendedRepositories,
+		opts...,
+	))
+	mux.Handle("/buf.alpha.registry.v1alpha1.RecommendationService/RecommendedTemplates", connect_go.NewUnaryHandler(
+		"/buf.alpha.registry.v1alpha1.RecommendationService/RecommendedTemplates",
+		svc.RecommendedTemplates,
+		opts...,
+	))
+	mux.Handle("/buf.alpha.registry.v1alpha1.RecommendationService/ListR
