@@ -49,4 +49,61 @@ type RecommendationServiceClient interface {
 	// Deprecated: do not use.
 	RecommendedTemplates(context.Context, *connect_go.Request[v1alpha1.RecommendedTemplatesRequest]) (*connect_go.Response[v1alpha1.RecommendedTemplatesResponse], error)
 	// ListRecommendedResources returns a list of recommended resources.
-	ListRecommendedResources(context.Context, *connect_go.Requ
+	ListRecommendedResources(context.Context, *connect_go.Request[v1alpha1.ListRecommendedResourcesRequest]) (*connect_go.Response[v1alpha1.ListRecommendedResourcesResponse], error)
+	// SetRecommendedResources set the list of recommended resources in the server.
+	SetRecommendedResources(context.Context, *connect_go.Request[v1alpha1.SetRecommendedResourcesRequest]) (*connect_go.Response[v1alpha1.SetRecommendedResourcesResponse], error)
+}
+
+// NewRecommendationServiceClient constructs a client for the
+// buf.alpha.registry.v1alpha1.RecommendationService service. By default, it uses the Connect
+// protocol with the binary Protobuf Codec, asks for gzipped responses, and sends uncompressed
+// requests. To use the gRPC or gRPC-Web protocols, supply the connect.WithGRPC() or
+// connect.WithGRPCWeb() options.
+//
+// The URL supplied here should be the base URL for the Connect or gRPC server (for example,
+// http://api.acme.com or https://acme.com/grpc).
+func NewRecommendationServiceClient(httpClient connect_go.HTTPClient, baseURL string, opts ...connect_go.ClientOption) RecommendationServiceClient {
+	baseURL = strings.TrimRight(baseURL, "/")
+	return &recommendationServiceClient{
+		recommendedRepositories: connect_go.NewClient[v1alpha1.RecommendedRepositoriesRequest, v1alpha1.RecommendedRepositoriesResponse](
+			httpClient,
+			baseURL+"/buf.alpha.registry.v1alpha1.RecommendationService/RecommendedRepositories",
+			opts...,
+		),
+		recommendedTemplates: connect_go.NewClient[v1alpha1.RecommendedTemplatesRequest, v1alpha1.RecommendedTemplatesResponse](
+			httpClient,
+			baseURL+"/buf.alpha.registry.v1alpha1.RecommendationService/RecommendedTemplates",
+			opts...,
+		),
+		listRecommendedResources: connect_go.NewClient[v1alpha1.ListRecommendedResourcesRequest, v1alpha1.ListRecommendedResourcesResponse](
+			httpClient,
+			baseURL+"/buf.alpha.registry.v1alpha1.RecommendationService/ListRecommendedResources",
+			opts...,
+		),
+		setRecommendedResources: connect_go.NewClient[v1alpha1.SetRecommendedResourcesRequest, v1alpha1.SetRecommendedResourcesResponse](
+			httpClient,
+			baseURL+"/buf.alpha.registry.v1alpha1.RecommendationService/SetRecommendedResources",
+			opts...,
+		),
+	}
+}
+
+// recommendationServiceClient implements RecommendationServiceClient.
+type recommendationServiceClient struct {
+	recommendedRepositories  *connect_go.Client[v1alpha1.RecommendedRepositoriesRequest, v1alpha1.RecommendedRepositoriesResponse]
+	recommendedTemplates     *connect_go.Client[v1alpha1.RecommendedTemplatesRequest, v1alpha1.RecommendedTemplatesResponse]
+	listRecommendedResources *connect_go.Client[v1alpha1.ListRecommendedResourcesRequest, v1alpha1.ListRecommendedResourcesResponse]
+	setRecommendedResources  *connect_go.Client[v1alpha1.SetRecommendedResourcesRequest, v1alpha1.SetRecommendedResourcesResponse]
+}
+
+// RecommendedRepositories calls
+// buf.alpha.registry.v1alpha1.RecommendationService.RecommendedRepositories.
+func (c *recommendationServiceClient) RecommendedRepositories(ctx context.Context, req *connect_go.Request[v1alpha1.RecommendedRepositoriesRequest]) (*connect_go.Response[v1alpha1.RecommendedRepositoriesResponse], error) {
+	return c.recommendedRepositories.CallUnary(ctx, req)
+}
+
+// RecommendedTemplates calls
+// buf.alpha.registry.v1alpha1.RecommendationService.RecommendedTemplates.
+//
+// Deprecated: do not use.
+func (c *recommendationServiceClient) RecommendedTemplates(ctx contex
