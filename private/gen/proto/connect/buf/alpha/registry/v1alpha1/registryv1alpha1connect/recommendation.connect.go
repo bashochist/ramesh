@@ -154,4 +154,34 @@ func NewRecommendationServiceHandler(svc RecommendationServiceHandler, opts ...c
 		svc.RecommendedTemplates,
 		opts...,
 	))
-	mux.Handle("/buf.alpha.registry.v1alpha1.RecommendationService/ListR
+	mux.Handle("/buf.alpha.registry.v1alpha1.RecommendationService/ListRecommendedResources", connect_go.NewUnaryHandler(
+		"/buf.alpha.registry.v1alpha1.RecommendationService/ListRecommendedResources",
+		svc.ListRecommendedResources,
+		opts...,
+	))
+	mux.Handle("/buf.alpha.registry.v1alpha1.RecommendationService/SetRecommendedResources", connect_go.NewUnaryHandler(
+		"/buf.alpha.registry.v1alpha1.RecommendationService/SetRecommendedResources",
+		svc.SetRecommendedResources,
+		opts...,
+	))
+	return "/buf.alpha.registry.v1alpha1.RecommendationService/", mux
+}
+
+// UnimplementedRecommendationServiceHandler returns CodeUnimplemented from all methods.
+type UnimplementedRecommendationServiceHandler struct{}
+
+func (UnimplementedRecommendationServiceHandler) RecommendedRepositories(context.Context, *connect_go.Request[v1alpha1.RecommendedRepositoriesRequest]) (*connect_go.Response[v1alpha1.RecommendedRepositoriesResponse], error) {
+	return nil, connect_go.NewError(connect_go.CodeUnimplemented, errors.New("buf.alpha.registry.v1alpha1.RecommendationService.RecommendedRepositories is not implemented"))
+}
+
+func (UnimplementedRecommendationServiceHandler) RecommendedTemplates(context.Context, *connect_go.Request[v1alpha1.RecommendedTemplatesRequest]) (*connect_go.Response[v1alpha1.RecommendedTemplatesResponse], error) {
+	return nil, connect_go.NewError(connect_go.CodeUnimplemented, errors.New("buf.alpha.registry.v1alpha1.RecommendationService.RecommendedTemplates is not implemented"))
+}
+
+func (UnimplementedRecommendationServiceHandler) ListRecommendedResources(context.Context, *connect_go.Request[v1alpha1.ListRecommendedResourcesRequest]) (*connect_go.Response[v1alpha1.ListRecommendedResourcesResponse], error) {
+	return nil, connect_go.NewError(connect_go.CodeUnimplemented, errors.New("buf.alpha.registry.v1alpha1.RecommendationService.ListRecommendedResources is not implemented"))
+}
+
+func (UnimplementedRecommendationServiceHandler) SetRecommendedResources(context.Context, *connect_go.Request[v1alpha1.SetRecommendedResourcesRequest]) (*connect_go.Response[v1alpha1.SetRecommendedResourcesResponse], error) {
+	return nil, connect_go.NewError(connect_go.CodeUnimplemented, errors.New("buf.alpha.registry.v1alpha1.RecommendationService.SetRecommendedResources is not implemented"))
+}
