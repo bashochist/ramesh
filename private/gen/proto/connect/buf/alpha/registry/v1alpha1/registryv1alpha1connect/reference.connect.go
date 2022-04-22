@@ -88,4 +88,19 @@ type ReferenceServiceHandler interface {
 //
 // By default, handlers support the Connect, gRPC, and gRPC-Web protocols with the binary Protobuf
 // and JSON codecs. They also support gzip compression.
-func NewReferenceServiceHandler(svc ReferenceServiceHandler, opts ...connect_go.HandlerOptio
+func NewReferenceServiceHandler(svc ReferenceServiceHandler, opts ...connect_go.HandlerOption) (string, http.Handler) {
+	mux := http.NewServeMux()
+	mux.Handle("/buf.alpha.registry.v1alpha1.ReferenceService/GetReferenceByName", connect_go.NewUnaryHandler(
+		"/buf.alpha.registry.v1alpha1.ReferenceService/GetReferenceByName",
+		svc.GetReferenceByName,
+		opts...,
+	))
+	return "/buf.alpha.registry.v1alpha1.ReferenceService/", mux
+}
+
+// UnimplementedReferenceServiceHandler returns CodeUnimplemented from all methods.
+type UnimplementedReferenceServiceHandler struct{}
+
+func (UnimplementedReferenceServiceHandler) GetReferenceByName(context.Context, *connect_go.Request[v1alpha1.GetReferenceByNameRequest]) (*connect_go.Response[v1alpha1.GetReferenceByNameResponse], error) {
+	return nil, connect_go.NewError(connect_go.CodeUnimplemented, errors.New("buf.alpha.registry.v1alpha1.ReferenceService.GetReferenceByName is not implemented"))
+}
