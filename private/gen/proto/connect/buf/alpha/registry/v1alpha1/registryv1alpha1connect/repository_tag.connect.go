@@ -36,4 +36,60 @@ const _ = connect_go.IsAtLeastVersion0_1_0
 
 const (
 	// RepositoryTagServiceName is the fully-qualified name of the RepositoryTagService service.
-	RepositoryTagServiceName = "buf.alpha.registry.v1alpha1.RepositoryT
+	RepositoryTagServiceName = "buf.alpha.registry.v1alpha1.RepositoryTagService"
+)
+
+// RepositoryTagServiceClient is a client for the buf.alpha.registry.v1alpha1.RepositoryTagService
+// service.
+type RepositoryTagServiceClient interface {
+	// CreateRepositoryTag creates a new repository tag.
+	CreateRepositoryTag(context.Context, *connect_go.Request[v1alpha1.CreateRepositoryTagRequest]) (*connect_go.Response[v1alpha1.CreateRepositoryTagResponse], error)
+	// ListRepositoryTags lists the repository tags associated with a Repository.
+	ListRepositoryTags(context.Context, *connect_go.Request[v1alpha1.ListRepositoryTagsRequest]) (*connect_go.Response[v1alpha1.ListRepositoryTagsResponse], error)
+}
+
+// NewRepositoryTagServiceClient constructs a client for the
+// buf.alpha.registry.v1alpha1.RepositoryTagService service. By default, it uses the Connect
+// protocol with the binary Protobuf Codec, asks for gzipped responses, and sends uncompressed
+// requests. To use the gRPC or gRPC-Web protocols, supply the connect.WithGRPC() or
+// connect.WithGRPCWeb() options.
+//
+// The URL supplied here should be the base URL for the Connect or gRPC server (for example,
+// http://api.acme.com or https://acme.com/grpc).
+func NewRepositoryTagServiceClient(httpClient connect_go.HTTPClient, baseURL string, opts ...connect_go.ClientOption) RepositoryTagServiceClient {
+	baseURL = strings.TrimRight(baseURL, "/")
+	return &repositoryTagServiceClient{
+		createRepositoryTag: connect_go.NewClient[v1alpha1.CreateRepositoryTagRequest, v1alpha1.CreateRepositoryTagResponse](
+			httpClient,
+			baseURL+"/buf.alpha.registry.v1alpha1.RepositoryTagService/CreateRepositoryTag",
+			opts...,
+		),
+		listRepositoryTags: connect_go.NewClient[v1alpha1.ListRepositoryTagsRequest, v1alpha1.ListRepositoryTagsResponse](
+			httpClient,
+			baseURL+"/buf.alpha.registry.v1alpha1.RepositoryTagService/ListRepositoryTags",
+			opts...,
+		),
+	}
+}
+
+// repositoryTagServiceClient implements RepositoryTagServiceClient.
+type repositoryTagServiceClient struct {
+	createRepositoryTag *connect_go.Client[v1alpha1.CreateRepositoryTagRequest, v1alpha1.CreateRepositoryTagResponse]
+	listRepositoryTags  *connect_go.Client[v1alpha1.ListRepositoryTagsRequest, v1alpha1.ListRepositoryTagsResponse]
+}
+
+// CreateRepositoryTag calls buf.alpha.registry.v1alpha1.RepositoryTagService.CreateRepositoryTag.
+func (c *repositoryTagServiceClient) CreateRepositoryTag(ctx context.Context, req *connect_go.Request[v1alpha1.CreateRepositoryTagRequest]) (*connect_go.Response[v1alpha1.CreateRepositoryTagResponse], error) {
+	return c.createRepositoryTag.CallUnary(ctx, req)
+}
+
+// ListRepositoryTags calls buf.alpha.registry.v1alpha1.RepositoryTagService.ListRepositoryTags.
+func (c *repositoryTagServiceClient) ListRepositoryTags(ctx context.Context, req *connect_go.Request[v1alpha1.ListRepositoryTagsRequest]) (*connect_go.Response[v1alpha1.ListRepositoryTagsResponse], error) {
+	return c.listRepositoryTags.CallUnary(ctx, req)
+}
+
+// RepositoryTagServiceHandler is an implementation of the
+// buf.alpha.registry.v1alpha1.RepositoryTagService service.
+type RepositoryTagServiceHandler interface {
+	// CreateRepositoryTag creates a new repository tag.
+	CreateRepositoryTag(context.Context, *connect_go.Request[v1alpha1.CreateRepositoryTagRequest]) (*connect_go.Response[v1alpha1.CreateRepositoryTagResponse]
