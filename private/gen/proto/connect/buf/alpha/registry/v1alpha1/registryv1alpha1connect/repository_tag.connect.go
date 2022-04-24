@@ -92,4 +92,38 @@ func (c *repositoryTagServiceClient) ListRepositoryTags(ctx context.Context, req
 // buf.alpha.registry.v1alpha1.RepositoryTagService service.
 type RepositoryTagServiceHandler interface {
 	// CreateRepositoryTag creates a new repository tag.
-	CreateRepositoryTag(context.Context, *connect_go.Request[v1alpha1.CreateRepositoryTagRequest]) (*connect_go.Response[v1alpha1.CreateRepositoryTagResponse]
+	CreateRepositoryTag(context.Context, *connect_go.Request[v1alpha1.CreateRepositoryTagRequest]) (*connect_go.Response[v1alpha1.CreateRepositoryTagResponse], error)
+	// ListRepositoryTags lists the repository tags associated with a Repository.
+	ListRepositoryTags(context.Context, *connect_go.Request[v1alpha1.ListRepositoryTagsRequest]) (*connect_go.Response[v1alpha1.ListRepositoryTagsResponse], error)
+}
+
+// NewRepositoryTagServiceHandler builds an HTTP handler from the service implementation. It returns
+// the path on which to mount the handler and the handler itself.
+//
+// By default, handlers support the Connect, gRPC, and gRPC-Web protocols with the binary Protobuf
+// and JSON codecs. They also support gzip compression.
+func NewRepositoryTagServiceHandler(svc RepositoryTagServiceHandler, opts ...connect_go.HandlerOption) (string, http.Handler) {
+	mux := http.NewServeMux()
+	mux.Handle("/buf.alpha.registry.v1alpha1.RepositoryTagService/CreateRepositoryTag", connect_go.NewUnaryHandler(
+		"/buf.alpha.registry.v1alpha1.RepositoryTagService/CreateRepositoryTag",
+		svc.CreateRepositoryTag,
+		opts...,
+	))
+	mux.Handle("/buf.alpha.registry.v1alpha1.RepositoryTagService/ListRepositoryTags", connect_go.NewUnaryHandler(
+		"/buf.alpha.registry.v1alpha1.RepositoryTagService/ListRepositoryTags",
+		svc.ListRepositoryTags,
+		opts...,
+	))
+	return "/buf.alpha.registry.v1alpha1.RepositoryTagService/", mux
+}
+
+// UnimplementedRepositoryTagServiceHandler returns CodeUnimplemented from all methods.
+type UnimplementedRepositoryTagServiceHandler struct{}
+
+func (UnimplementedRepositoryTagServiceHandler) CreateRepositoryTag(context.Context, *connect_go.Request[v1alpha1.CreateRepositoryTagRequest]) (*connect_go.Response[v1alpha1.CreateRepositoryTagResponse], error) {
+	return nil, connect_go.NewError(connect_go.CodeUnimplemented, errors.New("buf.alpha.registry.v1alpha1.RepositoryTagService.CreateRepositoryTag is not implemented"))
+}
+
+func (UnimplementedRepositoryTagServiceHandler) ListRepositoryTags(context.Context, *connect_go.Request[v1alpha1.ListRepositoryTagsRequest]) (*connect_go.Response[v1alpha1.ListRepositoryTagsResponse], error) {
+	return nil, connect_go.NewError(connect_go.CodeUnimplemented, errors.New("buf.alpha.registry.v1alpha1.RepositoryTagService.ListRepositoryTags is not implemented"))
+}
