@@ -46,4 +46,64 @@ type SchemaServiceClient interface {
 	GetSchema(context.Context, *connect_go.Request[v1alpha1.GetSchemaRequest]) (*connect_go.Response[v1alpha1.GetSchemaResponse], error)
 	// ConvertMessage allows the caller to convert a given message data blob from
 	// one format to another by referring to a type schema for the blob.
-	ConvertMessage(context.Context, *connect_go.Request[v1alpha1.ConvertMessageRequest]) (*connect_go.Respons
+	ConvertMessage(context.Context, *connect_go.Request[v1alpha1.ConvertMessageRequest]) (*connect_go.Response[v1alpha1.ConvertMessageResponse], error)
+}
+
+// NewSchemaServiceClient constructs a client for the buf.alpha.registry.v1alpha1.SchemaService
+// service. By default, it uses the Connect protocol with the binary Protobuf Codec, asks for
+// gzipped responses, and sends uncompressed requests. To use the gRPC or gRPC-Web protocols, supply
+// the connect.WithGRPC() or connect.WithGRPCWeb() options.
+//
+// The URL supplied here should be the base URL for the Connect or gRPC server (for example,
+// http://api.acme.com or https://acme.com/grpc).
+func NewSchemaServiceClient(httpClient connect_go.HTTPClient, baseURL string, opts ...connect_go.ClientOption) SchemaServiceClient {
+	baseURL = strings.TrimRight(baseURL, "/")
+	return &schemaServiceClient{
+		getSchema: connect_go.NewClient[v1alpha1.GetSchemaRequest, v1alpha1.GetSchemaResponse](
+			httpClient,
+			baseURL+"/buf.alpha.registry.v1alpha1.SchemaService/GetSchema",
+			opts...,
+		),
+		convertMessage: connect_go.NewClient[v1alpha1.ConvertMessageRequest, v1alpha1.ConvertMessageResponse](
+			httpClient,
+			baseURL+"/buf.alpha.registry.v1alpha1.SchemaService/ConvertMessage",
+			opts...,
+		),
+	}
+}
+
+// schemaServiceClient implements SchemaServiceClient.
+type schemaServiceClient struct {
+	getSchema      *connect_go.Client[v1alpha1.GetSchemaRequest, v1alpha1.GetSchemaResponse]
+	convertMessage *connect_go.Client[v1alpha1.ConvertMessageRequest, v1alpha1.ConvertMessageResponse]
+}
+
+// GetSchema calls buf.alpha.registry.v1alpha1.SchemaService.GetSchema.
+func (c *schemaServiceClient) GetSchema(ctx context.Context, req *connect_go.Request[v1alpha1.GetSchemaRequest]) (*connect_go.Response[v1alpha1.GetSchemaResponse], error) {
+	return c.getSchema.CallUnary(ctx, req)
+}
+
+// ConvertMessage calls buf.alpha.registry.v1alpha1.SchemaService.ConvertMessage.
+func (c *schemaServiceClient) ConvertMessage(ctx context.Context, req *connect_go.Request[v1alpha1.ConvertMessageRequest]) (*connect_go.Response[v1alpha1.ConvertMessageResponse], error) {
+	return c.convertMessage.CallUnary(ctx, req)
+}
+
+// SchemaServiceHandler is an implementation of the buf.alpha.registry.v1alpha1.SchemaService
+// service.
+type SchemaServiceHandler interface {
+	// GetSchema allows the caller to download a schema for one or more requested
+	// types, RPC services, or RPC methods.
+	GetSchema(context.Context, *connect_go.Request[v1alpha1.GetSchemaRequest]) (*connect_go.Response[v1alpha1.GetSchemaResponse], error)
+	// ConvertMessage allows the caller to convert a given message data blob from
+	// one format to another by referring to a type schema for the blob.
+	ConvertMessage(context.Context, *connect_go.Request[v1alpha1.ConvertMessageRequest]) (*connect_go.Response[v1alpha1.ConvertMessageResponse], error)
+}
+
+// NewSchemaServiceHandler builds an HTTP handler from the service implementation. It returns the
+// path on which to mount the handler and the handler itself.
+//
+// By default, handlers support the Connect, gRPC, and gRPC-Web protocols with the binary Protobuf
+// and JSON codecs. They also support gzip compression.
+func NewSchemaServiceHandler(svc SchemaServiceHandler, opts ...connect_go.HandlerOption) (string, http.Handler) {
+	mux := http.NewServeMux()
+	mux.Handle("/buf.alpha.registry.v1alpha1.SchemaService/GetSchema", con
