@@ -85,4 +85,21 @@ type ResourceServiceHandler interface {
 // NewResourceServiceHandler builds an HTTP handler from the service implementation. It returns the
 // path on which to mount the handler and the handler itself.
 //
-// By default, handlers support the Connect,
+// By default, handlers support the Connect, gRPC, and gRPC-Web protocols with the binary Protobuf
+// and JSON codecs. They also support gzip compression.
+func NewResourceServiceHandler(svc ResourceServiceHandler, opts ...connect_go.HandlerOption) (string, http.Handler) {
+	mux := http.NewServeMux()
+	mux.Handle("/buf.alpha.registry.v1alpha1.ResourceService/GetResourceByName", connect_go.NewUnaryHandler(
+		"/buf.alpha.registry.v1alpha1.ResourceService/GetResourceByName",
+		svc.GetResourceByName,
+		opts...,
+	))
+	return "/buf.alpha.registry.v1alpha1.ResourceService/", mux
+}
+
+// UnimplementedResourceServiceHandler returns CodeUnimplemented from all methods.
+type UnimplementedResourceServiceHandler struct{}
+
+func (UnimplementedResourceServiceHandler) GetResourceByName(context.Context, *connect_go.Request[v1alpha1.GetResourceByNameRequest]) (*connect_go.Response[v1alpha1.GetResourceByNameResponse], error) {
+	return nil, connect_go.NewError(connect_go.CodeUnimplemented, errors.New("buf.alpha.registry.v1alpha1.ResourceService.GetResourceByName is not implemented"))
+}
