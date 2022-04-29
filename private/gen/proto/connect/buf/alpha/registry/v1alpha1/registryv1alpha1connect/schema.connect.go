@@ -106,4 +106,26 @@ type SchemaServiceHandler interface {
 // and JSON codecs. They also support gzip compression.
 func NewSchemaServiceHandler(svc SchemaServiceHandler, opts ...connect_go.HandlerOption) (string, http.Handler) {
 	mux := http.NewServeMux()
-	mux.Handle("/buf.alpha.registry.v1alpha1.SchemaService/GetSchema", con
+	mux.Handle("/buf.alpha.registry.v1alpha1.SchemaService/GetSchema", connect_go.NewUnaryHandler(
+		"/buf.alpha.registry.v1alpha1.SchemaService/GetSchema",
+		svc.GetSchema,
+		opts...,
+	))
+	mux.Handle("/buf.alpha.registry.v1alpha1.SchemaService/ConvertMessage", connect_go.NewUnaryHandler(
+		"/buf.alpha.registry.v1alpha1.SchemaService/ConvertMessage",
+		svc.ConvertMessage,
+		opts...,
+	))
+	return "/buf.alpha.registry.v1alpha1.SchemaService/", mux
+}
+
+// UnimplementedSchemaServiceHandler returns CodeUnimplemented from all methods.
+type UnimplementedSchemaServiceHandler struct{}
+
+func (UnimplementedSchemaServiceHandler) GetSchema(context.Context, *connect_go.Request[v1alpha1.GetSchemaRequest]) (*connect_go.Response[v1alpha1.GetSchemaResponse], error) {
+	return nil, connect_go.NewError(connect_go.CodeUnimplemented, errors.New("buf.alpha.registry.v1alpha1.SchemaService.GetSchema is not implemented"))
+}
+
+func (UnimplementedSchemaServiceHandler) ConvertMessage(context.Context, *connect_go.Request[v1alpha1.ConvertMessageRequest]) (*connect_go.Response[v1alpha1.ConvertMessageResponse], error) {
+	return nil, connect_go.NewError(connect_go.CodeUnimplemented, errors.New("buf.alpha.registry.v1alpha1.SchemaService.ConvertMessage is not implemented"))
+}
