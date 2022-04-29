@@ -36,4 +36,71 @@ const _ = connect_go.IsAtLeastVersion0_1_0
 
 const (
 	// TokenServiceName is the fully-qualified name of the TokenService service.
-	TokenServiceName = "buf.alpha.registr
+	TokenServiceName = "buf.alpha.registry.v1alpha1.TokenService"
+)
+
+// TokenServiceClient is a client for the buf.alpha.registry.v1alpha1.TokenService service.
+type TokenServiceClient interface {
+	// CreateToken creates a new token suitable for machine-to-machine authentication.
+	CreateToken(context.Context, *connect_go.Request[v1alpha1.CreateTokenRequest]) (*connect_go.Response[v1alpha1.CreateTokenResponse], error)
+	// GetToken gets the specific token for the user
+	//
+	// This method requires authentication.
+	GetToken(context.Context, *connect_go.Request[v1alpha1.GetTokenRequest]) (*connect_go.Response[v1alpha1.GetTokenResponse], error)
+	// ListTokens lists the users active tokens
+	//
+	// This method requires authentication.
+	ListTokens(context.Context, *connect_go.Request[v1alpha1.ListTokensRequest]) (*connect_go.Response[v1alpha1.ListTokensResponse], error)
+	// DeleteToken deletes an existing token.
+	//
+	// This method requires authentication.
+	DeleteToken(context.Context, *connect_go.Request[v1alpha1.DeleteTokenRequest]) (*connect_go.Response[v1alpha1.DeleteTokenResponse], error)
+}
+
+// NewTokenServiceClient constructs a client for the buf.alpha.registry.v1alpha1.TokenService
+// service. By default, it uses the Connect protocol with the binary Protobuf Codec, asks for
+// gzipped responses, and sends uncompressed requests. To use the gRPC or gRPC-Web protocols, supply
+// the connect.WithGRPC() or connect.WithGRPCWeb() options.
+//
+// The URL supplied here should be the base URL for the Connect or gRPC server (for example,
+// http://api.acme.com or https://acme.com/grpc).
+func NewTokenServiceClient(httpClient connect_go.HTTPClient, baseURL string, opts ...connect_go.ClientOption) TokenServiceClient {
+	baseURL = strings.TrimRight(baseURL, "/")
+	return &tokenServiceClient{
+		createToken: connect_go.NewClient[v1alpha1.CreateTokenRequest, v1alpha1.CreateTokenResponse](
+			httpClient,
+			baseURL+"/buf.alpha.registry.v1alpha1.TokenService/CreateToken",
+			opts...,
+		),
+		getToken: connect_go.NewClient[v1alpha1.GetTokenRequest, v1alpha1.GetTokenResponse](
+			httpClient,
+			baseURL+"/buf.alpha.registry.v1alpha1.TokenService/GetToken",
+			opts...,
+		),
+		listTokens: connect_go.NewClient[v1alpha1.ListTokensRequest, v1alpha1.ListTokensResponse](
+			httpClient,
+			baseURL+"/buf.alpha.registry.v1alpha1.TokenService/ListTokens",
+			opts...,
+		),
+		deleteToken: connect_go.NewClient[v1alpha1.DeleteTokenRequest, v1alpha1.DeleteTokenResponse](
+			httpClient,
+			baseURL+"/buf.alpha.registry.v1alpha1.TokenService/DeleteToken",
+			opts...,
+		),
+	}
+}
+
+// tokenServiceClient implements TokenServiceClient.
+type tokenServiceClient struct {
+	createToken *connect_go.Client[v1alpha1.CreateTokenRequest, v1alpha1.CreateTokenResponse]
+	getToken    *connect_go.Client[v1alpha1.GetTokenRequest, v1alpha1.GetTokenResponse]
+	listTokens  *connect_go.Client[v1alpha1.ListTokensRequest, v1alpha1.ListTokensResponse]
+	deleteToken *connect_go.Client[v1alpha1.DeleteTokenRequest, v1alpha1.DeleteTokenResponse]
+}
+
+// CreateToken calls buf.alpha.registry.v1alpha1.TokenService.CreateToken.
+func (c *tokenServiceClient) CreateToken(ctx context.Context, req *connect_go.Request[v1alpha1.CreateTokenRequest]) (*connect_go.Response[v1alpha1.CreateTokenResponse], error) {
+	return c.createToken.CallUnary(ctx, req)
+}
+
+// GetToken calls buf.alpha
