@@ -103,4 +103,68 @@ func (c *tokenServiceClient) CreateToken(ctx context.Context, req *connect_go.Re
 	return c.createToken.CallUnary(ctx, req)
 }
 
-// GetToken calls buf.alpha
+// GetToken calls buf.alpha.registry.v1alpha1.TokenService.GetToken.
+func (c *tokenServiceClient) GetToken(ctx context.Context, req *connect_go.Request[v1alpha1.GetTokenRequest]) (*connect_go.Response[v1alpha1.GetTokenResponse], error) {
+	return c.getToken.CallUnary(ctx, req)
+}
+
+// ListTokens calls buf.alpha.registry.v1alpha1.TokenService.ListTokens.
+func (c *tokenServiceClient) ListTokens(ctx context.Context, req *connect_go.Request[v1alpha1.ListTokensRequest]) (*connect_go.Response[v1alpha1.ListTokensResponse], error) {
+	return c.listTokens.CallUnary(ctx, req)
+}
+
+// DeleteToken calls buf.alpha.registry.v1alpha1.TokenService.DeleteToken.
+func (c *tokenServiceClient) DeleteToken(ctx context.Context, req *connect_go.Request[v1alpha1.DeleteTokenRequest]) (*connect_go.Response[v1alpha1.DeleteTokenResponse], error) {
+	return c.deleteToken.CallUnary(ctx, req)
+}
+
+// TokenServiceHandler is an implementation of the buf.alpha.registry.v1alpha1.TokenService service.
+type TokenServiceHandler interface {
+	// CreateToken creates a new token suitable for machine-to-machine authentication.
+	CreateToken(context.Context, *connect_go.Request[v1alpha1.CreateTokenRequest]) (*connect_go.Response[v1alpha1.CreateTokenResponse], error)
+	// GetToken gets the specific token for the user
+	//
+	// This method requires authentication.
+	GetToken(context.Context, *connect_go.Request[v1alpha1.GetTokenRequest]) (*connect_go.Response[v1alpha1.GetTokenResponse], error)
+	// ListTokens lists the users active tokens
+	//
+	// This method requires authentication.
+	ListTokens(context.Context, *connect_go.Request[v1alpha1.ListTokensRequest]) (*connect_go.Response[v1alpha1.ListTokensResponse], error)
+	// DeleteToken deletes an existing token.
+	//
+	// This method requires authentication.
+	DeleteToken(context.Context, *connect_go.Request[v1alpha1.DeleteTokenRequest]) (*connect_go.Response[v1alpha1.DeleteTokenResponse], error)
+}
+
+// NewTokenServiceHandler builds an HTTP handler from the service implementation. It returns the
+// path on which to mount the handler and the handler itself.
+//
+// By default, handlers support the Connect, gRPC, and gRPC-Web protocols with the binary Protobuf
+// and JSON codecs. They also support gzip compression.
+func NewTokenServiceHandler(svc TokenServiceHandler, opts ...connect_go.HandlerOption) (string, http.Handler) {
+	mux := http.NewServeMux()
+	mux.Handle("/buf.alpha.registry.v1alpha1.TokenService/CreateToken", connect_go.NewUnaryHandler(
+		"/buf.alpha.registry.v1alpha1.TokenService/CreateToken",
+		svc.CreateToken,
+		opts...,
+	))
+	mux.Handle("/buf.alpha.registry.v1alpha1.TokenService/GetToken", connect_go.NewUnaryHandler(
+		"/buf.alpha.registry.v1alpha1.TokenService/GetToken",
+		svc.GetToken,
+		opts...,
+	))
+	mux.Handle("/buf.alpha.registry.v1alpha1.TokenService/ListTokens", connect_go.NewUnaryHandler(
+		"/buf.alpha.registry.v1alpha1.TokenService/ListTokens",
+		svc.ListTokens,
+		opts...,
+	))
+	mux.Handle("/buf.alpha.registry.v1alpha1.TokenService/DeleteToken", connect_go.NewUnaryHandler(
+		"/buf.alpha.registry.v1alpha1.TokenService/DeleteToken",
+		svc.DeleteToken,
+		opts...,
+	))
+	return "/buf.alpha.registry.v1alpha1.TokenService/", mux
+}
+
+// UnimplementedTokenServiceHandler returns CodeUnimplemented from all methods.
+type UnimplementedTokenServiceHandler struc
