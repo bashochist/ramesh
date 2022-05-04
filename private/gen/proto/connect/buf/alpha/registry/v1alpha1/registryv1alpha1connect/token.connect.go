@@ -167,4 +167,20 @@ func NewTokenServiceHandler(svc TokenServiceHandler, opts ...connect_go.HandlerO
 }
 
 // UnimplementedTokenServiceHandler returns CodeUnimplemented from all methods.
-type UnimplementedTokenServiceHandler struc
+type UnimplementedTokenServiceHandler struct{}
+
+func (UnimplementedTokenServiceHandler) CreateToken(context.Context, *connect_go.Request[v1alpha1.CreateTokenRequest]) (*connect_go.Response[v1alpha1.CreateTokenResponse], error) {
+	return nil, connect_go.NewError(connect_go.CodeUnimplemented, errors.New("buf.alpha.registry.v1alpha1.TokenService.CreateToken is not implemented"))
+}
+
+func (UnimplementedTokenServiceHandler) GetToken(context.Context, *connect_go.Request[v1alpha1.GetTokenRequest]) (*connect_go.Response[v1alpha1.GetTokenResponse], error) {
+	return nil, connect_go.NewError(connect_go.CodeUnimplemented, errors.New("buf.alpha.registry.v1alpha1.TokenService.GetToken is not implemented"))
+}
+
+func (UnimplementedTokenServiceHandler) ListTokens(context.Context, *connect_go.Request[v1alpha1.ListTokensRequest]) (*connect_go.Response[v1alpha1.ListTokensResponse], error) {
+	return nil, connect_go.NewError(connect_go.CodeUnimplemented, errors.New("buf.alpha.registry.v1alpha1.TokenService.ListTokens is not implemented"))
+}
+
+func (UnimplementedTokenServiceHandler) DeleteToken(context.Context, *connect_go.Request[v1alpha1.DeleteTokenRequest]) (*connect_go.Response[v1alpha1.DeleteTokenResponse], error) {
+	return nil, connect_go.NewError(connect_go.CodeUnimplemented, errors.New("buf.alpha.registry.v1alpha1.TokenService.DeleteToken is not implemented"))
+}
