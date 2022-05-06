@@ -65,4 +65,127 @@ type Config struct {
 	// rpc_allow_same_request_response allows the same message type for both the request and response of an RPC.
 	RpcAllowSameRequestResponse bool `protobuf:"varint,7,opt,name=rpc_allow_same_request_response,json=rpcAllowSameRequestResponse,proto3" json:"rpc_allow_same_request_response,omitempty"`
 	// rpc_allow_google_protobuf_empty_requests allows the RPC requests to use the google.protobuf.Empty message.
-	RpcAllowGoogleProtobufEmptyRequests bool `protobuf:"varint,8,opt,name=rpc_allow_goog
+	RpcAllowGoogleProtobufEmptyRequests bool `protobuf:"varint,8,opt,name=rpc_allow_google_protobuf_empty_requests,json=rpcAllowGoogleProtobufEmptyRequests,proto3" json:"rpc_allow_google_protobuf_empty_requests,omitempty"`
+	// rpc_allow_google_protobuf_empty_responses allows the RPC responses to use the google.protobuf.Empty message.
+	RpcAllowGoogleProtobufEmptyResponses bool `protobuf:"varint,9,opt,name=rpc_allow_google_protobuf_empty_responses,json=rpcAllowGoogleProtobufEmptyResponses,proto3" json:"rpc_allow_google_protobuf_empty_responses,omitempty"`
+	// service_suffix applies to the SERVICE_SUFFIX rule ID. By default, the rule verifies that all service names
+	// end with the suffix Service. This allows users to override the value with the given string.
+	ServiceSuffix string `protobuf:"bytes,10,opt,name=service_suffix,json=serviceSuffix,proto3" json:"service_suffix,omitempty"`
+	// allow_comment_ignores turns on comment-driven ignores.
+	AllowCommentIgnores bool `protobuf:"varint,11,opt,name=allow_comment_ignores,json=allowCommentIgnores,proto3" json:"allow_comment_ignores,omitempty"`
+}
+
+func (x *Config) Reset() {
+	*x = Config{}
+	if protoimpl.UnsafeEnabled {
+		mi := &file_buf_alpha_lint_v1_config_proto_msgTypes[0]
+		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
+		ms.StoreMessageInfo(mi)
+	}
+}
+
+func (x *Config) String() string {
+	return protoimpl.X.MessageStringOf(x)
+}
+
+func (*Config) ProtoMessage() {}
+
+func (x *Config) ProtoReflect() protoreflect.Message {
+	mi := &file_buf_alpha_lint_v1_config_proto_msgTypes[0]
+	if protoimpl.UnsafeEnabled && x != nil {
+		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
+		if ms.LoadMessageInfo() == nil {
+			ms.StoreMessageInfo(mi)
+		}
+		return ms
+	}
+	return mi.MessageOf(x)
+}
+
+// Deprecated: Use Config.ProtoReflect.Descriptor instead.
+func (*Config) Descriptor() ([]byte, []int) {
+	return file_buf_alpha_lint_v1_config_proto_rawDescGZIP(), []int{0}
+}
+
+func (x *Config) GetVersion() string {
+	if x != nil {
+		return x.Version
+	}
+	return ""
+}
+
+func (x *Config) GetUseIds() []string {
+	if x != nil {
+		return x.UseIds
+	}
+	return nil
+}
+
+func (x *Config) GetExceptIds() []string {
+	if x != nil {
+		return x.ExceptIds
+	}
+	return nil
+}
+
+func (x *Config) GetIgnorePaths() []string {
+	if x != nil {
+		return x.IgnorePaths
+	}
+	return nil
+}
+
+func (x *Config) GetIgnoreIdPaths() []*IDPaths {
+	if x != nil {
+		return x.IgnoreIdPaths
+	}
+	return nil
+}
+
+func (x *Config) GetEnumZeroValueSuffix() string {
+	if x != nil {
+		return x.EnumZeroValueSuffix
+	}
+	return ""
+}
+
+func (x *Config) GetRpcAllowSameRequestResponse() bool {
+	if x != nil {
+		return x.RpcAllowSameRequestResponse
+	}
+	return false
+}
+
+func (x *Config) GetRpcAllowGoogleProtobufEmptyRequests() bool {
+	if x != nil {
+		return x.RpcAllowGoogleProtobufEmptyRequests
+	}
+	return false
+}
+
+func (x *Config) GetRpcAllowGoogleProtobufEmptyResponses() bool {
+	if x != nil {
+		return x.RpcAllowGoogleProtobufEmptyResponses
+	}
+	return false
+}
+
+func (x *Config) GetServiceSuffix() string {
+	if x != nil {
+		return x.ServiceSuffix
+	}
+	return ""
+}
+
+func (x *Config) GetAllowCommentIgnores() bool {
+	if x != nil {
+		return x.AllowCommentIgnores
+	}
+	return false
+}
+
+// IDPaths represents a rule or category ID and the file and/or directory paths that are ignored for the rule.
+type IDPaths struct {
+	state         protoimpl.MessageState
+	sizeCache     protoimpl.SizeCache
+	unknownFiel
