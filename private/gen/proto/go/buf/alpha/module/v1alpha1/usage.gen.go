@@ -14,6 +14,6 @@
 
 // Generated. DO NOT EDIT.
 
-package lintv1
+package modulev1alpha1
 
 import _ "github.com/bufbuild/buf/private/usage"
