@@ -46,4 +46,107 @@ type LocalModuleReference struct {
 	Owner      string `protobuf:"bytes,1,opt,name=owner,proto3" json:"owner,omitempty"`
 	Repository string `protobuf:"bytes,2,opt,name=repository,proto3" json:"repository,omitempty"`
 	// either branch or commit
-	Reference string `protobuf:"bytes,3,opt,name=reference,proto3" jso
+	Reference string `protobuf:"bytes,3,opt,name=reference,proto3" json:"reference,omitempty"`
+}
+
+func (x *LocalModuleReference) Reset() {
+	*x = LocalModuleReference{}
+	if protoimpl.UnsafeEnabled {
+		mi := &file_buf_alpha_registry_v1alpha1_module_proto_msgTypes[0]
+		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
+		ms.StoreMessageInfo(mi)
+	}
+}
+
+func (x *LocalModuleReference) String() string {
+	return protoimpl.X.MessageStringOf(x)
+}
+
+func (*LocalModuleReference) ProtoMessage() {}
+
+func (x *LocalModuleReference) ProtoReflect() protoreflect.Message {
+	mi := &file_buf_alpha_registry_v1alpha1_module_proto_msgTypes[0]
+	if protoimpl.UnsafeEnabled && x != nil {
+		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
+		if ms.LoadMessageInfo() == nil {
+			ms.StoreMessageInfo(mi)
+		}
+		return ms
+	}
+	return mi.MessageOf(x)
+}
+
+// Deprecated: Use LocalModuleReference.ProtoReflect.Descriptor instead.
+func (*LocalModuleReference) Descriptor() ([]byte, []int) {
+	return file_buf_alpha_registry_v1alpha1_module_proto_rawDescGZIP(), []int{0}
+}
+
+func (x *LocalModuleReference) GetOwner() string {
+	if x != nil {
+		return x.Owner
+	}
+	return ""
+}
+
+func (x *LocalModuleReference) GetRepository() string {
+	if x != nil {
+		return x.Repository
+	}
+	return ""
+}
+
+func (x *LocalModuleReference) GetReference() string {
+	if x != nil {
+		return x.Reference
+	}
+	return ""
+}
+
+// LocalModulePin is a local module pin.
+//
+// It does not include a remote.
+type LocalModulePin struct {
+	state         protoimpl.MessageState
+	sizeCache     protoimpl.SizeCache
+	unknownFields protoimpl.UnknownFields
+
+	Owner      string `protobuf:"bytes,1,opt,name=owner,proto3" json:"owner,omitempty"`
+	Repository string `protobuf:"bytes,2,opt,name=repository,proto3" json:"repository,omitempty"`
+	Branch     string `protobuf:"bytes,3,opt,name=branch,proto3" json:"branch,omitempty"`
+	Commit     string `protobuf:"bytes,4,opt,name=commit,proto3" json:"commit,omitempty"`
+	// Module's manifest digest. Replacement for previous b1/b3 digests.
+	ManifestDigest string                 `protobuf:"bytes,6,opt,name=manifest_digest,json=manifestDigest,proto3" json:"manifest_digest,omitempty"`
+	CreateTime     *timestamppb.Timestamp `protobuf:"bytes,7,opt,name=create_time,json=createTime,proto3" json:"create_time,omitempty"`
+	DraftName      string                 `protobuf:"bytes,8,opt,name=draft_name,json=draftName,proto3" json:"draft_name,omitempty"`
+}
+
+func (x *LocalModulePin) Reset() {
+	*x = LocalModulePin{}
+	if protoimpl.UnsafeEnabled {
+		mi := &file_buf_alpha_registry_v1alpha1_module_proto_msgTypes[1]
+		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
+		ms.StoreMessageInfo(mi)
+	}
+}
+
+func (x *LocalModulePin) String() string {
+	return protoimpl.X.MessageStringOf(x)
+}
+
+func (*LocalModulePin) ProtoMessage() {}
+
+func (x *LocalModulePin) ProtoReflect() protoreflect.Message {
+	mi := &file_buf_alpha_registry_v1alpha1_module_proto_msgTypes[1]
+	if protoimpl.UnsafeEnabled && x != nil {
+		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
+		if ms.LoadMessageInfo() == nil {
+			ms.StoreMessageInfo(mi)
+		}
+		return ms
+	}
+	return mi.MessageOf(x)
+}
+
+// Deprecated: Use LocalModulePin.ProtoReflect.Descriptor instead.
+func (*LocalModulePin) Descriptor() ([]byte, []int) {
+	return file_buf_alpha_registry_v1alpha1_module_pr
