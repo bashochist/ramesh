@@ -229,3 +229,80 @@ func (x *Plugin) GetUpdateTime() *timestamppb.Timestamp {
 	}
 	return nil
 }
+
+// PluginVersion represents a specific build of a plugin,
+// such as protoc-gen-go v1.4.0.
+//
+// Deprecated: The entire proto file buf/alpha/registry/v1alpha1/plugin.proto is marked as deprecated.
+type PluginVersion struct {
+	state         protoimpl.MessageState
+	sizeCache     protoimpl.SizeCache
+	unknownFields protoimpl.UnknownFields
+
+	// The ID of the plugin version, which uniquely identifies the plugin version.
+	// Mostly used for pagination.
+	//
+	// Deprecated: The entire proto file buf/alpha/registry/v1alpha1/plugin.proto is marked as deprecated.
+	Id string `protobuf:"bytes,1,opt,name=id,proto3" json:"id,omitempty"`
+	// The name of the version, i.e. "v1.4.0".
+	//
+	// Deprecated: The entire proto file buf/alpha/registry/v1alpha1/plugin.proto is marked as deprecated.
+	Name string `protobuf:"bytes,2,opt,name=name,proto3" json:"name,omitempty"`
+	// The name of the plugin to which this version relates.
+	//
+	// Deprecated: The entire proto file buf/alpha/registry/v1alpha1/plugin.proto is marked as deprecated.
+	PluginName string `protobuf:"bytes,3,opt,name=plugin_name,json=pluginName,proto3" json:"plugin_name,omitempty"`
+	// The owner of the plugin to which this version relates.
+	//
+	// Deprecated: The entire proto file buf/alpha/registry/v1alpha1/plugin.proto is marked as deprecated.
+	PluginOwner string `protobuf:"bytes,4,opt,name=plugin_owner,json=pluginOwner,proto3" json:"plugin_owner,omitempty"`
+	// The full container image digest associated with this plugin version including
+	// the algorithm.
+	// Ref: https://github.com/opencontainers/image-spec/blob/main/descriptor.md#digests
+	//
+	// Deprecated: The entire proto file buf/alpha/registry/v1alpha1/plugin.proto is marked as deprecated.
+	ContainerImageDigest string `protobuf:"bytes,5,opt,name=container_image_digest,json=containerImageDigest,proto3" json:"container_image_digest,omitempty"`
+	// Optionally define the runtime libraries.
+	//
+	// Deprecated: The entire proto file buf/alpha/registry/v1alpha1/plugin.proto is marked as deprecated.
+	RuntimeLibraries []*RuntimeLibrary `protobuf:"bytes,6,rep,name=runtime_libraries,json=runtimeLibraries,proto3" json:"runtime_libraries,omitempty"`
+}
+
+func (x *PluginVersion) Reset() {
+	*x = PluginVersion{}
+	if protoimpl.UnsafeEnabled {
+		mi := &file_buf_alpha_registry_v1alpha1_plugin_proto_msgTypes[1]
+		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
+		ms.StoreMessageInfo(mi)
+	}
+}
+
+func (x *PluginVersion) String() string {
+	return protoimpl.X.MessageStringOf(x)
+}
+
+func (*PluginVersion) ProtoMessage() {}
+
+func (x *PluginVersion) ProtoReflect() protoreflect.Message {
+	mi := &file_buf_alpha_registry_v1alpha1_plugin_proto_msgTypes[1]
+	if protoimpl.UnsafeEnabled && x != nil {
+		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
+		if ms.LoadMessageInfo() == nil {
+			ms.StoreMessageInfo(mi)
+		}
+		return ms
+	}
+	return mi.MessageOf(x)
+}
+
+// Deprecated: Use PluginVersion.ProtoReflect.Descriptor instead.
+func (*PluginVersion) Descriptor() ([]byte, []int) {
+	return file_buf_alpha_registry_v1alpha1_plugin_proto_rawDescGZIP(), []int{1}
+}
+
+// Deprecated: The entire proto file buf/alpha/registry/v1alpha1/plugin.proto is marked as deprecated.
+func (x *PluginVersion) GetId() string {
+	if x != nil {
+		return x.Id
+	}
+	return 
