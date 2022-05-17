@@ -305,4 +305,85 @@ func (x *PluginVersion) GetId() string {
 	if x != nil {
 		return x.Id
 	}
-	return 
+	return ""
+}
+
+// Deprecated: The entire proto file buf/alpha/registry/v1alpha1/plugin.proto is marked as deprecated.
+func (x *PluginVersion) GetName() string {
+	if x != nil {
+		return x.Name
+	}
+	return ""
+}
+
+// Deprecated: The entire proto file buf/alpha/registry/v1alpha1/plugin.proto is marked as deprecated.
+func (x *PluginVersion) GetPluginName() string {
+	if x != nil {
+		return x.PluginName
+	}
+	return ""
+}
+
+// Deprecated: The entire proto file buf/alpha/registry/v1alpha1/plugin.proto is marked as deprecated.
+func (x *PluginVersion) GetPluginOwner() string {
+	if x != nil {
+		return x.PluginOwner
+	}
+	return ""
+}
+
+// Deprecated: The entire proto file buf/alpha/registry/v1alpha1/plugin.proto is marked as deprecated.
+func (x *PluginVersion) GetContainerImageDigest() string {
+	if x != nil {
+		return x.ContainerImageDigest
+	}
+	return ""
+}
+
+// Deprecated: The entire proto file buf/alpha/registry/v1alpha1/plugin.proto is marked as deprecated.
+func (x *PluginVersion) GetRuntimeLibraries() []*RuntimeLibrary {
+	if x != nil {
+		return x.RuntimeLibraries
+	}
+	return nil
+}
+
+// Template defines a set of plugins that should be used together
+// i.e. "go-grpc" would include protoc-gen-go and protoc-gen-go-grpc.
+//
+// Deprecated: The entire proto file buf/alpha/registry/v1alpha1/plugin.proto is marked as deprecated.
+type Template struct {
+	state         protoimpl.MessageState
+	sizeCache     protoimpl.SizeCache
+	unknownFields protoimpl.UnknownFields
+
+	// The ID of the template, which uniquely identifies the template.
+	//
+	// Deprecated: The entire proto file buf/alpha/registry/v1alpha1/plugin.proto is marked as deprecated.
+	Id string `protobuf:"bytes,1,opt,name=id,proto3" json:"id,omitempty"`
+	// The name of the template, i.e. "grpc-go".
+	//
+	// Deprecated: The entire proto file buf/alpha/registry/v1alpha1/plugin.proto is marked as deprecated.
+	Name string `protobuf:"bytes,2,opt,name=name,proto3" json:"name,omitempty"`
+	// The name of the owner of the template. Either a
+	// username or organization name.
+	//
+	// Deprecated: The entire proto file buf/alpha/registry/v1alpha1/plugin.proto is marked as deprecated.
+	Owner string `protobuf:"bytes,3,opt,name=owner,proto3" json:"owner,omitempty"`
+	// Must not contain duplicate plugins. Order of plugin configs
+	// dictates insertion point order. Note that we're
+	// intentionally putting most of the plugin configuration
+	// in the template, so that template versions are
+	// less likely to cause breakages for users.
+	//
+	// Deprecated: The entire proto file buf/alpha/registry/v1alpha1/plugin.proto is marked as deprecated.
+	PluginConfigs []*PluginConfig `protobuf:"bytes,4,rep,name=plugin_configs,json=pluginConfigs,proto3" json:"plugin_configs,omitempty"`
+	// The visibility of the template.
+	//
+	// Deprecated: The entire proto file buf/alpha/registry/v1alpha1/plugin.proto is marked as deprecated.
+	Visibility PluginVisibility `protobuf:"varint,5,opt,name=visibility,proto3,enum=buf.alpha.registry.v1alpha1.PluginVisibility" json:"visibility,omitempty"`
+	// deprecated means this template is deprecated.
+	//
+	// Deprecated: The entire proto file buf/alpha/registry/v1alpha1/plugin.proto is marked as deprecated.
+	Deprecated bool `protobuf:"varint,8,opt,name=deprecated,proto3" json:"deprecated,omitempty"`
+	// deprecation_message is the message shown if the 
