@@ -587,4 +587,87 @@ func (x *PluginConfig) GetParameters() []string {
 	return nil
 }
 
-// Depr
+// Deprecated: The entire proto file buf/alpha/registry/v1alpha1/plugin.proto is marked as deprecated.
+func (x *PluginConfig) GetInaccessible() bool {
+	if x != nil {
+		return x.Inaccessible
+	}
+	return false
+}
+
+// TemplateVersion defines a template at a
+// specific set of versions for the contained plugins.
+//
+// Deprecated: The entire proto file buf/alpha/registry/v1alpha1/plugin.proto is marked as deprecated.
+type TemplateVersion struct {
+	state         protoimpl.MessageState
+	sizeCache     protoimpl.SizeCache
+	unknownFields protoimpl.UnknownFields
+
+	// The ID of the template version, which uniquely identifies the template version.
+	// Mostly used for pagination.
+	//
+	// Deprecated: The entire proto file buf/alpha/registry/v1alpha1/plugin.proto is marked as deprecated.
+	Id string `protobuf:"bytes,1,opt,name=id,proto3" json:"id,omitempty"`
+	// The name of the template version, i.e. "v1".
+	//
+	// Deprecated: The entire proto file buf/alpha/registry/v1alpha1/plugin.proto is marked as deprecated.
+	Name string `protobuf:"bytes,2,opt,name=name,proto3" json:"name,omitempty"`
+	// The owner of the template to which this version relates.
+	//
+	// Deprecated: The entire proto file buf/alpha/registry/v1alpha1/plugin.proto is marked as deprecated.
+	TemplateOwner string `protobuf:"bytes,3,opt,name=template_owner,json=templateOwner,proto3" json:"template_owner,omitempty"`
+	// The name of the template to which this version relates.
+	//
+	// Deprecated: The entire proto file buf/alpha/registry/v1alpha1/plugin.proto is marked as deprecated.
+	TemplateName string `protobuf:"bytes,4,opt,name=template_name,json=templateName,proto3" json:"template_name,omitempty"`
+	// A map from plugin owner and name to version for the plugins
+	// defined in the template. Every plugin in the template
+	// must have a corresponding version in this array.
+	//
+	// Deprecated: The entire proto file buf/alpha/registry/v1alpha1/plugin.proto is marked as deprecated.
+	PluginVersions []*PluginVersionMapping `protobuf:"bytes,5,rep,name=plugin_versions,json=pluginVersions,proto3" json:"plugin_versions,omitempty"`
+}
+
+func (x *TemplateVersion) Reset() {
+	*x = TemplateVersion{}
+	if protoimpl.UnsafeEnabled {
+		mi := &file_buf_alpha_registry_v1alpha1_plugin_proto_msgTypes[4]
+		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
+		ms.StoreMessageInfo(mi)
+	}
+}
+
+func (x *TemplateVersion) String() string {
+	return protoimpl.X.MessageStringOf(x)
+}
+
+func (*TemplateVersion) ProtoMessage() {}
+
+func (x *TemplateVersion) ProtoReflect() protoreflect.Message {
+	mi := &file_buf_alpha_registry_v1alpha1_plugin_proto_msgTypes[4]
+	if protoimpl.UnsafeEnabled && x != nil {
+		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
+		if ms.LoadMessageInfo() == nil {
+			ms.StoreMessageInfo(mi)
+		}
+		return ms
+	}
+	return mi.MessageOf(x)
+}
+
+// Deprecated: Use TemplateVersion.ProtoReflect.Descriptor instead.
+func (*TemplateVersion) Descriptor() ([]byte, []int) {
+	return file_buf_alpha_registry_v1alpha1_plugin_proto_rawDescGZIP(), []int{4}
+}
+
+// Deprecated: The entire proto file buf/alpha/registry/v1alpha1/plugin.proto is marked as deprecated.
+func (x *TemplateVersion) GetId() string {
+	if x != nil {
+		return x.Id
+	}
+	return ""
+}
+
+// Deprecated: The entire proto file buf/alpha/registry/v1alpha1/plugin.proto is marked as deprecated.
+func (x *TemplateVersion) GetName() s
