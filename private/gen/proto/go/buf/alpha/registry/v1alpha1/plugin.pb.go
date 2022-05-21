@@ -767,4 +767,88 @@ func (x *PluginVersionMapping) GetPluginOwner() string {
 	return ""
 }
 
-// Deprecated: The entire proto file buf/alpha/registry/v1alpha1/plugin.p
+// Deprecated: The entire proto file buf/alpha/registry/v1alpha1/plugin.proto is marked as deprecated.
+func (x *PluginVersionMapping) GetPluginName() string {
+	if x != nil {
+		return x.PluginName
+	}
+	return ""
+}
+
+// Deprecated: The entire proto file buf/alpha/registry/v1alpha1/plugin.proto is marked as deprecated.
+func (x *PluginVersionMapping) GetVersion() string {
+	if x != nil {
+		return x.Version
+	}
+	return ""
+}
+
+// Deprecated: The entire proto file buf/alpha/registry/v1alpha1/plugin.proto is marked as deprecated.
+func (x *PluginVersionMapping) GetInaccessible() bool {
+	if x != nil {
+		return x.Inaccessible
+	}
+	return false
+}
+
+// Deprecated: The entire proto file buf/alpha/registry/v1alpha1/plugin.proto is marked as deprecated.
+type PluginContributor struct {
+	state         protoimpl.MessageState
+	sizeCache     protoimpl.SizeCache
+	unknownFields protoimpl.UnknownFields
+
+	// Deprecated: The entire proto file buf/alpha/registry/v1alpha1/plugin.proto is marked as deprecated.
+	User *User `protobuf:"bytes,1,opt,name=user,proto3" json:"user,omitempty"`
+	// The ID of the plugin which the role belongs to.
+	//
+	// Deprecated: The entire proto file buf/alpha/registry/v1alpha1/plugin.proto is marked as deprecated.
+	PluginId string `protobuf:"bytes,2,opt,name=plugin_id,json=pluginId,proto3" json:"plugin_id,omitempty"`
+	// The role that the user has been explicitly assigned against the plugin.
+	//
+	// Deprecated: The entire proto file buf/alpha/registry/v1alpha1/plugin.proto is marked as deprecated.
+	ExplicitRole PluginRole `protobuf:"varint,3,opt,name=explicit_role,json=explicitRole,proto3,enum=buf.alpha.registry.v1alpha1.PluginRole" json:"explicit_role,omitempty"`
+	// Optionally defines the role that the user has implicitly against the plugin through the owning organization.
+	// If the plugin does not belong to an organization or the user is not part of the owning organization, this is unset.
+	//
+	// Deprecated: The entire proto file buf/alpha/registry/v1alpha1/plugin.proto is marked as deprecated.
+	ImplicitRole PluginRole `protobuf:"varint,4,opt,name=implicit_role,json=implicitRole,proto3,enum=buf.alpha.registry.v1alpha1.PluginRole" json:"implicit_role,omitempty"`
+}
+
+func (x *PluginContributor) Reset() {
+	*x = PluginContributor{}
+	if protoimpl.UnsafeEnabled {
+		mi := &file_buf_alpha_registry_v1alpha1_plugin_proto_msgTypes[6]
+		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
+		ms.StoreMessageInfo(mi)
+	}
+}
+
+func (x *PluginContributor) String() string {
+	return protoimpl.X.MessageStringOf(x)
+}
+
+func (*PluginContributor) ProtoMessage() {}
+
+func (x *PluginContributor) ProtoReflect() protoreflect.Message {
+	mi := &file_buf_alpha_registry_v1alpha1_plugin_proto_msgTypes[6]
+	if protoimpl.UnsafeEnabled && x != nil {
+		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
+		if ms.LoadMessageInfo() == nil {
+			ms.StoreMessageInfo(mi)
+		}
+		return ms
+	}
+	return mi.MessageOf(x)
+}
+
+// Deprecated: Use PluginContributor.ProtoReflect.Descriptor instead.
+func (*PluginContributor) Descriptor() ([]byte, []int) {
+	return file_buf_alpha_registry_v1alpha1_plugin_proto_rawDescGZIP(), []int{6}
+}
+
+// Deprecated: The entire proto file buf/alpha/registry/v1alpha1/plugin.proto is marked as deprecated.
+func (x *PluginContributor) GetUser() *User {
+	if x != nil {
+		return x.User
+	}
+	
