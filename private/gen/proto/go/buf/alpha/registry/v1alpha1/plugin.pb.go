@@ -851,4 +851,86 @@ func (x *PluginContributor) GetUser() *User {
 	if x != nil {
 		return x.User
 	}
-	
+	return nil
+}
+
+// Deprecated: The entire proto file buf/alpha/registry/v1alpha1/plugin.proto is marked as deprecated.
+func (x *PluginContributor) GetPluginId() string {
+	if x != nil {
+		return x.PluginId
+	}
+	return ""
+}
+
+// Deprecated: The entire proto file buf/alpha/registry/v1alpha1/plugin.proto is marked as deprecated.
+func (x *PluginContributor) GetExplicitRole() PluginRole {
+	if x != nil {
+		return x.ExplicitRole
+	}
+	return PluginRole_PLUGIN_ROLE_UNSPECIFIED
+}
+
+// Deprecated: The entire proto file buf/alpha/registry/v1alpha1/plugin.proto is marked as deprecated.
+func (x *PluginContributor) GetImplicitRole() PluginRole {
+	if x != nil {
+		return x.ImplicitRole
+	}
+	return PluginRole_PLUGIN_ROLE_UNSPECIFIED
+}
+
+// Deprecated: The entire proto file buf/alpha/registry/v1alpha1/plugin.proto is marked as deprecated.
+type TemplateContributor struct {
+	state         protoimpl.MessageState
+	sizeCache     protoimpl.SizeCache
+	unknownFields protoimpl.UnknownFields
+
+	// Deprecated: The entire proto file buf/alpha/registry/v1alpha1/plugin.proto is marked as deprecated.
+	User *User `protobuf:"bytes,1,opt,name=user,proto3" json:"user,omitempty"`
+	// The ID of the template which the role belongs to.
+	//
+	// Deprecated: The entire proto file buf/alpha/registry/v1alpha1/plugin.proto is marked as deprecated.
+	TemplateId string `protobuf:"bytes,2,opt,name=template_id,json=templateId,proto3" json:"template_id,omitempty"`
+	// The role that the user has been explicitly assigned against the template.
+	//
+	// Deprecated: The entire proto file buf/alpha/registry/v1alpha1/plugin.proto is marked as deprecated.
+	ExplicitRole TemplateRole `protobuf:"varint,3,opt,name=explicit_role,json=explicitRole,proto3,enum=buf.alpha.registry.v1alpha1.TemplateRole" json:"explicit_role,omitempty"`
+	// Optionally defines the role that the user has implicitly against the template through the owning organization.
+	// If the template does not belong to an organization or the user is not part of the owning organization, this is unset.
+	//
+	// Deprecated: The entire proto file buf/alpha/registry/v1alpha1/plugin.proto is marked as deprecated.
+	ImplicitRole TemplateRole `protobuf:"varint,4,opt,name=implicit_role,json=implicitRole,proto3,enum=buf.alpha.registry.v1alpha1.TemplateRole" json:"implicit_role,omitempty"`
+}
+
+func (x *TemplateContributor) Reset() {
+	*x = TemplateContributor{}
+	if protoimpl.UnsafeEnabled {
+		mi := &file_buf_alpha_registry_v1alpha1_plugin_proto_msgTypes[7]
+		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
+		ms.StoreMessageInfo(mi)
+	}
+}
+
+func (x *TemplateContributor) String() string {
+	return protoimpl.X.MessageStringOf(x)
+}
+
+func (*TemplateContributor) ProtoMessage() {}
+
+func (x *TemplateContributor) ProtoReflect() protoreflect.Message {
+	mi := &file_buf_alpha_registry_v1alpha1_plugin_proto_msgTypes[7]
+	if protoimpl.UnsafeEnabled && x != nil {
+		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
+		if ms.LoadMessageInfo() == nil {
+			ms.StoreMessageInfo(mi)
+		}
+		return ms
+	}
+	return mi.MessageOf(x)
+}
+
+// Deprecated: Use TemplateContributor.ProtoReflect.Descriptor instead.
+func (*TemplateContributor) Descriptor() ([]byte, []int) {
+	return file_buf_alpha_registry_v1alpha1_plugin_proto_rawDescGZIP(), []int{7}
+}
+
+// Deprecated: The
