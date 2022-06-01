@@ -1214,4 +1214,88 @@ func (*ListUserPluginsResponse) ProtoMessage() {}
 
 func (x *ListUserPluginsResponse) ProtoReflect() protoreflect.Message {
 	mi := &file_buf_alpha_registry_v1alpha1_plugin_proto_msgTypes[11]
-	if protoim
+	if protoimpl.UnsafeEnabled && x != nil {
+		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
+		if ms.LoadMessageInfo() == nil {
+			ms.StoreMessageInfo(mi)
+		}
+		return ms
+	}
+	return mi.MessageOf(x)
+}
+
+// Deprecated: Use ListUserPluginsResponse.ProtoReflect.Descriptor instead.
+func (*ListUserPluginsResponse) Descriptor() ([]byte, []int) {
+	return file_buf_alpha_registry_v1alpha1_plugin_proto_rawDescGZIP(), []int{11}
+}
+
+// Deprecated: The entire proto file buf/alpha/registry/v1alpha1/plugin.proto is marked as deprecated.
+func (x *ListUserPluginsResponse) GetPlugins() []*Plugin {
+	if x != nil {
+		return x.Plugins
+	}
+	return nil
+}
+
+// Deprecated: The entire proto file buf/alpha/registry/v1alpha1/plugin.proto is marked as deprecated.
+func (x *ListUserPluginsResponse) GetNextPageToken() string {
+	if x != nil {
+		return x.NextPageToken
+	}
+	return ""
+}
+
+// Deprecated: The entire proto file buf/alpha/registry/v1alpha1/plugin.proto is marked as deprecated.
+type ListOrganizationPluginsRequest struct {
+	state         protoimpl.MessageState
+	sizeCache     protoimpl.SizeCache
+	unknownFields protoimpl.UnknownFields
+
+	// The organization to list plugins for.
+	//
+	// Deprecated: The entire proto file buf/alpha/registry/v1alpha1/plugin.proto is marked as deprecated.
+	Organization string `protobuf:"bytes,1,opt,name=organization,proto3" json:"organization,omitempty"`
+	// Deprecated: The entire proto file buf/alpha/registry/v1alpha1/plugin.proto is marked as deprecated.
+	PageSize uint32 `protobuf:"varint,2,opt,name=page_size,json=pageSize,proto3" json:"page_size,omitempty"`
+	// The first page is returned if this is empty.
+	//
+	// Deprecated: The entire proto file buf/alpha/registry/v1alpha1/plugin.proto is marked as deprecated.
+	PageToken string `protobuf:"bytes,3,opt,name=page_token,json=pageToken,proto3" json:"page_token,omitempty"`
+	// Deprecated: The entire proto file buf/alpha/registry/v1alpha1/plugin.proto is marked as deprecated.
+	Reverse bool `protobuf:"varint,4,opt,name=reverse,proto3" json:"reverse,omitempty"`
+}
+
+func (x *ListOrganizationPluginsRequest) Reset() {
+	*x = ListOrganizationPluginsRequest{}
+	if protoimpl.UnsafeEnabled {
+		mi := &file_buf_alpha_registry_v1alpha1_plugin_proto_msgTypes[12]
+		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
+		ms.StoreMessageInfo(mi)
+	}
+}
+
+func (x *ListOrganizationPluginsRequest) String() string {
+	return protoimpl.X.MessageStringOf(x)
+}
+
+func (*ListOrganizationPluginsRequest) ProtoMessage() {}
+
+func (x *ListOrganizationPluginsRequest) ProtoReflect() protoreflect.Message {
+	mi := &file_buf_alpha_registry_v1alpha1_plugin_proto_msgTypes[12]
+	if protoimpl.UnsafeEnabled && x != nil {
+		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
+		if ms.LoadMessageInfo() == nil {
+			ms.StoreMessageInfo(mi)
+		}
+		return ms
+	}
+	return mi.MessageOf(x)
+}
+
+// Deprecated: Use ListOrganizationPluginsRequest.ProtoReflect.Descriptor instead.
+func (*ListOrganizationPluginsRequest) Descriptor() ([]byte, []int) {
+	return file_buf_alpha_registry_v1alpha1_plugin_proto_rawDescGZIP(), []int{12}
+}
+
+// Deprecated: The entire proto file buf/alpha/registry/v1alpha1/plugin.proto is marked as deprecated.
+func (x *ListOrganizationPluginsRequest) GetOrganization() 
