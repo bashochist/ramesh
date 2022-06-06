@@ -1583,4 +1583,102 @@ func (x *ListPluginVersionsRequest) GetOwner() string {
 	return ""
 }
 
-// Deprecated: The entire proto file buf/alpha/regi
+// Deprecated: The entire proto file buf/alpha/registry/v1alpha1/plugin.proto is marked as deprecated.
+func (x *ListPluginVersionsRequest) GetName() string {
+	if x != nil {
+		return x.Name
+	}
+	return ""
+}
+
+// Deprecated: The entire proto file buf/alpha/registry/v1alpha1/plugin.proto is marked as deprecated.
+func (x *ListPluginVersionsRequest) GetPageSize() uint32 {
+	if x != nil {
+		return x.PageSize
+	}
+	return 0
+}
+
+// Deprecated: The entire proto file buf/alpha/registry/v1alpha1/plugin.proto is marked as deprecated.
+func (x *ListPluginVersionsRequest) GetPageToken() string {
+	if x != nil {
+		return x.PageToken
+	}
+	return ""
+}
+
+// Deprecated: The entire proto file buf/alpha/registry/v1alpha1/plugin.proto is marked as deprecated.
+func (x *ListPluginVersionsRequest) GetReverse() bool {
+	if x != nil {
+		return x.Reverse
+	}
+	return false
+}
+
+// Deprecated: The entire proto file buf/alpha/registry/v1alpha1/plugin.proto is marked as deprecated.
+type ListPluginVersionsResponse struct {
+	state         protoimpl.MessageState
+	sizeCache     protoimpl.SizeCache
+	unknownFields protoimpl.UnknownFields
+
+	// Deprecated: The entire proto file buf/alpha/registry/v1alpha1/plugin.proto is marked as deprecated.
+	PluginVersions []*PluginVersion `protobuf:"bytes,1,rep,name=plugin_versions,json=pluginVersions,proto3" json:"plugin_versions,omitempty"`
+	// There are no more pages if this is empty.
+	//
+	// Deprecated: The entire proto file buf/alpha/registry/v1alpha1/plugin.proto is marked as deprecated.
+	NextPageToken string `protobuf:"bytes,2,opt,name=next_page_token,json=nextPageToken,proto3" json:"next_page_token,omitempty"`
+}
+
+func (x *ListPluginVersionsResponse) Reset() {
+	*x = ListPluginVersionsResponse{}
+	if protoimpl.UnsafeEnabled {
+		mi := &file_buf_alpha_registry_v1alpha1_plugin_proto_msgTypes[17]
+		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
+		ms.StoreMessageInfo(mi)
+	}
+}
+
+func (x *ListPluginVersionsResponse) String() string {
+	return protoimpl.X.MessageStringOf(x)
+}
+
+func (*ListPluginVersionsResponse) ProtoMessage() {}
+
+func (x *ListPluginVersionsResponse) ProtoReflect() protoreflect.Message {
+	mi := &file_buf_alpha_registry_v1alpha1_plugin_proto_msgTypes[17]
+	if protoimpl.UnsafeEnabled && x != nil {
+		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
+		if ms.LoadMessageInfo() == nil {
+			ms.StoreMessageInfo(mi)
+		}
+		return ms
+	}
+	return mi.MessageOf(x)
+}
+
+// Deprecated: Use ListPluginVersionsResponse.ProtoReflect.Descriptor instead.
+func (*ListPluginVersionsResponse) Descriptor() ([]byte, []int) {
+	return file_buf_alpha_registry_v1alpha1_plugin_proto_rawDescGZIP(), []int{17}
+}
+
+// Deprecated: The entire proto file buf/alpha/registry/v1alpha1/plugin.proto is marked as deprecated.
+func (x *ListPluginVersionsResponse) GetPluginVersions() []*PluginVersion {
+	if x != nil {
+		return x.PluginVersions
+	}
+	return nil
+}
+
+// Deprecated: The entire proto file buf/alpha/registry/v1alpha1/plugin.proto is marked as deprecated.
+func (x *ListPluginVersionsResponse) GetNextPageToken() string {
+	if x != nil {
+		return x.NextPageToken
+	}
+	return ""
+}
+
+// Deprecated: The entire proto file buf/alpha/registry/v1alpha1/plugin.proto is marked as deprecated.
+type CreatePluginRequest struct {
+	state         protoimpl.MessageState
+	sizeCache     protoimpl.SizeCache
+	unknownFields protoimpl.UnknownFi
