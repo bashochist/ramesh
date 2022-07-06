@@ -3583,4 +3583,104 @@ func (x *CreateTemplateResponse) String() string {
 
 func (*CreateTemplateResponse) ProtoMessage() {}
 
-func (x *CreateTemplateResponse) ProtoRef
+func (x *CreateTemplateResponse) ProtoReflect() protoreflect.Message {
+	mi := &file_buf_alpha_registry_v1alpha1_plugin_proto_msgTypes[47]
+	if protoimpl.UnsafeEnabled && x != nil {
+		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
+		if ms.LoadMessageInfo() == nil {
+			ms.StoreMessageInfo(mi)
+		}
+		return ms
+	}
+	return mi.MessageOf(x)
+}
+
+// Deprecated: Use CreateTemplateResponse.ProtoReflect.Descriptor instead.
+func (*CreateTemplateResponse) Descriptor() ([]byte, []int) {
+	return file_buf_alpha_registry_v1alpha1_plugin_proto_rawDescGZIP(), []int{47}
+}
+
+// Deprecated: The entire proto file buf/alpha/registry/v1alpha1/plugin.proto is marked as deprecated.
+func (x *CreateTemplateResponse) GetTemplate() *Template {
+	if x != nil {
+		return x.Template
+	}
+	return nil
+}
+
+// Deprecated: The entire proto file buf/alpha/registry/v1alpha1/plugin.proto is marked as deprecated.
+type DeleteTemplateRequest struct {
+	state         protoimpl.MessageState
+	sizeCache     protoimpl.SizeCache
+	unknownFields protoimpl.UnknownFields
+
+	// The owner of the template to delete.
+	//
+	// Deprecated: The entire proto file buf/alpha/registry/v1alpha1/plugin.proto is marked as deprecated.
+	Owner string `protobuf:"bytes,1,opt,name=owner,proto3" json:"owner,omitempty"`
+	// The name of the template to delete.
+	//
+	// Deprecated: The entire proto file buf/alpha/registry/v1alpha1/plugin.proto is marked as deprecated.
+	Name string `protobuf:"bytes,2,opt,name=name,proto3" json:"name,omitempty"`
+}
+
+func (x *DeleteTemplateRequest) Reset() {
+	*x = DeleteTemplateRequest{}
+	if protoimpl.UnsafeEnabled {
+		mi := &file_buf_alpha_registry_v1alpha1_plugin_proto_msgTypes[48]
+		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
+		ms.StoreMessageInfo(mi)
+	}
+}
+
+func (x *DeleteTemplateRequest) String() string {
+	return protoimpl.X.MessageStringOf(x)
+}
+
+func (*DeleteTemplateRequest) ProtoMessage() {}
+
+func (x *DeleteTemplateRequest) ProtoReflect() protoreflect.Message {
+	mi := &file_buf_alpha_registry_v1alpha1_plugin_proto_msgTypes[48]
+	if protoimpl.UnsafeEnabled && x != nil {
+		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
+		if ms.LoadMessageInfo() == nil {
+			ms.StoreMessageInfo(mi)
+		}
+		return ms
+	}
+	return mi.MessageOf(x)
+}
+
+// Deprecated: Use DeleteTemplateRequest.ProtoReflect.Descriptor instead.
+func (*DeleteTemplateRequest) Descriptor() ([]byte, []int) {
+	return file_buf_alpha_registry_v1alpha1_plugin_proto_rawDescGZIP(), []int{48}
+}
+
+// Deprecated: The entire proto file buf/alpha/registry/v1alpha1/plugin.proto is marked as deprecated.
+func (x *DeleteTemplateRequest) GetOwner() string {
+	if x != nil {
+		return x.Owner
+	}
+	return ""
+}
+
+// Deprecated: The entire proto file buf/alpha/registry/v1alpha1/plugin.proto is marked as deprecated.
+func (x *DeleteTemplateRequest) GetName() string {
+	if x != nil {
+		return x.Name
+	}
+	return ""
+}
+
+// Deprecated: The entire proto file buf/alpha/registry/v1alpha1/plugin.proto is marked as deprecated.
+type DeleteTemplateResponse struct {
+	state         protoimpl.MessageState
+	sizeCache     protoimpl.SizeCache
+	unknownFields protoimpl.UnknownFields
+}
+
+func (x *DeleteTemplateResponse) Reset() {
+	*x = DeleteTemplateResponse{}
+	if protoimpl.UnsafeEnabled {
+		mi := &file_buf_alpha_registry_v1alpha1_plugin_proto_msgTypes[49]
+		ms := protoimpl.X.MessageStateOf(p
