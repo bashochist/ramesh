@@ -3865,4 +3865,103 @@ type SetTemplateContributorRequest struct {
 	TemplateId string `protobuf:"bytes,1,opt,name=template_id,json=templateId,proto3" json:"template_id,omitempty"`
 	// The ID of the user whose role will be set.
 	//
-	// Deprecated: The entire proto fil
+	// Deprecated: The entire proto file buf/alpha/registry/v1alpha1/plugin.proto is marked as deprecated.
+	UserId string `protobuf:"bytes,2,opt,name=user_id,json=userId,proto3" json:"user_id,omitempty"`
+	// The role to assign to the user.
+	// Setting UNSPECIFIED means removing the user's role.
+	//
+	// Deprecated: The entire proto file buf/alpha/registry/v1alpha1/plugin.proto is marked as deprecated.
+	TemplateRole TemplateRole `protobuf:"varint,3,opt,name=template_role,json=templateRole,proto3,enum=buf.alpha.registry.v1alpha1.TemplateRole" json:"template_role,omitempty"`
+}
+
+func (x *SetTemplateContributorRequest) Reset() {
+	*x = SetTemplateContributorRequest{}
+	if protoimpl.UnsafeEnabled {
+		mi := &file_buf_alpha_registry_v1alpha1_plugin_proto_msgTypes[52]
+		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
+		ms.StoreMessageInfo(mi)
+	}
+}
+
+func (x *SetTemplateContributorRequest) String() string {
+	return protoimpl.X.MessageStringOf(x)
+}
+
+func (*SetTemplateContributorRequest) ProtoMessage() {}
+
+func (x *SetTemplateContributorRequest) ProtoReflect() protoreflect.Message {
+	mi := &file_buf_alpha_registry_v1alpha1_plugin_proto_msgTypes[52]
+	if protoimpl.UnsafeEnabled && x != nil {
+		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
+		if ms.LoadMessageInfo() == nil {
+			ms.StoreMessageInfo(mi)
+		}
+		return ms
+	}
+	return mi.MessageOf(x)
+}
+
+// Deprecated: Use SetTemplateContributorRequest.ProtoReflect.Descriptor instead.
+func (*SetTemplateContributorRequest) Descriptor() ([]byte, []int) {
+	return file_buf_alpha_registry_v1alpha1_plugin_proto_rawDescGZIP(), []int{52}
+}
+
+// Deprecated: The entire proto file buf/alpha/registry/v1alpha1/plugin.proto is marked as deprecated.
+func (x *SetTemplateContributorRequest) GetTemplateId() string {
+	if x != nil {
+		return x.TemplateId
+	}
+	return ""
+}
+
+// Deprecated: The entire proto file buf/alpha/registry/v1alpha1/plugin.proto is marked as deprecated.
+func (x *SetTemplateContributorRequest) GetUserId() string {
+	if x != nil {
+		return x.UserId
+	}
+	return ""
+}
+
+// Deprecated: The entire proto file buf/alpha/registry/v1alpha1/plugin.proto is marked as deprecated.
+func (x *SetTemplateContributorRequest) GetTemplateRole() TemplateRole {
+	if x != nil {
+		return x.TemplateRole
+	}
+	return TemplateRole_TEMPLATE_ROLE_UNSPECIFIED
+}
+
+// Deprecated: The entire proto file buf/alpha/registry/v1alpha1/plugin.proto is marked as deprecated.
+type SetTemplateContributorResponse struct {
+	state         protoimpl.MessageState
+	sizeCache     protoimpl.SizeCache
+	unknownFields protoimpl.UnknownFields
+}
+
+func (x *SetTemplateContributorResponse) Reset() {
+	*x = SetTemplateContributorResponse{}
+	if protoimpl.UnsafeEnabled {
+		mi := &file_buf_alpha_registry_v1alpha1_plugin_proto_msgTypes[53]
+		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
+		ms.StoreMessageInfo(mi)
+	}
+}
+
+func (x *SetTemplateContributorResponse) String() string {
+	return protoimpl.X.MessageStringOf(x)
+}
+
+func (*SetTemplateContributorResponse) ProtoMessage() {}
+
+func (x *SetTemplateContributorResponse) ProtoReflect() protoreflect.Message {
+	mi := &file_buf_alpha_registry_v1alpha1_plugin_proto_msgTypes[53]
+	if protoimpl.UnsafeEnabled && x != nil {
+		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
+		if ms.LoadMessageInfo() == nil {
+			ms.StoreMessageInfo(mi)
+		}
+		return ms
+	}
+	return mi.MessageOf(x)
+}
+
+// Depr
