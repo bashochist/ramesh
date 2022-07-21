@@ -3770,4 +3770,99 @@ func (*CreateTemplateVersionRequest) Descriptor() ([]byte, []int) {
 }
 
 // Deprecated: The entire proto file buf/alpha/registry/v1alpha1/plugin.proto is marked as deprecated.
-func (x *CreateTemplateVersi
+func (x *CreateTemplateVersionRequest) GetName() string {
+	if x != nil {
+		return x.Name
+	}
+	return ""
+}
+
+// Deprecated: The entire proto file buf/alpha/registry/v1alpha1/plugin.proto is marked as deprecated.
+func (x *CreateTemplateVersionRequest) GetTemplateOwner() string {
+	if x != nil {
+		return x.TemplateOwner
+	}
+	return ""
+}
+
+// Deprecated: The entire proto file buf/alpha/registry/v1alpha1/plugin.proto is marked as deprecated.
+func (x *CreateTemplateVersionRequest) GetTemplateName() string {
+	if x != nil {
+		return x.TemplateName
+	}
+	return ""
+}
+
+// Deprecated: The entire proto file buf/alpha/registry/v1alpha1/plugin.proto is marked as deprecated.
+func (x *CreateTemplateVersionRequest) GetPluginVersions() []*PluginVersionMapping {
+	if x != nil {
+		return x.PluginVersions
+	}
+	return nil
+}
+
+// Deprecated: The entire proto file buf/alpha/registry/v1alpha1/plugin.proto is marked as deprecated.
+type CreateTemplateVersionResponse struct {
+	state         protoimpl.MessageState
+	sizeCache     protoimpl.SizeCache
+	unknownFields protoimpl.UnknownFields
+
+	// The created template version.
+	//
+	// Deprecated: The entire proto file buf/alpha/registry/v1alpha1/plugin.proto is marked as deprecated.
+	TemplateVersion *TemplateVersion `protobuf:"bytes,1,opt,name=template_version,json=templateVersion,proto3" json:"template_version,omitempty"`
+}
+
+func (x *CreateTemplateVersionResponse) Reset() {
+	*x = CreateTemplateVersionResponse{}
+	if protoimpl.UnsafeEnabled {
+		mi := &file_buf_alpha_registry_v1alpha1_plugin_proto_msgTypes[51]
+		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
+		ms.StoreMessageInfo(mi)
+	}
+}
+
+func (x *CreateTemplateVersionResponse) String() string {
+	return protoimpl.X.MessageStringOf(x)
+}
+
+func (*CreateTemplateVersionResponse) ProtoMessage() {}
+
+func (x *CreateTemplateVersionResponse) ProtoReflect() protoreflect.Message {
+	mi := &file_buf_alpha_registry_v1alpha1_plugin_proto_msgTypes[51]
+	if protoimpl.UnsafeEnabled && x != nil {
+		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
+		if ms.LoadMessageInfo() == nil {
+			ms.StoreMessageInfo(mi)
+		}
+		return ms
+	}
+	return mi.MessageOf(x)
+}
+
+// Deprecated: Use CreateTemplateVersionResponse.ProtoReflect.Descriptor instead.
+func (*CreateTemplateVersionResponse) Descriptor() ([]byte, []int) {
+	return file_buf_alpha_registry_v1alpha1_plugin_proto_rawDescGZIP(), []int{51}
+}
+
+// Deprecated: The entire proto file buf/alpha/registry/v1alpha1/plugin.proto is marked as deprecated.
+func (x *CreateTemplateVersionResponse) GetTemplateVersion() *TemplateVersion {
+	if x != nil {
+		return x.TemplateVersion
+	}
+	return nil
+}
+
+// Deprecated: The entire proto file buf/alpha/registry/v1alpha1/plugin.proto is marked as deprecated.
+type SetTemplateContributorRequest struct {
+	state         protoimpl.MessageState
+	sizeCache     protoimpl.SizeCache
+	unknownFields protoimpl.UnknownFields
+
+	// The ID of the template for which the user's role will be set.
+	//
+	// Deprecated: The entire proto file buf/alpha/registry/v1alpha1/plugin.proto is marked as deprecated.
+	TemplateId string `protobuf:"bytes,1,opt,name=template_id,json=templateId,proto3" json:"template_id,omitempty"`
+	// The ID of the user whose role will be set.
+	//
+	// Deprecated: The entire proto fil
