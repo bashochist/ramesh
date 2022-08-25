@@ -5125,4 +5125,36 @@ var file_buf_alpha_registry_v1alpha1_plugin_proto_goTypes = []interface{}{
 	(*ListPluginVersionsRequest)(nil),          // 17: buf.alpha.registry.v1alpha1.ListPluginVersionsRequest
 	(*ListPluginVersionsResponse)(nil),         // 18: buf.alpha.registry.v1alpha1.ListPluginVersionsResponse
 	(*CreatePluginRequest)(nil),                // 19: buf.alpha.registry.v1alpha1.CreatePluginRequest
-	(*CreatePluginResponse)(nil),               // 20: buf.alpha.registry.v1alpha1.CreatePluginRes
+	(*CreatePluginResponse)(nil),               // 20: buf.alpha.registry.v1alpha1.CreatePluginResponse
+	(*GetPluginRequest)(nil),                   // 21: buf.alpha.registry.v1alpha1.GetPluginRequest
+	(*GetPluginResponse)(nil),                  // 22: buf.alpha.registry.v1alpha1.GetPluginResponse
+	(*DeletePluginRequest)(nil),                // 23: buf.alpha.registry.v1alpha1.DeletePluginRequest
+	(*DeletePluginResponse)(nil),               // 24: buf.alpha.registry.v1alpha1.DeletePluginResponse
+	(*SetPluginContributorRequest)(nil),        // 25: buf.alpha.registry.v1alpha1.SetPluginContributorRequest
+	(*SetPluginContributorResponse)(nil),       // 26: buf.alpha.registry.v1alpha1.SetPluginContributorResponse
+	(*ListPluginContributorsRequest)(nil),      // 27: buf.alpha.registry.v1alpha1.ListPluginContributorsRequest
+	(*ListPluginContributorsResponse)(nil),     // 28: buf.alpha.registry.v1alpha1.ListPluginContributorsResponse
+	(*DeprecatePluginRequest)(nil),             // 29: buf.alpha.registry.v1alpha1.DeprecatePluginRequest
+	(*DeprecatePluginResponse)(nil),            // 30: buf.alpha.registry.v1alpha1.DeprecatePluginResponse
+	(*UndeprecatePluginRequest)(nil),           // 31: buf.alpha.registry.v1alpha1.UndeprecatePluginRequest
+	(*UndeprecatePluginResponse)(nil),          // 32: buf.alpha.registry.v1alpha1.UndeprecatePluginResponse
+	(*GetTemplateRequest)(nil),                 // 33: buf.alpha.registry.v1alpha1.GetTemplateRequest
+	(*GetTemplateResponse)(nil),                // 34: buf.alpha.registry.v1alpha1.GetTemplateResponse
+	(*ListTemplatesRequest)(nil),               // 35: buf.alpha.registry.v1alpha1.ListTemplatesRequest
+	(*ListTemplatesResponse)(nil),              // 36: buf.alpha.registry.v1alpha1.ListTemplatesResponse
+	(*ListTemplatesUserCanAccessRequest)(nil),  // 37: buf.alpha.registry.v1alpha1.ListTemplatesUserCanAccessRequest
+	(*ListTemplatesUserCanAccessResponse)(nil), // 38: buf.alpha.registry.v1alpha1.ListTemplatesUserCanAccessResponse
+	(*ListUserTemplatesRequest)(nil),           // 39: buf.alpha.registry.v1alpha1.ListUserTemplatesRequest
+	(*ListUserTemplatesResponse)(nil),          // 40: buf.alpha.registry.v1alpha1.ListUserTemplatesResponse
+	(*GetTemplateVersionRequest)(nil),          // 41: buf.alpha.registry.v1alpha1.GetTemplateVersionRequest
+	(*GetTemplateVersionResponse)(nil),         // 42: buf.alpha.registry.v1alpha1.GetTemplateVersionResponse
+	(*ListOrganizationTemplatesRequest)(nil),   // 43: buf.alpha.registry.v1alpha1.ListOrganizationTemplatesRequest
+	(*ListOrganizationTemplatesResponse)(nil),  // 44: buf.alpha.registry.v1alpha1.ListOrganizationTemplatesResponse
+	(*ListTemplateVersionsRequest)(nil),        // 45: buf.alpha.registry.v1alpha1.ListTemplateVersionsRequest
+	(*ListTemplateVersionsResponse)(nil),       // 46: buf.alpha.registry.v1alpha1.ListTemplateVersionsResponse
+	(*CreateTemplateRequest)(nil),              // 47: buf.alpha.registry.v1alpha1.CreateTemplateRequest
+	(*CreateTemplateResponse)(nil),             // 48: buf.alpha.registry.v1alpha1.CreateTemplateResponse
+	(*DeleteTemplateRequest)(nil),              // 49: buf.alpha.registry.v1alpha1.DeleteTemplateRequest
+	(*DeleteTemplateResponse)(nil),             // 50: buf.alpha.registry.v1alpha1.DeleteTemplateResponse
+	(*CreateTemplateVersionRequest)(nil),       // 51: buf.alpha.registry.v1alpha1.CreateTemplateVersionRequest
+	(*CreateTem
