@@ -5083,4 +5083,46 @@ var file_buf_alpha_registry_v1alpha1_plugin_proto_rawDesc = []byte{
 	0x61, 0x31, 0xca, 0x02, 0x1b, 0x42, 0x75, 0x66, 0x5c, 0x41, 0x6c, 0x70, 0x68, 0x61, 0x5c, 0x52,
 	0x65, 0x67, 0x69, 0x73, 0x74, 0x72, 0x79, 0x5c, 0x56, 0x31, 0x61, 0x6c, 0x70, 0x68, 0x61, 0x31,
 	0xe2, 0x02, 0x27, 0x42, 0x75, 0x66, 0x5c, 0x41, 0x6c, 0x70, 0x68, 0x61, 0x5c, 0x52, 0x65, 0x67,
-	0x69, 0x73, 0x74, 0x72, 0x79, 0x5c, 0x56, 0x31, 0x61, 0x6c, 0x70, 0x68, 0x61, 0
+	0x69, 0x73, 0x74, 0x72, 0x79, 0x5c, 0x56, 0x31, 0x61, 0x6c, 0x70, 0x68, 0x61, 0x31, 0x5c, 0x47,
+	0x50, 0x42, 0x4d, 0x65, 0x74, 0x61, 0x64, 0x61, 0x74, 0x61, 0xea, 0x02, 0x1e, 0x42, 0x75, 0x66,
+	0x3a, 0x3a, 0x41, 0x6c, 0x70, 0x68, 0x61, 0x3a, 0x3a, 0x52, 0x65, 0x67, 0x69, 0x73, 0x74, 0x72,
+	0x79, 0x3a, 0x3a, 0x56, 0x31, 0x61, 0x6c, 0x70, 0x68, 0x61, 0x31, 0x62, 0x06, 0x70, 0x72, 0x6f,
+	0x74, 0x6f, 0x33,
+}
+
+var (
+	file_buf_alpha_registry_v1alpha1_plugin_proto_rawDescOnce sync.Once
+	file_buf_alpha_registry_v1alpha1_plugin_proto_rawDescData = file_buf_alpha_registry_v1alpha1_plugin_proto_rawDesc
+)
+
+func file_buf_alpha_registry_v1alpha1_plugin_proto_rawDescGZIP() []byte {
+	file_buf_alpha_registry_v1alpha1_plugin_proto_rawDescOnce.Do(func() {
+		file_buf_alpha_registry_v1alpha1_plugin_proto_rawDescData = protoimpl.X.CompressGZIP(file_buf_alpha_registry_v1alpha1_plugin_proto_rawDescData)
+	})
+	return file_buf_alpha_registry_v1alpha1_plugin_proto_rawDescData
+}
+
+var file_buf_alpha_registry_v1alpha1_plugin_proto_enumTypes = make([]protoimpl.EnumInfo, 1)
+var file_buf_alpha_registry_v1alpha1_plugin_proto_msgTypes = make([]protoimpl.MessageInfo, 60)
+var file_buf_alpha_registry_v1alpha1_plugin_proto_goTypes = []interface{}{
+	(PluginVisibility)(0),                      // 0: buf.alpha.registry.v1alpha1.PluginVisibility
+	(*Plugin)(nil),                             // 1: buf.alpha.registry.v1alpha1.Plugin
+	(*PluginVersion)(nil),                      // 2: buf.alpha.registry.v1alpha1.PluginVersion
+	(*Template)(nil),                           // 3: buf.alpha.registry.v1alpha1.Template
+	(*PluginConfig)(nil),                       // 4: buf.alpha.registry.v1alpha1.PluginConfig
+	(*TemplateVersion)(nil),                    // 5: buf.alpha.registry.v1alpha1.TemplateVersion
+	(*PluginVersionMapping)(nil),               // 6: buf.alpha.registry.v1alpha1.PluginVersionMapping
+	(*PluginContributor)(nil),                  // 7: buf.alpha.registry.v1alpha1.PluginContributor
+	(*TemplateContributor)(nil),                // 8: buf.alpha.registry.v1alpha1.TemplateContributor
+	(*ListPluginsRequest)(nil),                 // 9: buf.alpha.registry.v1alpha1.ListPluginsRequest
+	(*ListPluginsResponse)(nil),                // 10: buf.alpha.registry.v1alpha1.ListPluginsResponse
+	(*ListUserPluginsRequest)(nil),             // 11: buf.alpha.registry.v1alpha1.ListUserPluginsRequest
+	(*ListUserPluginsResponse)(nil),            // 12: buf.alpha.registry.v1alpha1.ListUserPluginsResponse
+	(*ListOrganizationPluginsRequest)(nil),     // 13: buf.alpha.registry.v1alpha1.ListOrganizationPluginsRequest
+	(*ListOrganizationPluginsResponse)(nil),    // 14: buf.alpha.registry.v1alpha1.ListOrganizationPluginsResponse
+	(*GetPluginVersionRequest)(nil),            // 15: buf.alpha.registry.v1alpha1.GetPluginVersionRequest
+	(*GetPluginVersionResponse)(nil),           // 16: buf.alpha.registry.v1alpha1.GetPluginVersionResponse
+	(*ListPluginVersionsRequest)(nil),          // 17: buf.alpha.registry.v1alpha1.ListPluginVersionsRequest
+	(*ListPluginVersionsResponse)(nil),         // 18: buf.alpha.registry.v1alpha1.ListPluginVersionsResponse
+	(*CreatePluginRequest)(nil),                // 19: buf.alpha.registry.v1alpha1.CreatePluginRequest
+	(*CreatePluginResponse)(nil),               // 20: buf.alpha.registry.v1alpha1.CreatePluginRes
