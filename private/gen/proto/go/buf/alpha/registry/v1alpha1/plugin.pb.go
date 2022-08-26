@@ -5261,4 +5261,107 @@ var file_buf_alpha_registry_v1alpha1_plugin_proto_depIdxs = []int32{
 	50, // 85: buf.alpha.registry.v1alpha1.PluginService.DeleteTemplate:output_type -> buf.alpha.registry.v1alpha1.DeleteTemplateResponse
 	52, // 86: buf.alpha.registry.v1alpha1.PluginService.CreateTemplateVersion:output_type -> buf.alpha.registry.v1alpha1.CreateTemplateVersionResponse
 	54, // 87: buf.alpha.registry.v1alpha1.PluginService.SetTemplateContributor:output_type -> buf.alpha.registry.v1alpha1.SetTemplateContributorResponse
-	56, // 88: buf.alpha.registry.v1alpha1.PluginService.ListTem
+	56, // 88: buf.alpha.registry.v1alpha1.PluginService.ListTemplateContributors:output_type -> buf.alpha.registry.v1alpha1.ListTemplateContributorsResponse
+	58, // 89: buf.alpha.registry.v1alpha1.PluginService.DeprecateTemplate:output_type -> buf.alpha.registry.v1alpha1.DeprecateTemplateResponse
+	60, // 90: buf.alpha.registry.v1alpha1.PluginService.UndeprecateTemplate:output_type -> buf.alpha.registry.v1alpha1.UndeprecateTemplateResponse
+	65, // [65:91] is the sub-list for method output_type
+	39, // [39:65] is the sub-list for method input_type
+	39, // [39:39] is the sub-list for extension type_name
+	39, // [39:39] is the sub-list for extension extendee
+	0,  // [0:39] is the sub-list for field type_name
+}
+
+func init() { file_buf_alpha_registry_v1alpha1_plugin_proto_init() }
+func file_buf_alpha_registry_v1alpha1_plugin_proto_init() {
+	if File_buf_alpha_registry_v1alpha1_plugin_proto != nil {
+		return
+	}
+	file_buf_alpha_registry_v1alpha1_generate_proto_init()
+	file_buf_alpha_registry_v1alpha1_role_proto_init()
+	file_buf_alpha_registry_v1alpha1_user_proto_init()
+	if !protoimpl.UnsafeEnabled {
+		file_buf_alpha_registry_v1alpha1_plugin_proto_msgTypes[0].Exporter = func(v interface{}, i int) interface{} {
+			switch v := v.(*Plugin); i {
+			case 0:
+				return &v.state
+			case 1:
+				return &v.sizeCache
+			case 2:
+				return &v.unknownFields
+			default:
+				return nil
+			}
+		}
+		file_buf_alpha_registry_v1alpha1_plugin_proto_msgTypes[1].Exporter = func(v interface{}, i int) interface{} {
+			switch v := v.(*PluginVersion); i {
+			case 0:
+				return &v.state
+			case 1:
+				return &v.sizeCache
+			case 2:
+				return &v.unknownFields
+			default:
+				return nil
+			}
+		}
+		file_buf_alpha_registry_v1alpha1_plugin_proto_msgTypes[2].Exporter = func(v interface{}, i int) interface{} {
+			switch v := v.(*Template); i {
+			case 0:
+				return &v.state
+			case 1:
+				return &v.sizeCache
+			case 2:
+				return &v.unknownFields
+			default:
+				return nil
+			}
+		}
+		file_buf_alpha_registry_v1alpha1_plugin_proto_msgTypes[3].Exporter = func(v interface{}, i int) interface{} {
+			switch v := v.(*PluginConfig); i {
+			case 0:
+				return &v.state
+			case 1:
+				return &v.sizeCache
+			case 2:
+				return &v.unknownFields
+			default:
+				return nil
+			}
+		}
+		file_buf_alpha_registry_v1alpha1_plugin_proto_msgTypes[4].Exporter = func(v interface{}, i int) interface{} {
+			switch v := v.(*TemplateVersion); i {
+			case 0:
+				return &v.state
+			case 1:
+				return &v.sizeCache
+			case 2:
+				return &v.unknownFields
+			default:
+				return nil
+			}
+		}
+		file_buf_alpha_registry_v1alpha1_plugin_proto_msgTypes[5].Exporter = func(v interface{}, i int) interface{} {
+			switch v := v.(*PluginVersionMapping); i {
+			case 0:
+				return &v.state
+			case 1:
+				return &v.sizeCache
+			case 2:
+				return &v.unknownFields
+			default:
+				return nil
+			}
+		}
+		file_buf_alpha_registry_v1alpha1_plugin_proto_msgTypes[6].Exporter = func(v interface{}, i int) interface{} {
+			switch v := v.(*PluginContributor); i {
+			case 0:
+				return &v.state
+			case 1:
+				return &v.sizeCache
+			case 2:
+				return &v.unknownFields
+			default:
+				return nil
+			}
+		}
+		file_buf_alpha_registry_v1alpha1_plugin_proto_ms
