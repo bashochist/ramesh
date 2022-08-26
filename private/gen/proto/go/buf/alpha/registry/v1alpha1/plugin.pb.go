@@ -5157,4 +5157,36 @@ var file_buf_alpha_registry_v1alpha1_plugin_proto_goTypes = []interface{}{
 	(*DeleteTemplateRequest)(nil),              // 49: buf.alpha.registry.v1alpha1.DeleteTemplateRequest
 	(*DeleteTemplateResponse)(nil),             // 50: buf.alpha.registry.v1alpha1.DeleteTemplateResponse
 	(*CreateTemplateVersionRequest)(nil),       // 51: buf.alpha.registry.v1alpha1.CreateTemplateVersionRequest
-	(*CreateTem
+	(*CreateTemplateVersionResponse)(nil),      // 52: buf.alpha.registry.v1alpha1.CreateTemplateVersionResponse
+	(*SetTemplateContributorRequest)(nil),      // 53: buf.alpha.registry.v1alpha1.SetTemplateContributorRequest
+	(*SetTemplateContributorResponse)(nil),     // 54: buf.alpha.registry.v1alpha1.SetTemplateContributorResponse
+	(*ListTemplateContributorsRequest)(nil),    // 55: buf.alpha.registry.v1alpha1.ListTemplateContributorsRequest
+	(*ListTemplateContributorsResponse)(nil),   // 56: buf.alpha.registry.v1alpha1.ListTemplateContributorsResponse
+	(*DeprecateTemplateRequest)(nil),           // 57: buf.alpha.registry.v1alpha1.DeprecateTemplateRequest
+	(*DeprecateTemplateResponse)(nil),          // 58: buf.alpha.registry.v1alpha1.DeprecateTemplateResponse
+	(*UndeprecateTemplateRequest)(nil),         // 59: buf.alpha.registry.v1alpha1.UndeprecateTemplateRequest
+	(*UndeprecateTemplateResponse)(nil),        // 60: buf.alpha.registry.v1alpha1.UndeprecateTemplateResponse
+	(*timestamppb.Timestamp)(nil),              // 61: google.protobuf.Timestamp
+	(*RuntimeLibrary)(nil),                     // 62: buf.alpha.registry.v1alpha1.RuntimeLibrary
+	(*User)(nil),                               // 63: buf.alpha.registry.v1alpha1.User
+	(PluginRole)(0),                            // 64: buf.alpha.registry.v1alpha1.PluginRole
+	(TemplateRole)(0),                          // 65: buf.alpha.registry.v1alpha1.TemplateRole
+}
+var file_buf_alpha_registry_v1alpha1_plugin_proto_depIdxs = []int32{
+	0,  // 0: buf.alpha.registry.v1alpha1.Plugin.visibility:type_name -> buf.alpha.registry.v1alpha1.PluginVisibility
+	61, // 1: buf.alpha.registry.v1alpha1.Plugin.create_time:type_name -> google.protobuf.Timestamp
+	61, // 2: buf.alpha.registry.v1alpha1.Plugin.update_time:type_name -> google.protobuf.Timestamp
+	62, // 3: buf.alpha.registry.v1alpha1.PluginVersion.runtime_libraries:type_name -> buf.alpha.registry.v1alpha1.RuntimeLibrary
+	4,  // 4: buf.alpha.registry.v1alpha1.Template.plugin_configs:type_name -> buf.alpha.registry.v1alpha1.PluginConfig
+	0,  // 5: buf.alpha.registry.v1alpha1.Template.visibility:type_name -> buf.alpha.registry.v1alpha1.PluginVisibility
+	61, // 6: buf.alpha.registry.v1alpha1.Template.create_time:type_name -> google.protobuf.Timestamp
+	61, // 7: buf.alpha.registry.v1alpha1.Template.update_time:type_name -> google.protobuf.Timestamp
+	6,  // 8: buf.alpha.registry.v1alpha1.TemplateVersion.plugin_versions:type_name -> buf.alpha.registry.v1alpha1.PluginVersionMapping
+	63, // 9: buf.alpha.registry.v1alpha1.PluginContributor.user:type_name -> buf.alpha.registry.v1alpha1.User
+	64, // 10: buf.alpha.registry.v1alpha1.PluginContributor.explicit_role:type_name -> buf.alpha.registry.v1alpha1.PluginRole
+	64, // 11: buf.alpha.registry.v1alpha1.PluginContributor.implicit_role:type_name -> buf.alpha.registry.v1alpha1.PluginRole
+	63, // 12: buf.alpha.registry.v1alpha1.TemplateContributor.user:type_name -> buf.alpha.registry.v1alpha1.User
+	65, // 13: buf.alpha.registry.v1alpha1.TemplateContributor.explicit_role:type_name -> buf.alpha.registry.v1alpha1.TemplateRole
+	65, // 14: buf.alpha.registry.v1alpha1.TemplateContributor.implicit_role:type_name -> buf.alpha.registry.v1alpha1.TemplateRole
+	1,  // 15: buf.alpha.registry.v1alpha1.ListPluginsResponse.plugins:type_name -> buf.alpha.registry.v1alpha1.Plugin
+	1,  // 16: buf.alpha.reg
