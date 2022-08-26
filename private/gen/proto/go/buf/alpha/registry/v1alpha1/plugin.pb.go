@@ -5238,4 +5238,27 @@ var file_buf_alpha_registry_v1alpha1_plugin_proto_depIdxs = []int32{
 	55, // 62: buf.alpha.registry.v1alpha1.PluginService.ListTemplateContributors:input_type -> buf.alpha.registry.v1alpha1.ListTemplateContributorsRequest
 	57, // 63: buf.alpha.registry.v1alpha1.PluginService.DeprecateTemplate:input_type -> buf.alpha.registry.v1alpha1.DeprecateTemplateRequest
 	59, // 64: buf.alpha.registry.v1alpha1.PluginService.UndeprecateTemplate:input_type -> buf.alpha.registry.v1alpha1.UndeprecateTemplateRequest
-	10, // 65: buf.alpha.registry.v1alpha1.PluginService.ListPlugins:output
+	10, // 65: buf.alpha.registry.v1alpha1.PluginService.ListPlugins:output_type -> buf.alpha.registry.v1alpha1.ListPluginsResponse
+	12, // 66: buf.alpha.registry.v1alpha1.PluginService.ListUserPlugins:output_type -> buf.alpha.registry.v1alpha1.ListUserPluginsResponse
+	14, // 67: buf.alpha.registry.v1alpha1.PluginService.ListOrganizationPlugins:output_type -> buf.alpha.registry.v1alpha1.ListOrganizationPluginsResponse
+	16, // 68: buf.alpha.registry.v1alpha1.PluginService.GetPluginVersion:output_type -> buf.alpha.registry.v1alpha1.GetPluginVersionResponse
+	18, // 69: buf.alpha.registry.v1alpha1.PluginService.ListPluginVersions:output_type -> buf.alpha.registry.v1alpha1.ListPluginVersionsResponse
+	20, // 70: buf.alpha.registry.v1alpha1.PluginService.CreatePlugin:output_type -> buf.alpha.registry.v1alpha1.CreatePluginResponse
+	22, // 71: buf.alpha.registry.v1alpha1.PluginService.GetPlugin:output_type -> buf.alpha.registry.v1alpha1.GetPluginResponse
+	24, // 72: buf.alpha.registry.v1alpha1.PluginService.DeletePlugin:output_type -> buf.alpha.registry.v1alpha1.DeletePluginResponse
+	26, // 73: buf.alpha.registry.v1alpha1.PluginService.SetPluginContributor:output_type -> buf.alpha.registry.v1alpha1.SetPluginContributorResponse
+	28, // 74: buf.alpha.registry.v1alpha1.PluginService.ListPluginContributors:output_type -> buf.alpha.registry.v1alpha1.ListPluginContributorsResponse
+	30, // 75: buf.alpha.registry.v1alpha1.PluginService.DeprecatePlugin:output_type -> buf.alpha.registry.v1alpha1.DeprecatePluginResponse
+	32, // 76: buf.alpha.registry.v1alpha1.PluginService.UndeprecatePlugin:output_type -> buf.alpha.registry.v1alpha1.UndeprecatePluginResponse
+	34, // 77: buf.alpha.registry.v1alpha1.PluginService.GetTemplate:output_type -> buf.alpha.registry.v1alpha1.GetTemplateResponse
+	36, // 78: buf.alpha.registry.v1alpha1.PluginService.ListTemplates:output_type -> buf.alpha.registry.v1alpha1.ListTemplatesResponse
+	38, // 79: buf.alpha.registry.v1alpha1.PluginService.ListTemplatesUserCanAccess:output_type -> buf.alpha.registry.v1alpha1.ListTemplatesUserCanAccessResponse
+	40, // 80: buf.alpha.registry.v1alpha1.PluginService.ListUserTemplates:output_type -> buf.alpha.registry.v1alpha1.ListUserTemplatesResponse
+	44, // 81: buf.alpha.registry.v1alpha1.PluginService.ListOrganizationTemplates:output_type -> buf.alpha.registry.v1alpha1.ListOrganizationTemplatesResponse
+	42, // 82: buf.alpha.registry.v1alpha1.PluginService.GetTemplateVersion:output_type -> buf.alpha.registry.v1alpha1.GetTemplateVersionResponse
+	46, // 83: buf.alpha.registry.v1alpha1.PluginService.ListTemplateVersions:output_type -> buf.alpha.registry.v1alpha1.ListTemplateVersionsResponse
+	48, // 84: buf.alpha.registry.v1alpha1.PluginService.CreateTemplate:output_type -> buf.alpha.registry.v1alpha1.CreateTemplateResponse
+	50, // 85: buf.alpha.registry.v1alpha1.PluginService.DeleteTemplate:output_type -> buf.alpha.registry.v1alpha1.DeleteTemplateResponse
+	52, // 86: buf.alpha.registry.v1alpha1.PluginService.CreateTemplateVersion:output_type -> buf.alpha.registry.v1alpha1.CreateTemplateVersionResponse
+	54, // 87: buf.alpha.registry.v1alpha1.PluginService.SetTemplateContributor:output_type -> buf.alpha.registry.v1alpha1.SetTemplateContributorResponse
+	56, // 88: buf.alpha.registry.v1alpha1.PluginService.ListTem
