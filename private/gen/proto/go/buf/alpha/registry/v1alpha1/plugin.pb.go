@@ -5189,4 +5189,30 @@ var file_buf_alpha_registry_v1alpha1_plugin_proto_depIdxs = []int32{
 	65, // 13: buf.alpha.registry.v1alpha1.TemplateContributor.explicit_role:type_name -> buf.alpha.registry.v1alpha1.TemplateRole
 	65, // 14: buf.alpha.registry.v1alpha1.TemplateContributor.implicit_role:type_name -> buf.alpha.registry.v1alpha1.TemplateRole
 	1,  // 15: buf.alpha.registry.v1alpha1.ListPluginsResponse.plugins:type_name -> buf.alpha.registry.v1alpha1.Plugin
-	1,  // 16: buf.alpha.reg
+	1,  // 16: buf.alpha.registry.v1alpha1.ListUserPluginsResponse.plugins:type_name -> buf.alpha.registry.v1alpha1.Plugin
+	1,  // 17: buf.alpha.registry.v1alpha1.ListOrganizationPluginsResponse.plugins:type_name -> buf.alpha.registry.v1alpha1.Plugin
+	2,  // 18: buf.alpha.registry.v1alpha1.GetPluginVersionResponse.plugin_version:type_name -> buf.alpha.registry.v1alpha1.PluginVersion
+	2,  // 19: buf.alpha.registry.v1alpha1.ListPluginVersionsResponse.plugin_versions:type_name -> buf.alpha.registry.v1alpha1.PluginVersion
+	0,  // 20: buf.alpha.registry.v1alpha1.CreatePluginRequest.visibility:type_name -> buf.alpha.registry.v1alpha1.PluginVisibility
+	1,  // 21: buf.alpha.registry.v1alpha1.CreatePluginResponse.plugin:type_name -> buf.alpha.registry.v1alpha1.Plugin
+	1,  // 22: buf.alpha.registry.v1alpha1.GetPluginResponse.plugin:type_name -> buf.alpha.registry.v1alpha1.Plugin
+	64, // 23: buf.alpha.registry.v1alpha1.SetPluginContributorRequest.plugin_role:type_name -> buf.alpha.registry.v1alpha1.PluginRole
+	7,  // 24: buf.alpha.registry.v1alpha1.ListPluginContributorsResponse.users:type_name -> buf.alpha.registry.v1alpha1.PluginContributor
+	3,  // 25: buf.alpha.registry.v1alpha1.GetTemplateResponse.template:type_name -> buf.alpha.registry.v1alpha1.Template
+	3,  // 26: buf.alpha.registry.v1alpha1.ListTemplatesResponse.templates:type_name -> buf.alpha.registry.v1alpha1.Template
+	3,  // 27: buf.alpha.registry.v1alpha1.ListTemplatesUserCanAccessResponse.templates:type_name -> buf.alpha.registry.v1alpha1.Template
+	3,  // 28: buf.alpha.registry.v1alpha1.ListUserTemplatesResponse.templates:type_name -> buf.alpha.registry.v1alpha1.Template
+	5,  // 29: buf.alpha.registry.v1alpha1.GetTemplateVersionResponse.template_version:type_name -> buf.alpha.registry.v1alpha1.TemplateVersion
+	3,  // 30: buf.alpha.registry.v1alpha1.ListOrganizationTemplatesResponse.templates:type_name -> buf.alpha.registry.v1alpha1.Template
+	5,  // 31: buf.alpha.registry.v1alpha1.ListTemplateVersionsResponse.template_versions:type_name -> buf.alpha.registry.v1alpha1.TemplateVersion
+	0,  // 32: buf.alpha.registry.v1alpha1.CreateTemplateRequest.visibility:type_name -> buf.alpha.registry.v1alpha1.PluginVisibility
+	4,  // 33: buf.alpha.registry.v1alpha1.CreateTemplateRequest.plugin_configs:type_name -> buf.alpha.registry.v1alpha1.PluginConfig
+	3,  // 34: buf.alpha.registry.v1alpha1.CreateTemplateResponse.template:type_name -> buf.alpha.registry.v1alpha1.Template
+	6,  // 35: buf.alpha.registry.v1alpha1.CreateTemplateVersionRequest.plugin_versions:type_name -> buf.alpha.registry.v1alpha1.PluginVersionMapping
+	5,  // 36: buf.alpha.registry.v1alpha1.CreateTemplateVersionResponse.template_version:type_name -> buf.alpha.registry.v1alpha1.TemplateVersion
+	65, // 37: buf.alpha.registry.v1alpha1.SetTemplateContributorRequest.template_role:type_name -> buf.alpha.registry.v1alpha1.TemplateRole
+	8,  // 38: buf.alpha.registry.v1alpha1.ListTemplateContributorsResponse.users:type_name -> buf.alpha.registry.v1alpha1.TemplateContributor
+	9,  // 39: buf.alpha.registry.v1alpha1.PluginService.ListPlugins:input_type -> buf.alpha.registry.v1alpha1.ListPluginsRequest
+	11, // 40: buf.alpha.registry.v1alpha1.PluginService.ListUserPlugins:input_type -> buf.alpha.registry.v1alpha1.ListUserPluginsRequest
+	13, // 41: buf.alpha.registry.v1alpha1.PluginService.ListOrganizationPlugins:input_type -> buf.alpha.registry.v1alpha1.ListOrganizationPluginsRequest
+	15, // 42: buf.alpha.regis
