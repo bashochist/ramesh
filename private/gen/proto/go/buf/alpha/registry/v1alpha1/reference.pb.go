@@ -186,4 +186,120 @@ func (x *RepositoryMainReference) ProtoReflect() protoreflect.Message {
 	return mi.MessageOf(x)
 }
 
-// Deprecated: Use RepositoryMainReference.ProtoReflect.Descripto
+// Deprecated: Use RepositoryMainReference.ProtoReflect.Descriptor instead.
+func (*RepositoryMainReference) Descriptor() ([]byte, []int) {
+	return file_buf_alpha_registry_v1alpha1_reference_proto_rawDescGZIP(), []int{1}
+}
+
+func (x *RepositoryMainReference) GetName() string {
+	if x != nil {
+		return x.Name
+	}
+	return ""
+}
+
+func (x *RepositoryMainReference) GetCommit() *RepositoryCommit {
+	if x != nil {
+		return x.Commit
+	}
+	return nil
+}
+
+type RepositoryDraft struct {
+	state         protoimpl.MessageState
+	sizeCache     protoimpl.SizeCache
+	unknownFields protoimpl.UnknownFields
+
+	// The name of the draft
+	Name string `protobuf:"bytes,1,opt,name=name,proto3" json:"name,omitempty"`
+	// The commit this draft points to.
+	Commit *RepositoryCommit `protobuf:"bytes,2,opt,name=commit,proto3" json:"commit,omitempty"`
+}
+
+func (x *RepositoryDraft) Reset() {
+	*x = RepositoryDraft{}
+	if protoimpl.UnsafeEnabled {
+		mi := &file_buf_alpha_registry_v1alpha1_reference_proto_msgTypes[2]
+		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
+		ms.StoreMessageInfo(mi)
+	}
+}
+
+func (x *RepositoryDraft) String() string {
+	return protoimpl.X.MessageStringOf(x)
+}
+
+func (*RepositoryDraft) ProtoMessage() {}
+
+func (x *RepositoryDraft) ProtoReflect() protoreflect.Message {
+	mi := &file_buf_alpha_registry_v1alpha1_reference_proto_msgTypes[2]
+	if protoimpl.UnsafeEnabled && x != nil {
+		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
+		if ms.LoadMessageInfo() == nil {
+			ms.StoreMessageInfo(mi)
+		}
+		return ms
+	}
+	return mi.MessageOf(x)
+}
+
+// Deprecated: Use RepositoryDraft.ProtoReflect.Descriptor instead.
+func (*RepositoryDraft) Descriptor() ([]byte, []int) {
+	return file_buf_alpha_registry_v1alpha1_reference_proto_rawDescGZIP(), []int{2}
+}
+
+func (x *RepositoryDraft) GetName() string {
+	if x != nil {
+		return x.Name
+	}
+	return ""
+}
+
+func (x *RepositoryDraft) GetCommit() *RepositoryCommit {
+	if x != nil {
+		return x.Commit
+	}
+	return nil
+}
+
+type GetReferenceByNameRequest struct {
+	state         protoimpl.MessageState
+	sizeCache     protoimpl.SizeCache
+	unknownFields protoimpl.UnknownFields
+
+	// Name of the requested reference.
+	Name string `protobuf:"bytes,1,opt,name=name,proto3" json:"name,omitempty"`
+	// Owner of the repository the reference belongs to.
+	Owner string `protobuf:"bytes,2,opt,name=owner,proto3" json:"owner,omitempty"`
+	// Name of the repository the reference belongs to.
+	RepositoryName string `protobuf:"bytes,3,opt,name=repository_name,json=repositoryName,proto3" json:"repository_name,omitempty"`
+}
+
+func (x *GetReferenceByNameRequest) Reset() {
+	*x = GetReferenceByNameRequest{}
+	if protoimpl.UnsafeEnabled {
+		mi := &file_buf_alpha_registry_v1alpha1_reference_proto_msgTypes[3]
+		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
+		ms.StoreMessageInfo(mi)
+	}
+}
+
+func (x *GetReferenceByNameRequest) String() string {
+	return protoimpl.X.MessageStringOf(x)
+}
+
+func (*GetReferenceByNameRequest) ProtoMessage() {}
+
+func (x *GetReferenceByNameRequest) ProtoReflect() protoreflect.Message {
+	mi := &file_buf_alpha_registry_v1alpha1_reference_proto_msgTypes[3]
+	if protoimpl.UnsafeEnabled && x != nil {
+		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
+		if ms.LoadMessageInfo() == nil {
+			ms.StoreMessageInfo(mi)
+		}
+		return ms
+	}
+	return mi.MessageOf(x)
+}
+
+// Deprecated: Use GetReferenceB
