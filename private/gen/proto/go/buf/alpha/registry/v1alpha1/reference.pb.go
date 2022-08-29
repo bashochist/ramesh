@@ -63,4 +63,127 @@ func (x *Reference) String() string {
 
 func (*Reference) ProtoMessage() {}
 
-func (x *Reference) ProtoReflect() protore
+func (x *Reference) ProtoReflect() protoreflect.Message {
+	mi := &file_buf_alpha_registry_v1alpha1_reference_proto_msgTypes[0]
+	if protoimpl.UnsafeEnabled && x != nil {
+		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
+		if ms.LoadMessageInfo() == nil {
+			ms.StoreMessageInfo(mi)
+		}
+		return ms
+	}
+	return mi.MessageOf(x)
+}
+
+// Deprecated: Use Reference.ProtoReflect.Descriptor instead.
+func (*Reference) Descriptor() ([]byte, []int) {
+	return file_buf_alpha_registry_v1alpha1_reference_proto_rawDescGZIP(), []int{0}
+}
+
+func (m *Reference) GetReference() isReference_Reference {
+	if m != nil {
+		return m.Reference
+	}
+	return nil
+}
+
+func (x *Reference) GetTag() *RepositoryTag {
+	if x, ok := x.GetReference().(*Reference_Tag); ok {
+		return x.Tag
+	}
+	return nil
+}
+
+func (x *Reference) GetCommit() *RepositoryCommit {
+	if x, ok := x.GetReference().(*Reference_Commit); ok {
+		return x.Commit
+	}
+	return nil
+}
+
+func (x *Reference) GetMain() *RepositoryMainReference {
+	if x, ok := x.GetReference().(*Reference_Main); ok {
+		return x.Main
+	}
+	return nil
+}
+
+func (x *Reference) GetDraft() *RepositoryDraft {
+	if x, ok := x.GetReference().(*Reference_Draft); ok {
+		return x.Draft
+	}
+	return nil
+}
+
+type isReference_Reference interface {
+	isReference_Reference()
+}
+
+type Reference_Tag struct {
+	// The requested reference is a tag.
+	Tag *RepositoryTag `protobuf:"bytes,2,opt,name=tag,proto3,oneof"`
+}
+
+type Reference_Commit struct {
+	// The requested reference is a commit.
+	Commit *RepositoryCommit `protobuf:"bytes,3,opt,name=commit,proto3,oneof"`
+}
+
+type Reference_Main struct {
+	// The requested reference is the default reference.
+	Main *RepositoryMainReference `protobuf:"bytes,5,opt,name=main,proto3,oneof"`
+}
+
+type Reference_Draft struct {
+	// The requested reference is a draft commit.
+	Draft *RepositoryDraft `protobuf:"bytes,6,opt,name=draft,proto3,oneof"`
+}
+
+func (*Reference_Tag) isReference_Reference() {}
+
+func (*Reference_Commit) isReference_Reference() {}
+
+func (*Reference_Main) isReference_Reference() {}
+
+func (*Reference_Draft) isReference_Reference() {}
+
+type RepositoryMainReference struct {
+	state         protoimpl.MessageState
+	sizeCache     protoimpl.SizeCache
+	unknownFields protoimpl.UnknownFields
+
+	// Name is always 'main'.
+	Name string `protobuf:"bytes,1,opt,name=name,proto3" json:"name,omitempty"`
+	// The latest commit in this repository. If the repository has no commits,
+	// this will be empty.
+	Commit *RepositoryCommit `protobuf:"bytes,2,opt,name=commit,proto3" json:"commit,omitempty"`
+}
+
+func (x *RepositoryMainReference) Reset() {
+	*x = RepositoryMainReference{}
+	if protoimpl.UnsafeEnabled {
+		mi := &file_buf_alpha_registry_v1alpha1_reference_proto_msgTypes[1]
+		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
+		ms.StoreMessageInfo(mi)
+	}
+}
+
+func (x *RepositoryMainReference) String() string {
+	return protoimpl.X.MessageStringOf(x)
+}
+
+func (*RepositoryMainReference) ProtoMessage() {}
+
+func (x *RepositoryMainReference) ProtoReflect() protoreflect.Message {
+	mi := &file_buf_alpha_registry_v1alpha1_reference_proto_msgTypes[1]
+	if protoimpl.UnsafeEnabled && x != nil {
+		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
+		if ms.LoadMessageInfo() == nil {
+			ms.StoreMessageInfo(mi)
+		}
+		return ms
+	}
+	return mi.MessageOf(x)
+}
+
+// Deprecated: Use RepositoryMainReference.ProtoReflect.Descripto
