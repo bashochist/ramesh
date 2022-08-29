@@ -6012,4 +6012,12 @@ func file_buf_alpha_registry_v1alpha1_plugin_proto_init() {
 			NumServices:   1,
 		},
 		GoTypes:           file_buf_alpha_registry_v1alpha1_plugin_proto_goTypes,
-		D
+		DependencyIndexes: file_buf_alpha_registry_v1alpha1_plugin_proto_depIdxs,
+		EnumInfos:         file_buf_alpha_registry_v1alpha1_plugin_proto_enumTypes,
+		MessageInfos:      file_buf_alpha_registry_v1alpha1_plugin_proto_msgTypes,
+	}.Build()
+	File_buf_alpha_registry_v1alpha1_plugin_proto = out.File
+	file_buf_alpha_registry_v1alpha1_plugin_proto_rawDesc = nil
+	file_buf_alpha_registry_v1alpha1_plugin_proto_goTypes = nil
+	file_buf_alpha_registry_v1alpha1_plugin_proto_depIdxs = nil
+}
