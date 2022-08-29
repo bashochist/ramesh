@@ -5881,4 +5881,135 @@ func file_buf_alpha_registry_v1alpha1_plugin_proto_init() {
 			}
 		}
 		file_buf_alpha_registry_v1alpha1_plugin_proto_msgTypes[50].Exporter = func(v interface{}, i int) interface{} {
-			switch v := v.(*CreateTemplateVersionRequest); 
+			switch v := v.(*CreateTemplateVersionRequest); i {
+			case 0:
+				return &v.state
+			case 1:
+				return &v.sizeCache
+			case 2:
+				return &v.unknownFields
+			default:
+				return nil
+			}
+		}
+		file_buf_alpha_registry_v1alpha1_plugin_proto_msgTypes[51].Exporter = func(v interface{}, i int) interface{} {
+			switch v := v.(*CreateTemplateVersionResponse); i {
+			case 0:
+				return &v.state
+			case 1:
+				return &v.sizeCache
+			case 2:
+				return &v.unknownFields
+			default:
+				return nil
+			}
+		}
+		file_buf_alpha_registry_v1alpha1_plugin_proto_msgTypes[52].Exporter = func(v interface{}, i int) interface{} {
+			switch v := v.(*SetTemplateContributorRequest); i {
+			case 0:
+				return &v.state
+			case 1:
+				return &v.sizeCache
+			case 2:
+				return &v.unknownFields
+			default:
+				return nil
+			}
+		}
+		file_buf_alpha_registry_v1alpha1_plugin_proto_msgTypes[53].Exporter = func(v interface{}, i int) interface{} {
+			switch v := v.(*SetTemplateContributorResponse); i {
+			case 0:
+				return &v.state
+			case 1:
+				return &v.sizeCache
+			case 2:
+				return &v.unknownFields
+			default:
+				return nil
+			}
+		}
+		file_buf_alpha_registry_v1alpha1_plugin_proto_msgTypes[54].Exporter = func(v interface{}, i int) interface{} {
+			switch v := v.(*ListTemplateContributorsRequest); i {
+			case 0:
+				return &v.state
+			case 1:
+				return &v.sizeCache
+			case 2:
+				return &v.unknownFields
+			default:
+				return nil
+			}
+		}
+		file_buf_alpha_registry_v1alpha1_plugin_proto_msgTypes[55].Exporter = func(v interface{}, i int) interface{} {
+			switch v := v.(*ListTemplateContributorsResponse); i {
+			case 0:
+				return &v.state
+			case 1:
+				return &v.sizeCache
+			case 2:
+				return &v.unknownFields
+			default:
+				return nil
+			}
+		}
+		file_buf_alpha_registry_v1alpha1_plugin_proto_msgTypes[56].Exporter = func(v interface{}, i int) interface{} {
+			switch v := v.(*DeprecateTemplateRequest); i {
+			case 0:
+				return &v.state
+			case 1:
+				return &v.sizeCache
+			case 2:
+				return &v.unknownFields
+			default:
+				return nil
+			}
+		}
+		file_buf_alpha_registry_v1alpha1_plugin_proto_msgTypes[57].Exporter = func(v interface{}, i int) interface{} {
+			switch v := v.(*DeprecateTemplateResponse); i {
+			case 0:
+				return &v.state
+			case 1:
+				return &v.sizeCache
+			case 2:
+				return &v.unknownFields
+			default:
+				return nil
+			}
+		}
+		file_buf_alpha_registry_v1alpha1_plugin_proto_msgTypes[58].Exporter = func(v interface{}, i int) interface{} {
+			switch v := v.(*UndeprecateTemplateRequest); i {
+			case 0:
+				return &v.state
+			case 1:
+				return &v.sizeCache
+			case 2:
+				return &v.unknownFields
+			default:
+				return nil
+			}
+		}
+		file_buf_alpha_registry_v1alpha1_plugin_proto_msgTypes[59].Exporter = func(v interface{}, i int) interface{} {
+			switch v := v.(*UndeprecateTemplateResponse); i {
+			case 0:
+				return &v.state
+			case 1:
+				return &v.sizeCache
+			case 2:
+				return &v.unknownFields
+			default:
+				return nil
+			}
+		}
+	}
+	type x struct{}
+	out := protoimpl.TypeBuilder{
+		File: protoimpl.DescBuilder{
+			GoPackagePath: reflect.TypeOf(x{}).PkgPath(),
+			RawDescriptor: file_buf_alpha_registry_v1alpha1_plugin_proto_rawDesc,
+			NumEnums:      1,
+			NumMessages:   60,
+			NumExtensions: 0,
+			NumServices:   1,
+		},
+		GoTypes:           file_buf_alpha_registry_v1alpha1_plugin_proto_goTypes,
+		D
