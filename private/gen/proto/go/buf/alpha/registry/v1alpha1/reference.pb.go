@@ -502,4 +502,102 @@ var file_buf_alpha_registry_v1alpha1_reference_proto_depIdxs = []int32{
 	4, // 8: buf.alpha.registry.v1alpha1.ReferenceService.GetReferenceByName:output_type -> buf.alpha.registry.v1alpha1.GetReferenceByNameResponse
 	8, // [8:9] is the sub-list for method output_type
 	7, // [7:8] is the sub-list for method input_type
-	7, // [7:7] is the sub-list for extension t
+	7, // [7:7] is the sub-list for extension type_name
+	7, // [7:7] is the sub-list for extension extendee
+	0, // [0:7] is the sub-list for field type_name
+}
+
+func init() { file_buf_alpha_registry_v1alpha1_reference_proto_init() }
+func file_buf_alpha_registry_v1alpha1_reference_proto_init() {
+	if File_buf_alpha_registry_v1alpha1_reference_proto != nil {
+		return
+	}
+	file_buf_alpha_registry_v1alpha1_repository_commit_proto_init()
+	file_buf_alpha_registry_v1alpha1_repository_tag_proto_init()
+	if !protoimpl.UnsafeEnabled {
+		file_buf_alpha_registry_v1alpha1_reference_proto_msgTypes[0].Exporter = func(v interface{}, i int) interface{} {
+			switch v := v.(*Reference); i {
+			case 0:
+				return &v.state
+			case 1:
+				return &v.sizeCache
+			case 2:
+				return &v.unknownFields
+			default:
+				return nil
+			}
+		}
+		file_buf_alpha_registry_v1alpha1_reference_proto_msgTypes[1].Exporter = func(v interface{}, i int) interface{} {
+			switch v := v.(*RepositoryMainReference); i {
+			case 0:
+				return &v.state
+			case 1:
+				return &v.sizeCache
+			case 2:
+				return &v.unknownFields
+			default:
+				return nil
+			}
+		}
+		file_buf_alpha_registry_v1alpha1_reference_proto_msgTypes[2].Exporter = func(v interface{}, i int) interface{} {
+			switch v := v.(*RepositoryDraft); i {
+			case 0:
+				return &v.state
+			case 1:
+				return &v.sizeCache
+			case 2:
+				return &v.unknownFields
+			default:
+				return nil
+			}
+		}
+		file_buf_alpha_registry_v1alpha1_reference_proto_msgTypes[3].Exporter = func(v interface{}, i int) interface{} {
+			switch v := v.(*GetReferenceByNameRequest); i {
+			case 0:
+				return &v.state
+			case 1:
+				return &v.sizeCache
+			case 2:
+				return &v.unknownFields
+			default:
+				return nil
+			}
+		}
+		file_buf_alpha_registry_v1alpha1_reference_proto_msgTypes[4].Exporter = func(v interface{}, i int) interface{} {
+			switch v := v.(*GetReferenceByNameResponse); i {
+			case 0:
+				return &v.state
+			case 1:
+				return &v.sizeCache
+			case 2:
+				return &v.unknownFields
+			default:
+				return nil
+			}
+		}
+	}
+	file_buf_alpha_registry_v1alpha1_reference_proto_msgTypes[0].OneofWrappers = []interface{}{
+		(*Reference_Tag)(nil),
+		(*Reference_Commit)(nil),
+		(*Reference_Main)(nil),
+		(*Reference_Draft)(nil),
+	}
+	type x struct{}
+	out := protoimpl.TypeBuilder{
+		File: protoimpl.DescBuilder{
+			GoPackagePath: reflect.TypeOf(x{}).PkgPath(),
+			RawDescriptor: file_buf_alpha_registry_v1alpha1_reference_proto_rawDesc,
+			NumEnums:      0,
+			NumMessages:   5,
+			NumExtensions: 0,
+			NumServices:   1,
+		},
+		GoTypes:           file_buf_alpha_registry_v1alpha1_reference_proto_goTypes,
+		DependencyIndexes: file_buf_alpha_registry_v1alpha1_reference_proto_depIdxs,
+		MessageInfos:      file_buf_alpha_registry_v1alpha1_reference_proto_msgTypes,
+	}.Build()
+	File_buf_alpha_registry_v1alpha1_reference_proto = out.File
+	file_buf_alpha_registry_v1alpha1_reference_proto_rawDesc = nil
+	file_buf_alpha_registry_v1alpha1_reference_proto_goTypes = nil
+	file_buf_alpha_registry_v1alpha1_reference_proto_depIdxs = nil
+}
