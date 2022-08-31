@@ -116,4 +116,117 @@ func (x *GetModulePinsRequest) Reset() {
 }
 
 func (x *GetModulePinsRequest) String() string {
-	return protoimpl.X.Messa
+	return protoimpl.X.MessageStringOf(x)
+}
+
+func (*GetModulePinsRequest) ProtoMessage() {}
+
+func (x *GetModulePinsRequest) ProtoReflect() protoreflect.Message {
+	mi := &file_buf_alpha_registry_v1alpha1_resolve_proto_msgTypes[0]
+	if protoimpl.UnsafeEnabled && x != nil {
+		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
+		if ms.LoadMessageInfo() == nil {
+			ms.StoreMessageInfo(mi)
+		}
+		return ms
+	}
+	return mi.MessageOf(x)
+}
+
+// Deprecated: Use GetModulePinsRequest.ProtoReflect.Descriptor instead.
+func (*GetModulePinsRequest) Descriptor() ([]byte, []int) {
+	return file_buf_alpha_registry_v1alpha1_resolve_proto_rawDescGZIP(), []int{0}
+}
+
+func (x *GetModulePinsRequest) GetModuleReferences() []*v1alpha1.ModuleReference {
+	if x != nil {
+		return x.ModuleReferences
+	}
+	return nil
+}
+
+func (x *GetModulePinsRequest) GetCurrentModulePins() []*v1alpha1.ModulePin {
+	if x != nil {
+		return x.CurrentModulePins
+	}
+	return nil
+}
+
+type GetModulePinsResponse struct {
+	state         protoimpl.MessageState
+	sizeCache     protoimpl.SizeCache
+	unknownFields protoimpl.UnknownFields
+
+	ModulePins []*v1alpha1.ModulePin `protobuf:"bytes,1,rep,name=module_pins,json=modulePins,proto3" json:"module_pins,omitempty"`
+}
+
+func (x *GetModulePinsResponse) Reset() {
+	*x = GetModulePinsResponse{}
+	if protoimpl.UnsafeEnabled {
+		mi := &file_buf_alpha_registry_v1alpha1_resolve_proto_msgTypes[1]
+		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
+		ms.StoreMessageInfo(mi)
+	}
+}
+
+func (x *GetModulePinsResponse) String() string {
+	return protoimpl.X.MessageStringOf(x)
+}
+
+func (*GetModulePinsResponse) ProtoMessage() {}
+
+func (x *GetModulePinsResponse) ProtoReflect() protoreflect.Message {
+	mi := &file_buf_alpha_registry_v1alpha1_resolve_proto_msgTypes[1]
+	if protoimpl.UnsafeEnabled && x != nil {
+		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
+		if ms.LoadMessageInfo() == nil {
+			ms.StoreMessageInfo(mi)
+		}
+		return ms
+	}
+	return mi.MessageOf(x)
+}
+
+// Deprecated: Use GetModulePinsResponse.ProtoReflect.Descriptor instead.
+func (*GetModulePinsResponse) Descriptor() ([]byte, []int) {
+	return file_buf_alpha_registry_v1alpha1_resolve_proto_rawDescGZIP(), []int{1}
+}
+
+func (x *GetModulePinsResponse) GetModulePins() []*v1alpha1.ModulePin {
+	if x != nil {
+		return x.ModulePins
+	}
+	return nil
+}
+
+type GetLocalModulePinsRequest struct {
+	state         protoimpl.MessageState
+	sizeCache     protoimpl.SizeCache
+	unknownFields protoimpl.UnknownFields
+
+	LocalModuleReferences []*LocalModuleReference `protobuf:"bytes,1,rep,name=local_module_references,json=localModuleReferences,proto3" json:"local_module_references,omitempty"`
+}
+
+func (x *GetLocalModulePinsRequest) Reset() {
+	*x = GetLocalModulePinsRequest{}
+	if protoimpl.UnsafeEnabled {
+		mi := &file_buf_alpha_registry_v1alpha1_resolve_proto_msgTypes[2]
+		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
+		ms.StoreMessageInfo(mi)
+	}
+}
+
+func (x *GetLocalModulePinsRequest) String() string {
+	return protoimpl.X.MessageStringOf(x)
+}
+
+func (*GetLocalModulePinsRequest) ProtoMessage() {}
+
+func (x *GetLocalModulePinsRequest) ProtoReflect() protoreflect.Message {
+	mi := &file_buf_alpha_registry_v1alpha1_resolve_proto_msgTypes[2]
+	if protoimpl.UnsafeEnabled && x != nil {
+		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
+		if ms.LoadMessageInfo() == nil {
+			ms.StoreMessageInfo(mi)
+		}
+		r
