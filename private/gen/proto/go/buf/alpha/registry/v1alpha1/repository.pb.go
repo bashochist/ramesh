@@ -3540,3 +3540,73 @@ func file_buf_alpha_registry_v1alpha1_repository_proto_init() {
 			switch v := v.(*UpdateRepositorySettingsByNameRequest); i {
 			case 0:
 				return &v.state
+			case 1:
+				return &v.sizeCache
+			case 2:
+				return &v.unknownFields
+			default:
+				return nil
+			}
+		}
+		file_buf_alpha_registry_v1alpha1_repository_proto_msgTypes[37].Exporter = func(v interface{}, i int) interface{} {
+			switch v := v.(*UpdateRepositorySettingsByNameResponse); i {
+			case 0:
+				return &v.state
+			case 1:
+				return &v.sizeCache
+			case 2:
+				return &v.unknownFields
+			default:
+				return nil
+			}
+		}
+		file_buf_alpha_registry_v1alpha1_repository_proto_msgTypes[38].Exporter = func(v interface{}, i int) interface{} {
+			switch v := v.(*GetRepositoriesMetadataRequest); i {
+			case 0:
+				return &v.state
+			case 1:
+				return &v.sizeCache
+			case 2:
+				return &v.unknownFields
+			default:
+				return nil
+			}
+		}
+		file_buf_alpha_registry_v1alpha1_repository_proto_msgTypes[39].Exporter = func(v interface{}, i int) interface{} {
+			switch v := v.(*GetRepositoriesMetadataResponse); i {
+			case 0:
+				return &v.state
+			case 1:
+				return &v.sizeCache
+			case 2:
+				return &v.unknownFields
+			default:
+				return nil
+			}
+		}
+	}
+	file_buf_alpha_registry_v1alpha1_repository_proto_msgTypes[0].OneofWrappers = []interface{}{
+		(*Repository_UserId)(nil),
+		(*Repository_OrganizationId)(nil),
+	}
+	file_buf_alpha_registry_v1alpha1_repository_proto_msgTypes[36].OneofWrappers = []interface{}{}
+	type x struct{}
+	out := protoimpl.TypeBuilder{
+		File: protoimpl.DescBuilder{
+			GoPackagePath: reflect.TypeOf(x{}).PkgPath(),
+			RawDescriptor: file_buf_alpha_registry_v1alpha1_repository_proto_rawDesc,
+			NumEnums:      1,
+			NumMessages:   40,
+			NumExtensions: 0,
+			NumServices:   1,
+		},
+		GoTypes:           file_buf_alpha_registry_v1alpha1_repository_proto_goTypes,
+		DependencyIndexes: file_buf_alpha_registry_v1alpha1_repository_proto_depIdxs,
+		EnumInfos:         file_buf_alpha_registry_v1alpha1_repository_proto_enumTypes,
+		MessageInfos:      file_buf_alpha_registry_v1alpha1_repository_proto_msgTypes,
+	}.Build()
+	File_buf_alpha_registry_v1alpha1_repository_proto = out.File
+	file_buf_alpha_registry_v1alpha1_repository_proto_rawDesc = nil
+	file_buf_alpha_registry_v1alpha1_repository_proto_goTypes = nil
+	file_buf_alpha_registry_v1alpha1_repository_proto_depIdxs = nil
+}
