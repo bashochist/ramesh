@@ -459,4 +459,47 @@ var file_buf_alpha_registry_v1alpha1_reference_proto_rawDesc = []byte{
 	0x76, 0x31, 0x61, 0x6c, 0x70, 0x68, 0x61, 0x31, 0xa2, 0x02, 0x03, 0x42, 0x41, 0x52, 0xaa, 0x02,
 	0x1b, 0x42, 0x75, 0x66, 0x2e, 0x41, 0x6c, 0x70, 0x68, 0x61, 0x2e, 0x52, 0x65, 0x67, 0x69, 0x73,
 	0x74, 0x72, 0x79, 0x2e, 0x56, 0x31, 0x61, 0x6c, 0x70, 0x68, 0x61, 0x31, 0xca, 0x02, 0x1b, 0x42,
-	0x75, 0x66, 0x5c, 0x41, 0x6c, 0x70, 0x68, 0x61, 0x5c, 0x52, 0x65, 0x67, 0x69, 0
+	0x75, 0x66, 0x5c, 0x41, 0x6c, 0x70, 0x68, 0x61, 0x5c, 0x52, 0x65, 0x67, 0x69, 0x73, 0x74, 0x72,
+	0x79, 0x5c, 0x56, 0x31, 0x61, 0x6c, 0x70, 0x68, 0x61, 0x31, 0xe2, 0x02, 0x27, 0x42, 0x75, 0x66,
+	0x5c, 0x41, 0x6c, 0x70, 0x68, 0x61, 0x5c, 0x52, 0x65, 0x67, 0x69, 0x73, 0x74, 0x72, 0x79, 0x5c,
+	0x56, 0x31, 0x61, 0x6c, 0x70, 0x68, 0x61, 0x31, 0x5c, 0x47, 0x50, 0x42, 0x4d, 0x65, 0x74, 0x61,
+	0x64, 0x61, 0x74, 0x61, 0xea, 0x02, 0x1e, 0x42, 0x75, 0x66, 0x3a, 0x3a, 0x41, 0x6c, 0x70, 0x68,
+	0x61, 0x3a, 0x3a, 0x52, 0x65, 0x67, 0x69, 0x73, 0x74, 0x72, 0x79, 0x3a, 0x3a, 0x56, 0x31, 0x61,
+	0x6c, 0x70, 0x68, 0x61, 0x31, 0x62, 0x06, 0x70, 0x72, 0x6f, 0x74, 0x6f, 0x33,
+}
+
+var (
+	file_buf_alpha_registry_v1alpha1_reference_proto_rawDescOnce sync.Once
+	file_buf_alpha_registry_v1alpha1_reference_proto_rawDescData = file_buf_alpha_registry_v1alpha1_reference_proto_rawDesc
+)
+
+func file_buf_alpha_registry_v1alpha1_reference_proto_rawDescGZIP() []byte {
+	file_buf_alpha_registry_v1alpha1_reference_proto_rawDescOnce.Do(func() {
+		file_buf_alpha_registry_v1alpha1_reference_proto_rawDescData = protoimpl.X.CompressGZIP(file_buf_alpha_registry_v1alpha1_reference_proto_rawDescData)
+	})
+	return file_buf_alpha_registry_v1alpha1_reference_proto_rawDescData
+}
+
+var file_buf_alpha_registry_v1alpha1_reference_proto_msgTypes = make([]protoimpl.MessageInfo, 5)
+var file_buf_alpha_registry_v1alpha1_reference_proto_goTypes = []interface{}{
+	(*Reference)(nil),                  // 0: buf.alpha.registry.v1alpha1.Reference
+	(*RepositoryMainReference)(nil),    // 1: buf.alpha.registry.v1alpha1.RepositoryMainReference
+	(*RepositoryDraft)(nil),            // 2: buf.alpha.registry.v1alpha1.RepositoryDraft
+	(*GetReferenceByNameRequest)(nil),  // 3: buf.alpha.registry.v1alpha1.GetReferenceByNameRequest
+	(*GetReferenceByNameResponse)(nil), // 4: buf.alpha.registry.v1alpha1.GetReferenceByNameResponse
+	(*RepositoryTag)(nil),              // 5: buf.alpha.registry.v1alpha1.RepositoryTag
+	(*RepositoryCommit)(nil),           // 6: buf.alpha.registry.v1alpha1.RepositoryCommit
+}
+var file_buf_alpha_registry_v1alpha1_reference_proto_depIdxs = []int32{
+	5, // 0: buf.alpha.registry.v1alpha1.Reference.tag:type_name -> buf.alpha.registry.v1alpha1.RepositoryTag
+	6, // 1: buf.alpha.registry.v1alpha1.Reference.commit:type_name -> buf.alpha.registry.v1alpha1.RepositoryCommit
+	1, // 2: buf.alpha.registry.v1alpha1.Reference.main:type_name -> buf.alpha.registry.v1alpha1.RepositoryMainReference
+	2, // 3: buf.alpha.registry.v1alpha1.Reference.draft:type_name -> buf.alpha.registry.v1alpha1.RepositoryDraft
+	6, // 4: buf.alpha.registry.v1alpha1.RepositoryMainReference.commit:type_name -> buf.alpha.registry.v1alpha1.RepositoryCommit
+	6, // 5: buf.alpha.registry.v1alpha1.RepositoryDraft.commit:type_name -> buf.alpha.registry.v1alpha1.RepositoryCommit
+	0, // 6: buf.alpha.registry.v1alpha1.GetReferenceByNameResponse.reference:type_name -> buf.alpha.registry.v1alpha1.Reference
+	3, // 7: buf.alpha.registry.v1alpha1.ReferenceService.GetReferenceByName:input_type -> buf.alpha.registry.v1alpha1.GetReferenceByNameRequest
+	4, // 8: buf.alpha.registry.v1alpha1.ReferenceService.GetReferenceByName:output_type -> buf.alpha.registry.v1alpha1.GetReferenceByNameResponse
+	8, // [8:9] is the sub-list for method output_type
+	7, // [7:8] is the sub-list for method input_type
+	7, // [7:7] is the sub-list for extension t
