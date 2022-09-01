@@ -229,4 +229,102 @@ func (x *GetLocalModulePinsRequest) ProtoReflect() protoreflect.Message {
 		if ms.LoadMessageInfo() == nil {
 			ms.StoreMessageInfo(mi)
 		}
-		r
+		return ms
+	}
+	return mi.MessageOf(x)
+}
+
+// Deprecated: Use GetLocalModulePinsRequest.ProtoReflect.Descriptor instead.
+func (*GetLocalModulePinsRequest) Descriptor() ([]byte, []int) {
+	return file_buf_alpha_registry_v1alpha1_resolve_proto_rawDescGZIP(), []int{2}
+}
+
+func (x *GetLocalModulePinsRequest) GetLocalModuleReferences() []*LocalModuleReference {
+	if x != nil {
+		return x.LocalModuleReferences
+	}
+	return nil
+}
+
+type LocalModuleResolveResult struct {
+	state         protoimpl.MessageState
+	sizeCache     protoimpl.SizeCache
+	unknownFields protoimpl.UnknownFields
+
+	// A copy of the reference that was resolved.
+	Reference *LocalModuleReference `protobuf:"bytes,1,opt,name=reference,proto3" json:"reference,omitempty"`
+	// The pin the reference resolved to.
+	Pin *LocalModulePin `protobuf:"bytes,2,opt,name=pin,proto3" json:"pin,omitempty"`
+	// The type the reference resolved as.
+	ResolvedReferenceType ResolvedReferenceType `protobuf:"varint,3,opt,name=resolved_reference_type,json=resolvedReferenceType,proto3,enum=buf.alpha.registry.v1alpha1.ResolvedReferenceType" json:"resolved_reference_type,omitempty"`
+}
+
+func (x *LocalModuleResolveResult) Reset() {
+	*x = LocalModuleResolveResult{}
+	if protoimpl.UnsafeEnabled {
+		mi := &file_buf_alpha_registry_v1alpha1_resolve_proto_msgTypes[3]
+		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
+		ms.StoreMessageInfo(mi)
+	}
+}
+
+func (x *LocalModuleResolveResult) String() string {
+	return protoimpl.X.MessageStringOf(x)
+}
+
+func (*LocalModuleResolveResult) ProtoMessage() {}
+
+func (x *LocalModuleResolveResult) ProtoReflect() protoreflect.Message {
+	mi := &file_buf_alpha_registry_v1alpha1_resolve_proto_msgTypes[3]
+	if protoimpl.UnsafeEnabled && x != nil {
+		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
+		if ms.LoadMessageInfo() == nil {
+			ms.StoreMessageInfo(mi)
+		}
+		return ms
+	}
+	return mi.MessageOf(x)
+}
+
+// Deprecated: Use LocalModuleResolveResult.ProtoReflect.Descriptor instead.
+func (*LocalModuleResolveResult) Descriptor() ([]byte, []int) {
+	return file_buf_alpha_registry_v1alpha1_resolve_proto_rawDescGZIP(), []int{3}
+}
+
+func (x *LocalModuleResolveResult) GetReference() *LocalModuleReference {
+	if x != nil {
+		return x.Reference
+	}
+	return nil
+}
+
+func (x *LocalModuleResolveResult) GetPin() *LocalModulePin {
+	if x != nil {
+		return x.Pin
+	}
+	return nil
+}
+
+func (x *LocalModuleResolveResult) GetResolvedReferenceType() ResolvedReferenceType {
+	if x != nil {
+		return x.ResolvedReferenceType
+	}
+	return ResolvedReferenceType_RESOLVED_REFERENCE_TYPE_UNSPECIFIED
+}
+
+type GetLocalModulePinsResponse struct {
+	state         protoimpl.MessageState
+	sizeCache     protoimpl.SizeCache
+	unknownFields protoimpl.UnknownFields
+
+	LocalModuleResolveResults []*LocalModuleResolveResult `protobuf:"bytes,1,rep,name=local_module_resolve_results,json=localModuleResolveResults,proto3" json:"local_module_resolve_results,omitempty"`
+	// dependencies are the dependencies of the LocalModulePins.
+	//
+	// This includes the transitive deps.
+	Dependencies []*v1alpha1.ModulePin `protobuf:"bytes,2,rep,name=dependencies,proto3" json:"dependencies,omitempty"`
+}
+
+func (x *GetLocalModulePinsResponse) Reset() {
+	*x = GetLocalModulePinsResponse{}
+	if protoimpl.UnsafeEnabled {
+		mi := &file_buf_alpha_registry_v1alpha1_re
