@@ -535,4 +535,99 @@ var file_buf_alpha_registry_v1alpha1_resolve_proto_depIdxs = []int32{
 	1,  // 9: buf.alpha.registry.v1alpha1.ResolveService.GetModulePins:input_type -> buf.alpha.registry.v1alpha1.GetModulePinsRequest
 	3,  // 10: buf.alpha.registry.v1alpha1.LocalResolveService.GetLocalModulePins:input_type -> buf.alpha.registry.v1alpha1.GetLocalModulePinsRequest
 	2,  // 11: buf.alpha.registry.v1alpha1.ResolveService.GetModulePins:output_type -> buf.alpha.registry.v1alpha1.GetModulePinsResponse
-	5,  // 12: buf.alpha.registry.v1alpha1.L
+	5,  // 12: buf.alpha.registry.v1alpha1.LocalResolveService.GetLocalModulePins:output_type -> buf.alpha.registry.v1alpha1.GetLocalModulePinsResponse
+	11, // [11:13] is the sub-list for method output_type
+	9,  // [9:11] is the sub-list for method input_type
+	9,  // [9:9] is the sub-list for extension type_name
+	9,  // [9:9] is the sub-list for extension extendee
+	0,  // [0:9] is the sub-list for field type_name
+}
+
+func init() { file_buf_alpha_registry_v1alpha1_resolve_proto_init() }
+func file_buf_alpha_registry_v1alpha1_resolve_proto_init() {
+	if File_buf_alpha_registry_v1alpha1_resolve_proto != nil {
+		return
+	}
+	file_buf_alpha_registry_v1alpha1_module_proto_init()
+	if !protoimpl.UnsafeEnabled {
+		file_buf_alpha_registry_v1alpha1_resolve_proto_msgTypes[0].Exporter = func(v interface{}, i int) interface{} {
+			switch v := v.(*GetModulePinsRequest); i {
+			case 0:
+				return &v.state
+			case 1:
+				return &v.sizeCache
+			case 2:
+				return &v.unknownFields
+			default:
+				return nil
+			}
+		}
+		file_buf_alpha_registry_v1alpha1_resolve_proto_msgTypes[1].Exporter = func(v interface{}, i int) interface{} {
+			switch v := v.(*GetModulePinsResponse); i {
+			case 0:
+				return &v.state
+			case 1:
+				return &v.sizeCache
+			case 2:
+				return &v.unknownFields
+			default:
+				return nil
+			}
+		}
+		file_buf_alpha_registry_v1alpha1_resolve_proto_msgTypes[2].Exporter = func(v interface{}, i int) interface{} {
+			switch v := v.(*GetLocalModulePinsRequest); i {
+			case 0:
+				return &v.state
+			case 1:
+				return &v.sizeCache
+			case 2:
+				return &v.unknownFields
+			default:
+				return nil
+			}
+		}
+		file_buf_alpha_registry_v1alpha1_resolve_proto_msgTypes[3].Exporter = func(v interface{}, i int) interface{} {
+			switch v := v.(*LocalModuleResolveResult); i {
+			case 0:
+				return &v.state
+			case 1:
+				return &v.sizeCache
+			case 2:
+				return &v.unknownFields
+			default:
+				return nil
+			}
+		}
+		file_buf_alpha_registry_v1alpha1_resolve_proto_msgTypes[4].Exporter = func(v interface{}, i int) interface{} {
+			switch v := v.(*GetLocalModulePinsResponse); i {
+			case 0:
+				return &v.state
+			case 1:
+				return &v.sizeCache
+			case 2:
+				return &v.unknownFields
+			default:
+				return nil
+			}
+		}
+	}
+	type x struct{}
+	out := protoimpl.TypeBuilder{
+		File: protoimpl.DescBuilder{
+			GoPackagePath: reflect.TypeOf(x{}).PkgPath(),
+			RawDescriptor: file_buf_alpha_registry_v1alpha1_resolve_proto_rawDesc,
+			NumEnums:      1,
+			NumMessages:   5,
+			NumExtensions: 0,
+			NumServices:   2,
+		},
+		GoTypes:           file_buf_alpha_registry_v1alpha1_resolve_proto_goTypes,
+		DependencyIndexes: file_buf_alpha_registry_v1alpha1_resolve_proto_depIdxs,
+		EnumInfos:         file_buf_alpha_registry_v1alpha1_resolve_proto_enumTypes,
+		MessageInfos:      file_buf_alpha_registry_v1alpha1_resolve_proto_msgTypes,
+	}.Build()
+	File_buf_alpha_registry_v1alpha1_resolve_proto = out.File
+	file_buf_alpha_registry_v1alpha1_resolve_proto_rawDesc = nil
+	file_buf_alpha_registry_v1alpha1_resolve_proto_goTypes = nil
+	file_buf_alpha_registry_v1alpha1_resolve_proto_depIdxs = nil
+}
