@@ -498,4 +498,41 @@ var file_buf_alpha_registry_v1alpha1_resolve_proto_rawDesc = []byte{
 
 var (
 	file_buf_alpha_registry_v1alpha1_resolve_proto_rawDescOnce sync.Once
-	file_buf_alpha_registry_v1alpha1_resolve_proto_rawDescData = file_buf_alpha_registry_v1alpha1
+	file_buf_alpha_registry_v1alpha1_resolve_proto_rawDescData = file_buf_alpha_registry_v1alpha1_resolve_proto_rawDesc
+)
+
+func file_buf_alpha_registry_v1alpha1_resolve_proto_rawDescGZIP() []byte {
+	file_buf_alpha_registry_v1alpha1_resolve_proto_rawDescOnce.Do(func() {
+		file_buf_alpha_registry_v1alpha1_resolve_proto_rawDescData = protoimpl.X.CompressGZIP(file_buf_alpha_registry_v1alpha1_resolve_proto_rawDescData)
+	})
+	return file_buf_alpha_registry_v1alpha1_resolve_proto_rawDescData
+}
+
+var file_buf_alpha_registry_v1alpha1_resolve_proto_enumTypes = make([]protoimpl.EnumInfo, 1)
+var file_buf_alpha_registry_v1alpha1_resolve_proto_msgTypes = make([]protoimpl.MessageInfo, 5)
+var file_buf_alpha_registry_v1alpha1_resolve_proto_goTypes = []interface{}{
+	(ResolvedReferenceType)(0),         // 0: buf.alpha.registry.v1alpha1.ResolvedReferenceType
+	(*GetModulePinsRequest)(nil),       // 1: buf.alpha.registry.v1alpha1.GetModulePinsRequest
+	(*GetModulePinsResponse)(nil),      // 2: buf.alpha.registry.v1alpha1.GetModulePinsResponse
+	(*GetLocalModulePinsRequest)(nil),  // 3: buf.alpha.registry.v1alpha1.GetLocalModulePinsRequest
+	(*LocalModuleResolveResult)(nil),   // 4: buf.alpha.registry.v1alpha1.LocalModuleResolveResult
+	(*GetLocalModulePinsResponse)(nil), // 5: buf.alpha.registry.v1alpha1.GetLocalModulePinsResponse
+	(*v1alpha1.ModuleReference)(nil),   // 6: buf.alpha.module.v1alpha1.ModuleReference
+	(*v1alpha1.ModulePin)(nil),         // 7: buf.alpha.module.v1alpha1.ModulePin
+	(*LocalModuleReference)(nil),       // 8: buf.alpha.registry.v1alpha1.LocalModuleReference
+	(*LocalModulePin)(nil),             // 9: buf.alpha.registry.v1alpha1.LocalModulePin
+}
+var file_buf_alpha_registry_v1alpha1_resolve_proto_depIdxs = []int32{
+	6,  // 0: buf.alpha.registry.v1alpha1.GetModulePinsRequest.module_references:type_name -> buf.alpha.module.v1alpha1.ModuleReference
+	7,  // 1: buf.alpha.registry.v1alpha1.GetModulePinsRequest.current_module_pins:type_name -> buf.alpha.module.v1alpha1.ModulePin
+	7,  // 2: buf.alpha.registry.v1alpha1.GetModulePinsResponse.module_pins:type_name -> buf.alpha.module.v1alpha1.ModulePin
+	8,  // 3: buf.alpha.registry.v1alpha1.GetLocalModulePinsRequest.local_module_references:type_name -> buf.alpha.registry.v1alpha1.LocalModuleReference
+	8,  // 4: buf.alpha.registry.v1alpha1.LocalModuleResolveResult.reference:type_name -> buf.alpha.registry.v1alpha1.LocalModuleReference
+	9,  // 5: buf.alpha.registry.v1alpha1.LocalModuleResolveResult.pin:type_name -> buf.alpha.registry.v1alpha1.LocalModulePin
+	0,  // 6: buf.alpha.registry.v1alpha1.LocalModuleResolveResult.resolved_reference_type:type_name -> buf.alpha.registry.v1alpha1.ResolvedReferenceType
+	4,  // 7: buf.alpha.registry.v1alpha1.GetLocalModulePinsResponse.local_module_resolve_results:type_name -> buf.alpha.registry.v1alpha1.LocalModuleResolveResult
+	7,  // 8: buf.alpha.registry.v1alpha1.GetLocalModulePinsResponse.dependencies:type_name -> buf.alpha.module.v1alpha1.ModulePin
+	1,  // 9: buf.alpha.registry.v1alpha1.ResolveService.GetModulePins:input_type -> buf.alpha.registry.v1alpha1.GetModulePinsRequest
+	3,  // 10: buf.alpha.registry.v1alpha1.LocalResolveService.GetLocalModulePins:input_type -> buf.alpha.registry.v1alpha1.GetLocalModulePinsRequest
+	2,  // 11: buf.alpha.registry.v1alpha1.ResolveService.GetModulePins:output_type -> buf.alpha.registry.v1alpha1.GetModulePinsResponse
+	5,  // 12: buf.alpha.registry.v1alpha1.L
