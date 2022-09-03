@@ -98,4 +98,107 @@ const (
 // Enum value maps for OrganizationRole.
 var (
 	OrganizationRole_name = map[int32]string{
-		0: "ORGANIZATION_ROLE_UNSPECIF
+		0: "ORGANIZATION_ROLE_UNSPECIFIED",
+		1: "ORGANIZATION_ROLE_OWNER",
+		2: "ORGANIZATION_ROLE_ADMIN",
+		3: "ORGANIZATION_ROLE_MEMBER",
+		4: "ORGANIZATION_ROLE_MACHINE",
+	}
+	OrganizationRole_value = map[string]int32{
+		"ORGANIZATION_ROLE_UNSPECIFIED": 0,
+		"ORGANIZATION_ROLE_OWNER":       1,
+		"ORGANIZATION_ROLE_ADMIN":       2,
+		"ORGANIZATION_ROLE_MEMBER":      3,
+		"ORGANIZATION_ROLE_MACHINE":     4,
+	}
+)
+
+func (x OrganizationRole) Enum() *OrganizationRole {
+	p := new(OrganizationRole)
+	*p = x
+	return p
+}
+
+func (x OrganizationRole) String() string {
+	return protoimpl.X.EnumStringOf(x.Descriptor(), protoreflect.EnumNumber(x))
+}
+
+func (OrganizationRole) Descriptor() protoreflect.EnumDescriptor {
+	return file_buf_alpha_registry_v1alpha1_role_proto_enumTypes[1].Descriptor()
+}
+
+func (OrganizationRole) Type() protoreflect.EnumType {
+	return &file_buf_alpha_registry_v1alpha1_role_proto_enumTypes[1]
+}
+
+func (x OrganizationRole) Number() protoreflect.EnumNumber {
+	return protoreflect.EnumNumber(x)
+}
+
+// Deprecated: Use OrganizationRole.Descriptor instead.
+func (OrganizationRole) EnumDescriptor() ([]byte, []int) {
+	return file_buf_alpha_registry_v1alpha1_role_proto_rawDescGZIP(), []int{1}
+}
+
+// The source of a user's role in an Organization.
+type OrganizationRoleSource int32
+
+const (
+	OrganizationRoleSource_ORGANIZATION_ROLE_SOURCE_UNSPECIFIED OrganizationRoleSource = 0
+	OrganizationRoleSource_ORGANIZATION_ROLE_SOURCE_DIRECT      OrganizationRoleSource = 1
+	OrganizationRoleSource_ORGANIZATION_ROLE_SOURCE_JIT         OrganizationRoleSource = 2
+	OrganizationRoleSource_ORGANIZATION_ROLE_SOURCE_IDP_GROUP   OrganizationRoleSource = 3
+)
+
+// Enum value maps for OrganizationRoleSource.
+var (
+	OrganizationRoleSource_name = map[int32]string{
+		0: "ORGANIZATION_ROLE_SOURCE_UNSPECIFIED",
+		1: "ORGANIZATION_ROLE_SOURCE_DIRECT",
+		2: "ORGANIZATION_ROLE_SOURCE_JIT",
+		3: "ORGANIZATION_ROLE_SOURCE_IDP_GROUP",
+	}
+	OrganizationRoleSource_value = map[string]int32{
+		"ORGANIZATION_ROLE_SOURCE_UNSPECIFIED": 0,
+		"ORGANIZATION_ROLE_SOURCE_DIRECT":      1,
+		"ORGANIZATION_ROLE_SOURCE_JIT":         2,
+		"ORGANIZATION_ROLE_SOURCE_IDP_GROUP":   3,
+	}
+)
+
+func (x OrganizationRoleSource) Enum() *OrganizationRoleSource {
+	p := new(OrganizationRoleSource)
+	*p = x
+	return p
+}
+
+func (x OrganizationRoleSource) String() string {
+	return protoimpl.X.EnumStringOf(x.Descriptor(), protoreflect.EnumNumber(x))
+}
+
+func (OrganizationRoleSource) Descriptor() protoreflect.EnumDescriptor {
+	return file_buf_alpha_registry_v1alpha1_role_proto_enumTypes[2].Descriptor()
+}
+
+func (OrganizationRoleSource) Type() protoreflect.EnumType {
+	return &file_buf_alpha_registry_v1alpha1_role_proto_enumTypes[2]
+}
+
+func (x OrganizationRoleSource) Number() protoreflect.EnumNumber {
+	return protoreflect.EnumNumber(x)
+}
+
+// Deprecated: Use OrganizationRoleSource.Descriptor instead.
+func (OrganizationRoleSource) EnumDescriptor() ([]byte, []int) {
+	return file_buf_alpha_registry_v1alpha1_role_proto_rawDescGZIP(), []int{2}
+}
+
+// The roles that users can have for a Repository.
+type RepositoryRole int32
+
+const (
+	RepositoryRole_REPOSITORY_ROLE_UNSPECIFIED   RepositoryRole = 0
+	RepositoryRole_REPOSITORY_ROLE_OWNER         RepositoryRole = 1
+	RepositoryRole_REPOSITORY_ROLE_ADMIN         RepositoryRole = 2
+	RepositoryRole_REPOSITORY_ROLE_WRITE         RepositoryRole = 3
+	RepositoryR
