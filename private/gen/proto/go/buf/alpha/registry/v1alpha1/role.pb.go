@@ -201,4 +201,121 @@ const (
 	RepositoryRole_REPOSITORY_ROLE_OWNER         RepositoryRole = 1
 	RepositoryRole_REPOSITORY_ROLE_ADMIN         RepositoryRole = 2
 	RepositoryRole_REPOSITORY_ROLE_WRITE         RepositoryRole = 3
-	RepositoryR
+	RepositoryRole_REPOSITORY_ROLE_READ          RepositoryRole = 4
+	RepositoryRole_REPOSITORY_ROLE_LIMITED_WRITE RepositoryRole = 5
+)
+
+// Enum value maps for RepositoryRole.
+var (
+	RepositoryRole_name = map[int32]string{
+		0: "REPOSITORY_ROLE_UNSPECIFIED",
+		1: "REPOSITORY_ROLE_OWNER",
+		2: "REPOSITORY_ROLE_ADMIN",
+		3: "REPOSITORY_ROLE_WRITE",
+		4: "REPOSITORY_ROLE_READ",
+		5: "REPOSITORY_ROLE_LIMITED_WRITE",
+	}
+	RepositoryRole_value = map[string]int32{
+		"REPOSITORY_ROLE_UNSPECIFIED":   0,
+		"REPOSITORY_ROLE_OWNER":         1,
+		"REPOSITORY_ROLE_ADMIN":         2,
+		"REPOSITORY_ROLE_WRITE":         3,
+		"REPOSITORY_ROLE_READ":          4,
+		"REPOSITORY_ROLE_LIMITED_WRITE": 5,
+	}
+)
+
+func (x RepositoryRole) Enum() *RepositoryRole {
+	p := new(RepositoryRole)
+	*p = x
+	return p
+}
+
+func (x RepositoryRole) String() string {
+	return protoimpl.X.EnumStringOf(x.Descriptor(), protoreflect.EnumNumber(x))
+}
+
+func (RepositoryRole) Descriptor() protoreflect.EnumDescriptor {
+	return file_buf_alpha_registry_v1alpha1_role_proto_enumTypes[3].Descriptor()
+}
+
+func (RepositoryRole) Type() protoreflect.EnumType {
+	return &file_buf_alpha_registry_v1alpha1_role_proto_enumTypes[3]
+}
+
+func (x RepositoryRole) Number() protoreflect.EnumNumber {
+	return protoreflect.EnumNumber(x)
+}
+
+// Deprecated: Use RepositoryRole.Descriptor instead.
+func (RepositoryRole) EnumDescriptor() ([]byte, []int) {
+	return file_buf_alpha_registry_v1alpha1_role_proto_rawDescGZIP(), []int{3}
+}
+
+// The roles that users can have for a Template.
+//
+// Deprecated: Marked as deprecated in buf/alpha/registry/v1alpha1/role.proto.
+type TemplateRole int32
+
+const (
+	TemplateRole_TEMPLATE_ROLE_UNSPECIFIED TemplateRole = 0
+	TemplateRole_TEMPLATE_ROLE_OWNER       TemplateRole = 1
+	TemplateRole_TEMPLATE_ROLE_ADMIN       TemplateRole = 2
+	TemplateRole_TEMPLATE_ROLE_WRITE       TemplateRole = 3
+	TemplateRole_TEMPLATE_ROLE_READ        TemplateRole = 4
+)
+
+// Enum value maps for TemplateRole.
+var (
+	TemplateRole_name = map[int32]string{
+		0: "TEMPLATE_ROLE_UNSPECIFIED",
+		1: "TEMPLATE_ROLE_OWNER",
+		2: "TEMPLATE_ROLE_ADMIN",
+		3: "TEMPLATE_ROLE_WRITE",
+		4: "TEMPLATE_ROLE_READ",
+	}
+	TemplateRole_value = map[string]int32{
+		"TEMPLATE_ROLE_UNSPECIFIED": 0,
+		"TEMPLATE_ROLE_OWNER":       1,
+		"TEMPLATE_ROLE_ADMIN":       2,
+		"TEMPLATE_ROLE_WRITE":       3,
+		"TEMPLATE_ROLE_READ":        4,
+	}
+)
+
+func (x TemplateRole) Enum() *TemplateRole {
+	p := new(TemplateRole)
+	*p = x
+	return p
+}
+
+func (x TemplateRole) String() string {
+	return protoimpl.X.EnumStringOf(x.Descriptor(), protoreflect.EnumNumber(x))
+}
+
+func (TemplateRole) Descriptor() protoreflect.EnumDescriptor {
+	return file_buf_alpha_registry_v1alpha1_role_proto_enumTypes[4].Descriptor()
+}
+
+func (TemplateRole) Type() protoreflect.EnumType {
+	return &file_buf_alpha_registry_v1alpha1_role_proto_enumTypes[4]
+}
+
+func (x TemplateRole) Number() protoreflect.EnumNumber {
+	return protoreflect.EnumNumber(x)
+}
+
+// Deprecated: Use TemplateRole.Descriptor instead.
+func (TemplateRole) EnumDescriptor() ([]byte, []int) {
+	return file_buf_alpha_registry_v1alpha1_role_proto_rawDescGZIP(), []int{4}
+}
+
+// The roles that users can have for a Plugin.
+//
+// Deprecated: Marked as deprecated in buf/alpha/registry/v1alpha1/role.proto.
+type PluginRole int32
+
+const (
+	PluginRole_PLUGIN_ROLE_UNSPECIFIED PluginRole = 0
+	PluginRole_PLUGIN_ROLE_OWNER       PluginRole = 1
+	P
