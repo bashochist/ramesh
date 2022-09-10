@@ -460,4 +460,50 @@ var (
 )
 
 func file_buf_alpha_registry_v1alpha1_role_proto_rawDescGZIP() []byte {
-	file_buf_alpha_registry_v1alpha1_role_proto_rawDescOnce.Do(func(
+	file_buf_alpha_registry_v1alpha1_role_proto_rawDescOnce.Do(func() {
+		file_buf_alpha_registry_v1alpha1_role_proto_rawDescData = protoimpl.X.CompressGZIP(file_buf_alpha_registry_v1alpha1_role_proto_rawDescData)
+	})
+	return file_buf_alpha_registry_v1alpha1_role_proto_rawDescData
+}
+
+var file_buf_alpha_registry_v1alpha1_role_proto_enumTypes = make([]protoimpl.EnumInfo, 6)
+var file_buf_alpha_registry_v1alpha1_role_proto_goTypes = []interface{}{
+	(ServerRole)(0),             // 0: buf.alpha.registry.v1alpha1.ServerRole
+	(OrganizationRole)(0),       // 1: buf.alpha.registry.v1alpha1.OrganizationRole
+	(OrganizationRoleSource)(0), // 2: buf.alpha.registry.v1alpha1.OrganizationRoleSource
+	(RepositoryRole)(0),         // 3: buf.alpha.registry.v1alpha1.RepositoryRole
+	(TemplateRole)(0),           // 4: buf.alpha.registry.v1alpha1.TemplateRole
+	(PluginRole)(0),             // 5: buf.alpha.registry.v1alpha1.PluginRole
+}
+var file_buf_alpha_registry_v1alpha1_role_proto_depIdxs = []int32{
+	0, // [0:0] is the sub-list for method output_type
+	0, // [0:0] is the sub-list for method input_type
+	0, // [0:0] is the sub-list for extension type_name
+	0, // [0:0] is the sub-list for extension extendee
+	0, // [0:0] is the sub-list for field type_name
+}
+
+func init() { file_buf_alpha_registry_v1alpha1_role_proto_init() }
+func file_buf_alpha_registry_v1alpha1_role_proto_init() {
+	if File_buf_alpha_registry_v1alpha1_role_proto != nil {
+		return
+	}
+	type x struct{}
+	out := protoimpl.TypeBuilder{
+		File: protoimpl.DescBuilder{
+			GoPackagePath: reflect.TypeOf(x{}).PkgPath(),
+			RawDescriptor: file_buf_alpha_registry_v1alpha1_role_proto_rawDesc,
+			NumEnums:      6,
+			NumMessages:   0,
+			NumExtensions: 0,
+			NumServices:   0,
+		},
+		GoTypes:           file_buf_alpha_registry_v1alpha1_role_proto_goTypes,
+		DependencyIndexes: file_buf_alpha_registry_v1alpha1_role_proto_depIdxs,
+		EnumInfos:         file_buf_alpha_registry_v1alpha1_role_proto_enumTypes,
+	}.Build()
+	File_buf_alpha_registry_v1alpha1_role_proto = out.File
+	file_buf_alpha_registry_v1alpha1_role_proto_rawDesc = nil
+	file_buf_alpha_registry_v1alpha1_role_proto_goTypes = nil
+	file_buf_alpha_registry_v1alpha1_role_proto_depIdxs = nil
+}
