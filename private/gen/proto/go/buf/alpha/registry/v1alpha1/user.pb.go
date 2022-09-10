@@ -23,4 +23,127 @@ package registryv1alpha1
 import (
 	protoreflect "google.golang.org/protobuf/reflect/protoreflect"
 	protoimpl "google.golang.org/protobuf/runtime/protoimpl"
-	timestamppb "google.golang.org/protobuf/types/kn
+	timestamppb "google.golang.org/protobuf/types/known/timestamppb"
+	reflect "reflect"
+	sync "sync"
+)
+
+const (
+	// Verify that this generated code is sufficiently up-to-date.
+	_ = protoimpl.EnforceVersion(20 - protoimpl.MinVersion)
+	// Verify that runtime/protoimpl is sufficiently up-to-date.
+	_ = protoimpl.EnforceVersion(protoimpl.MaxVersion - 20)
+)
+
+type UserState int32
+
+const (
+	UserState_USER_STATE_UNSPECIFIED UserState = 0
+	UserState_USER_STATE_ACTIVE      UserState = 1
+	UserState_USER_STATE_DEACTIVATED UserState = 2
+)
+
+// Enum value maps for UserState.
+var (
+	UserState_name = map[int32]string{
+		0: "USER_STATE_UNSPECIFIED",
+		1: "USER_STATE_ACTIVE",
+		2: "USER_STATE_DEACTIVATED",
+	}
+	UserState_value = map[string]int32{
+		"USER_STATE_UNSPECIFIED": 0,
+		"USER_STATE_ACTIVE":      1,
+		"USER_STATE_DEACTIVATED": 2,
+	}
+)
+
+func (x UserState) Enum() *UserState {
+	p := new(UserState)
+	*p = x
+	return p
+}
+
+func (x UserState) String() string {
+	return protoimpl.X.EnumStringOf(x.Descriptor(), protoreflect.EnumNumber(x))
+}
+
+func (UserState) Descriptor() protoreflect.EnumDescriptor {
+	return file_buf_alpha_registry_v1alpha1_user_proto_enumTypes[0].Descriptor()
+}
+
+func (UserState) Type() protoreflect.EnumType {
+	return &file_buf_alpha_registry_v1alpha1_user_proto_enumTypes[0]
+}
+
+func (x UserState) Number() protoreflect.EnumNumber {
+	return protoreflect.EnumNumber(x)
+}
+
+// Deprecated: Use UserState.Descriptor instead.
+func (UserState) EnumDescriptor() ([]byte, []int) {
+	return file_buf_alpha_registry_v1alpha1_user_proto_rawDescGZIP(), []int{0}
+}
+
+type UserType int32
+
+const (
+	UserType_USER_TYPE_UNSPECIFIED UserType = 0
+	UserType_USER_TYPE_PERSONAL    UserType = 1
+	UserType_USER_TYPE_MACHINE     UserType = 2
+	UserType_USER_TYPE_SYSTEM      UserType = 3
+)
+
+// Enum value maps for UserType.
+var (
+	UserType_name = map[int32]string{
+		0: "USER_TYPE_UNSPECIFIED",
+		1: "USER_TYPE_PERSONAL",
+		2: "USER_TYPE_MACHINE",
+		3: "USER_TYPE_SYSTEM",
+	}
+	UserType_value = map[string]int32{
+		"USER_TYPE_UNSPECIFIED": 0,
+		"USER_TYPE_PERSONAL":    1,
+		"USER_TYPE_MACHINE":     2,
+		"USER_TYPE_SYSTEM":      3,
+	}
+)
+
+func (x UserType) Enum() *UserType {
+	p := new(UserType)
+	*p = x
+	return p
+}
+
+func (x UserType) String() string {
+	return protoimpl.X.EnumStringOf(x.Descriptor(), protoreflect.EnumNumber(x))
+}
+
+func (UserType) Descriptor() protoreflect.EnumDescriptor {
+	return file_buf_alpha_registry_v1alpha1_user_proto_enumTypes[1].Descriptor()
+}
+
+func (UserType) Type() protoreflect.EnumType {
+	return &file_buf_alpha_registry_v1alpha1_user_proto_enumTypes[1]
+}
+
+func (x UserType) Number() protoreflect.EnumNumber {
+	return protoreflect.EnumNumber(x)
+}
+
+// Deprecated: Use UserType.Descriptor instead.
+func (UserType) EnumDescriptor() ([]byte, []int) {
+	return file_buf_alpha_registry_v1alpha1_user_proto_rawDescGZIP(), []int{1}
+}
+
+type User struct {
+	state         protoimpl.MessageState
+	sizeCache     protoimpl.SizeCache
+	unknownFields protoimpl.UnknownFields
+
+	// primary key, unique, immutable
+	Id string `protobuf:"bytes,1,opt,name=id,proto3" json:"id,omitempty"`
+	// immutable
+	CreateTime *timestamppb.Timestamp `protobuf:"bytes,2,opt,name=create_time,json=createTime,proto3" json:"create_time,omitempty"`
+	// mutable
+	UpdateTime *timestamppb.Timestamp `protobuf:"bytes,3,opt,name=update_time,json=
