@@ -1172,4 +1172,107 @@ func (x *CountUsersRequest) ProtoReflect() protoreflect.Message {
 	return mi.MessageOf(x)
 }
 
-// Deprecated: Use
+// Deprecated: Use CountUsersRequest.ProtoReflect.Descriptor instead.
+func (*CountUsersRequest) Descriptor() ([]byte, []int) {
+	return file_buf_alpha_registry_v1alpha1_user_proto_rawDescGZIP(), []int{18}
+}
+
+func (x *CountUsersRequest) GetUserStateFilter() UserState {
+	if x != nil {
+		return x.UserStateFilter
+	}
+	return UserState_USER_STATE_UNSPECIFIED
+}
+
+type CountUsersResponse struct {
+	state         protoimpl.MessageState
+	sizeCache     protoimpl.SizeCache
+	unknownFields protoimpl.UnknownFields
+
+	TotalCount uint32 `protobuf:"varint,1,opt,name=total_count,json=totalCount,proto3" json:"total_count,omitempty"`
+}
+
+func (x *CountUsersResponse) Reset() {
+	*x = CountUsersResponse{}
+	if protoimpl.UnsafeEnabled {
+		mi := &file_buf_alpha_registry_v1alpha1_user_proto_msgTypes[19]
+		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
+		ms.StoreMessageInfo(mi)
+	}
+}
+
+func (x *CountUsersResponse) String() string {
+	return protoimpl.X.MessageStringOf(x)
+}
+
+func (*CountUsersResponse) ProtoMessage() {}
+
+func (x *CountUsersResponse) ProtoReflect() protoreflect.Message {
+	mi := &file_buf_alpha_registry_v1alpha1_user_proto_msgTypes[19]
+	if protoimpl.UnsafeEnabled && x != nil {
+		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
+		if ms.LoadMessageInfo() == nil {
+			ms.StoreMessageInfo(mi)
+		}
+		return ms
+	}
+	return mi.MessageOf(x)
+}
+
+// Deprecated: Use CountUsersResponse.ProtoReflect.Descriptor instead.
+func (*CountUsersResponse) Descriptor() ([]byte, []int) {
+	return file_buf_alpha_registry_v1alpha1_user_proto_rawDescGZIP(), []int{19}
+}
+
+func (x *CountUsersResponse) GetTotalCount() uint32 {
+	if x != nil {
+		return x.TotalCount
+	}
+	return 0
+}
+
+type UpdateUserSettingsRequest struct {
+	state         protoimpl.MessageState
+	sizeCache     protoimpl.SizeCache
+	unknownFields protoimpl.UnknownFields
+
+	UserId string `protobuf:"bytes,1,opt,name=user_id,json=userId,proto3" json:"user_id,omitempty"`
+	// optional, update to description will only be made when this is present
+	Description *string `protobuf:"bytes,2,opt,name=description,proto3,oneof" json:"description,omitempty"`
+	// optional, update to url will only be made when this is present
+	Url *string `protobuf:"bytes,3,opt,name=url,proto3,oneof" json:"url,omitempty"`
+}
+
+func (x *UpdateUserSettingsRequest) Reset() {
+	*x = UpdateUserSettingsRequest{}
+	if protoimpl.UnsafeEnabled {
+		mi := &file_buf_alpha_registry_v1alpha1_user_proto_msgTypes[20]
+		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
+		ms.StoreMessageInfo(mi)
+	}
+}
+
+func (x *UpdateUserSettingsRequest) String() string {
+	return protoimpl.X.MessageStringOf(x)
+}
+
+func (*UpdateUserSettingsRequest) ProtoMessage() {}
+
+func (x *UpdateUserSettingsRequest) ProtoReflect() protoreflect.Message {
+	mi := &file_buf_alpha_registry_v1alpha1_user_proto_msgTypes[20]
+	if protoimpl.UnsafeEnabled && x != nil {
+		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
+		if ms.LoadMessageInfo() == nil {
+			ms.StoreMessageInfo(mi)
+		}
+		return ms
+	}
+	return mi.MessageOf(x)
+}
+
+// Deprecated: Use UpdateUserSettingsRequest.ProtoReflect.Descriptor instead.
+func (*UpdateUserSettingsRequest) Descriptor() ([]byte, []int) {
+	return file_buf_alpha_registry_v1alpha1_user_proto_rawDescGZIP(), []int{20}
+}
+
+func (x *UpdateUserSet
