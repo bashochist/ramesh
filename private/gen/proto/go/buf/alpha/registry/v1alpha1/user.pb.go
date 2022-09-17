@@ -1062,4 +1062,114 @@ func (x *UpdateUserServerRoleRequest) Reset() {
 }
 
 func (x *UpdateUserServerRoleRequest) String() string {
-	return pr
+	return protoimpl.X.MessageStringOf(x)
+}
+
+func (*UpdateUserServerRoleRequest) ProtoMessage() {}
+
+func (x *UpdateUserServerRoleRequest) ProtoReflect() protoreflect.Message {
+	mi := &file_buf_alpha_registry_v1alpha1_user_proto_msgTypes[16]
+	if protoimpl.UnsafeEnabled && x != nil {
+		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
+		if ms.LoadMessageInfo() == nil {
+			ms.StoreMessageInfo(mi)
+		}
+		return ms
+	}
+	return mi.MessageOf(x)
+}
+
+// Deprecated: Use UpdateUserServerRoleRequest.ProtoReflect.Descriptor instead.
+func (*UpdateUserServerRoleRequest) Descriptor() ([]byte, []int) {
+	return file_buf_alpha_registry_v1alpha1_user_proto_rawDescGZIP(), []int{16}
+}
+
+func (x *UpdateUserServerRoleRequest) GetUserId() string {
+	if x != nil {
+		return x.UserId
+	}
+	return ""
+}
+
+func (x *UpdateUserServerRoleRequest) GetServerRole() ServerRole {
+	if x != nil {
+		return x.ServerRole
+	}
+	return ServerRole_SERVER_ROLE_UNSPECIFIED
+}
+
+type UpdateUserServerRoleResponse struct {
+	state         protoimpl.MessageState
+	sizeCache     protoimpl.SizeCache
+	unknownFields protoimpl.UnknownFields
+}
+
+func (x *UpdateUserServerRoleResponse) Reset() {
+	*x = UpdateUserServerRoleResponse{}
+	if protoimpl.UnsafeEnabled {
+		mi := &file_buf_alpha_registry_v1alpha1_user_proto_msgTypes[17]
+		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
+		ms.StoreMessageInfo(mi)
+	}
+}
+
+func (x *UpdateUserServerRoleResponse) String() string {
+	return protoimpl.X.MessageStringOf(x)
+}
+
+func (*UpdateUserServerRoleResponse) ProtoMessage() {}
+
+func (x *UpdateUserServerRoleResponse) ProtoReflect() protoreflect.Message {
+	mi := &file_buf_alpha_registry_v1alpha1_user_proto_msgTypes[17]
+	if protoimpl.UnsafeEnabled && x != nil {
+		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
+		if ms.LoadMessageInfo() == nil {
+			ms.StoreMessageInfo(mi)
+		}
+		return ms
+	}
+	return mi.MessageOf(x)
+}
+
+// Deprecated: Use UpdateUserServerRoleResponse.ProtoReflect.Descriptor instead.
+func (*UpdateUserServerRoleResponse) Descriptor() ([]byte, []int) {
+	return file_buf_alpha_registry_v1alpha1_user_proto_rawDescGZIP(), []int{17}
+}
+
+type CountUsersRequest struct {
+	state         protoimpl.MessageState
+	sizeCache     protoimpl.SizeCache
+	unknownFields protoimpl.UnknownFields
+
+	// If the user_state_filter is unspecified, all users are included.
+	UserStateFilter UserState `protobuf:"varint,1,opt,name=user_state_filter,json=userStateFilter,proto3,enum=buf.alpha.registry.v1alpha1.UserState" json:"user_state_filter,omitempty"`
+}
+
+func (x *CountUsersRequest) Reset() {
+	*x = CountUsersRequest{}
+	if protoimpl.UnsafeEnabled {
+		mi := &file_buf_alpha_registry_v1alpha1_user_proto_msgTypes[18]
+		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
+		ms.StoreMessageInfo(mi)
+	}
+}
+
+func (x *CountUsersRequest) String() string {
+	return protoimpl.X.MessageStringOf(x)
+}
+
+func (*CountUsersRequest) ProtoMessage() {}
+
+func (x *CountUsersRequest) ProtoReflect() protoreflect.Message {
+	mi := &file_buf_alpha_registry_v1alpha1_user_proto_msgTypes[18]
+	if protoimpl.UnsafeEnabled && x != nil {
+		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
+		if ms.LoadMessageInfo() == nil {
+			ms.StoreMessageInfo(mi)
+		}
+		return ms
+	}
+	return mi.MessageOf(x)
+}
+
+// Deprecated: Use
