@@ -1666,4 +1666,29 @@ var file_buf_alpha_registry_v1alpha1_user_proto_depIdxs = []int32{
 	27, // 6: buf.alpha.registry.v1alpha1.OrganizationUser.organization_role_source:type_name -> buf.alpha.registry.v1alpha1.OrganizationRoleSource
 	2,  // 7: buf.alpha.registry.v1alpha1.CreateUserResponse.user:type_name -> buf.alpha.registry.v1alpha1.User
 	2,  // 8: buf.alpha.registry.v1alpha1.GetUserResponse.user:type_name -> buf.alpha.registry.v1alpha1.User
-	2,  // 9: buf.alpha.registry.v1alpha1.GetUserByUsernameResponse.user:typ
+	2,  // 9: buf.alpha.registry.v1alpha1.GetUserByUsernameResponse.user:type_name -> buf.alpha.registry.v1alpha1.User
+	0,  // 10: buf.alpha.registry.v1alpha1.ListUsersRequest.user_state_filter:type_name -> buf.alpha.registry.v1alpha1.UserState
+	1,  // 11: buf.alpha.registry.v1alpha1.ListUsersRequest.user_type_filters:type_name -> buf.alpha.registry.v1alpha1.UserType
+	2,  // 12: buf.alpha.registry.v1alpha1.ListUsersResponse.users:type_name -> buf.alpha.registry.v1alpha1.User
+	3,  // 13: buf.alpha.registry.v1alpha1.ListOrganizationUsersResponse.users:type_name -> buf.alpha.registry.v1alpha1.OrganizationUser
+	28, // 14: buf.alpha.registry.v1alpha1.UpdateUserServerRoleRequest.server_role:type_name -> buf.alpha.registry.v1alpha1.ServerRole
+	0,  // 15: buf.alpha.registry.v1alpha1.CountUsersRequest.user_state_filter:type_name -> buf.alpha.registry.v1alpha1.UserState
+	4,  // 16: buf.alpha.registry.v1alpha1.UserService.CreateUser:input_type -> buf.alpha.registry.v1alpha1.CreateUserRequest
+	6,  // 17: buf.alpha.registry.v1alpha1.UserService.GetUser:input_type -> buf.alpha.registry.v1alpha1.GetUserRequest
+	8,  // 18: buf.alpha.registry.v1alpha1.UserService.GetUserByUsername:input_type -> buf.alpha.registry.v1alpha1.GetUserByUsernameRequest
+	10, // 19: buf.alpha.registry.v1alpha1.UserService.ListUsers:input_type -> buf.alpha.registry.v1alpha1.ListUsersRequest
+	12, // 20: buf.alpha.registry.v1alpha1.UserService.ListOrganizationUsers:input_type -> buf.alpha.registry.v1alpha1.ListOrganizationUsersRequest
+	14, // 21: buf.alpha.registry.v1alpha1.UserService.DeleteUser:input_type -> buf.alpha.registry.v1alpha1.DeleteUserRequest
+	16, // 22: buf.alpha.registry.v1alpha1.UserService.DeactivateUser:input_type -> buf.alpha.registry.v1alpha1.DeactivateUserRequest
+	18, // 23: buf.alpha.registry.v1alpha1.UserService.UpdateUserServerRole:input_type -> buf.alpha.registry.v1alpha1.UpdateUserServerRoleRequest
+	20, // 24: buf.alpha.registry.v1alpha1.UserService.CountUsers:input_type -> buf.alpha.registry.v1alpha1.CountUsersRequest
+	22, // 25: buf.alpha.registry.v1alpha1.UserService.UpdateUserSettings:input_type -> buf.alpha.registry.v1alpha1.UpdateUserSettingsRequest
+	5,  // 26: buf.alpha.registry.v1alpha1.UserService.CreateUser:output_type -> buf.alpha.registry.v1alpha1.CreateUserResponse
+	7,  // 27: buf.alpha.registry.v1alpha1.UserService.GetUser:output_type -> buf.alpha.registry.v1alpha1.GetUserResponse
+	9,  // 28: buf.alpha.registry.v1alpha1.UserService.GetUserByUsername:output_type -> buf.alpha.registry.v1alpha1.GetUserByUsernameResponse
+	11, // 29: buf.alpha.registry.v1alpha1.UserService.ListUsers:output_type -> buf.alpha.registry.v1alpha1.ListUsersResponse
+	13, // 30: buf.alpha.registry.v1alpha1.UserService.ListOrganizationUsers:output_type -> buf.alpha.registry.v1alpha1.ListOrganizationUsersResponse
+	15, // 31: buf.alpha.registry.v1alpha1.UserService.DeleteUser:output_type -> buf.alpha.registry.v1alpha1.DeleteUserResponse
+	17, // 32: buf.alpha.registry.v1alpha1.UserService.DeactivateUser:output_type -> buf.alpha.registry.v1alpha1.DeactivateUserResponse
+	19, // 33: buf.alpha.registry.v1alpha1.UserService.UpdateUserServerRole:output_type -> buf.alpha.registry.v1alpha1.UpdateUserServerRoleResponse
+	21, // 34: buf.alpha.registry.v1alpha1.UserService.CountUsers:output_type -> buf.alpha.registry.v1a
