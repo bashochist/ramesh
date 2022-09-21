@@ -1691,4 +1691,124 @@ var file_buf_alpha_registry_v1alpha1_user_proto_depIdxs = []int32{
 	15, // 31: buf.alpha.registry.v1alpha1.UserService.DeleteUser:output_type -> buf.alpha.registry.v1alpha1.DeleteUserResponse
 	17, // 32: buf.alpha.registry.v1alpha1.UserService.DeactivateUser:output_type -> buf.alpha.registry.v1alpha1.DeactivateUserResponse
 	19, // 33: buf.alpha.registry.v1alpha1.UserService.UpdateUserServerRole:output_type -> buf.alpha.registry.v1alpha1.UpdateUserServerRoleResponse
-	21, // 34: buf.alpha.registry.v1alpha1.UserService.CountUsers:output_type -> buf.alpha.registry.v1a
+	21, // 34: buf.alpha.registry.v1alpha1.UserService.CountUsers:output_type -> buf.alpha.registry.v1alpha1.CountUsersResponse
+	23, // 35: buf.alpha.registry.v1alpha1.UserService.UpdateUserSettings:output_type -> buf.alpha.registry.v1alpha1.UpdateUserSettingsResponse
+	26, // [26:36] is the sub-list for method output_type
+	16, // [16:26] is the sub-list for method input_type
+	16, // [16:16] is the sub-list for extension type_name
+	16, // [16:16] is the sub-list for extension extendee
+	0,  // [0:16] is the sub-list for field type_name
+}
+
+func init() { file_buf_alpha_registry_v1alpha1_user_proto_init() }
+func file_buf_alpha_registry_v1alpha1_user_proto_init() {
+	if File_buf_alpha_registry_v1alpha1_user_proto != nil {
+		return
+	}
+	file_buf_alpha_registry_v1alpha1_role_proto_init()
+	file_buf_alpha_registry_v1alpha1_verification_status_proto_init()
+	if !protoimpl.UnsafeEnabled {
+		file_buf_alpha_registry_v1alpha1_user_proto_msgTypes[0].Exporter = func(v interface{}, i int) interface{} {
+			switch v := v.(*User); i {
+			case 0:
+				return &v.state
+			case 1:
+				return &v.sizeCache
+			case 2:
+				return &v.unknownFields
+			default:
+				return nil
+			}
+		}
+		file_buf_alpha_registry_v1alpha1_user_proto_msgTypes[1].Exporter = func(v interface{}, i int) interface{} {
+			switch v := v.(*OrganizationUser); i {
+			case 0:
+				return &v.state
+			case 1:
+				return &v.sizeCache
+			case 2:
+				return &v.unknownFields
+			default:
+				return nil
+			}
+		}
+		file_buf_alpha_registry_v1alpha1_user_proto_msgTypes[2].Exporter = func(v interface{}, i int) interface{} {
+			switch v := v.(*CreateUserRequest); i {
+			case 0:
+				return &v.state
+			case 1:
+				return &v.sizeCache
+			case 2:
+				return &v.unknownFields
+			default:
+				return nil
+			}
+		}
+		file_buf_alpha_registry_v1alpha1_user_proto_msgTypes[3].Exporter = func(v interface{}, i int) interface{} {
+			switch v := v.(*CreateUserResponse); i {
+			case 0:
+				return &v.state
+			case 1:
+				return &v.sizeCache
+			case 2:
+				return &v.unknownFields
+			default:
+				return nil
+			}
+		}
+		file_buf_alpha_registry_v1alpha1_user_proto_msgTypes[4].Exporter = func(v interface{}, i int) interface{} {
+			switch v := v.(*GetUserRequest); i {
+			case 0:
+				return &v.state
+			case 1:
+				return &v.sizeCache
+			case 2:
+				return &v.unknownFields
+			default:
+				return nil
+			}
+		}
+		file_buf_alpha_registry_v1alpha1_user_proto_msgTypes[5].Exporter = func(v interface{}, i int) interface{} {
+			switch v := v.(*GetUserResponse); i {
+			case 0:
+				return &v.state
+			case 1:
+				return &v.sizeCache
+			case 2:
+				return &v.unknownFields
+			default:
+				return nil
+			}
+		}
+		file_buf_alpha_registry_v1alpha1_user_proto_msgTypes[6].Exporter = func(v interface{}, i int) interface{} {
+			switch v := v.(*GetUserByUsernameRequest); i {
+			case 0:
+				return &v.state
+			case 1:
+				return &v.sizeCache
+			case 2:
+				return &v.unknownFields
+			default:
+				return nil
+			}
+		}
+		file_buf_alpha_registry_v1alpha1_user_proto_msgTypes[7].Exporter = func(v interface{}, i int) interface{} {
+			switch v := v.(*GetUserByUsernameResponse); i {
+			case 0:
+				return &v.state
+			case 1:
+				return &v.sizeCache
+			case 2:
+				return &v.unknownFields
+			default:
+				return nil
+			}
+		}
+		file_buf_alpha_registry_v1alpha1_user_proto_msgTypes[8].Exporter = func(v interface{}, i int) interface{} {
+			switch v := v.(*ListUsersRequest); i {
+			case 0:
+				return &v.state
+			case 1:
+				return &v.sizeCache
+			case 2:
+				return &v.
