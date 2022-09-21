@@ -1632,4 +1632,38 @@ var file_buf_alpha_registry_v1alpha1_user_proto_goTypes = []interface{}{
 	(*OrganizationUser)(nil),              // 3: buf.alpha.registry.v1alpha1.OrganizationUser
 	(*CreateUserRequest)(nil),             // 4: buf.alpha.registry.v1alpha1.CreateUserRequest
 	(*CreateUserResponse)(nil),            // 5: buf.alpha.registry.v1alpha1.CreateUserResponse
-	(*GetUserRequest)(nil),  
+	(*GetUserRequest)(nil),                // 6: buf.alpha.registry.v1alpha1.GetUserRequest
+	(*GetUserResponse)(nil),               // 7: buf.alpha.registry.v1alpha1.GetUserResponse
+	(*GetUserByUsernameRequest)(nil),      // 8: buf.alpha.registry.v1alpha1.GetUserByUsernameRequest
+	(*GetUserByUsernameResponse)(nil),     // 9: buf.alpha.registry.v1alpha1.GetUserByUsernameResponse
+	(*ListUsersRequest)(nil),              // 10: buf.alpha.registry.v1alpha1.ListUsersRequest
+	(*ListUsersResponse)(nil),             // 11: buf.alpha.registry.v1alpha1.ListUsersResponse
+	(*ListOrganizationUsersRequest)(nil),  // 12: buf.alpha.registry.v1alpha1.ListOrganizationUsersRequest
+	(*ListOrganizationUsersResponse)(nil), // 13: buf.alpha.registry.v1alpha1.ListOrganizationUsersResponse
+	(*DeleteUserRequest)(nil),             // 14: buf.alpha.registry.v1alpha1.DeleteUserRequest
+	(*DeleteUserResponse)(nil),            // 15: buf.alpha.registry.v1alpha1.DeleteUserResponse
+	(*DeactivateUserRequest)(nil),         // 16: buf.alpha.registry.v1alpha1.DeactivateUserRequest
+	(*DeactivateUserResponse)(nil),        // 17: buf.alpha.registry.v1alpha1.DeactivateUserResponse
+	(*UpdateUserServerRoleRequest)(nil),   // 18: buf.alpha.registry.v1alpha1.UpdateUserServerRoleRequest
+	(*UpdateUserServerRoleResponse)(nil),  // 19: buf.alpha.registry.v1alpha1.UpdateUserServerRoleResponse
+	(*CountUsersRequest)(nil),             // 20: buf.alpha.registry.v1alpha1.CountUsersRequest
+	(*CountUsersResponse)(nil),            // 21: buf.alpha.registry.v1alpha1.CountUsersResponse
+	(*UpdateUserSettingsRequest)(nil),     // 22: buf.alpha.registry.v1alpha1.UpdateUserSettingsRequest
+	(*UpdateUserSettingsResponse)(nil),    // 23: buf.alpha.registry.v1alpha1.UpdateUserSettingsResponse
+	(*timestamppb.Timestamp)(nil),         // 24: google.protobuf.Timestamp
+	(VerificationStatus)(0),               // 25: buf.alpha.registry.v1alpha1.VerificationStatus
+	(OrganizationRole)(0),                 // 26: buf.alpha.registry.v1alpha1.OrganizationRole
+	(OrganizationRoleSource)(0),           // 27: buf.alpha.registry.v1alpha1.OrganizationRoleSource
+	(ServerRole)(0),                       // 28: buf.alpha.registry.v1alpha1.ServerRole
+}
+var file_buf_alpha_registry_v1alpha1_user_proto_depIdxs = []int32{
+	24, // 0: buf.alpha.registry.v1alpha1.User.create_time:type_name -> google.protobuf.Timestamp
+	24, // 1: buf.alpha.registry.v1alpha1.User.update_time:type_name -> google.protobuf.Timestamp
+	25, // 2: buf.alpha.registry.v1alpha1.User.verification_status:type_name -> buf.alpha.registry.v1alpha1.VerificationStatus
+	1,  // 3: buf.alpha.registry.v1alpha1.User.user_type:type_name -> buf.alpha.registry.v1alpha1.UserType
+	2,  // 4: buf.alpha.registry.v1alpha1.OrganizationUser.user:type_name -> buf.alpha.registry.v1alpha1.User
+	26, // 5: buf.alpha.registry.v1alpha1.OrganizationUser.organization_role:type_name -> buf.alpha.registry.v1alpha1.OrganizationRole
+	27, // 6: buf.alpha.registry.v1alpha1.OrganizationUser.organization_role_source:type_name -> buf.alpha.registry.v1alpha1.OrganizationRoleSource
+	2,  // 7: buf.alpha.registry.v1alpha1.CreateUserResponse.user:type_name -> buf.alpha.registry.v1alpha1.User
+	2,  // 8: buf.alpha.registry.v1alpha1.GetUserResponse.user:type_name -> buf.alpha.registry.v1alpha1.User
+	2,  // 9: buf.alpha.registry.v1alpha1.GetUserByUsernameResponse.user:typ
