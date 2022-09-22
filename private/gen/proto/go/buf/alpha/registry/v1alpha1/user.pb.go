@@ -1941,4 +1941,56 @@ func file_buf_alpha_registry_v1alpha1_user_proto_init() {
 			case 0:
 				return &v.state
 			case 1:
-				return &v.
+				return &v.sizeCache
+			case 2:
+				return &v.unknownFields
+			default:
+				return nil
+			}
+		}
+		file_buf_alpha_registry_v1alpha1_user_proto_msgTypes[20].Exporter = func(v interface{}, i int) interface{} {
+			switch v := v.(*UpdateUserSettingsRequest); i {
+			case 0:
+				return &v.state
+			case 1:
+				return &v.sizeCache
+			case 2:
+				return &v.unknownFields
+			default:
+				return nil
+			}
+		}
+		file_buf_alpha_registry_v1alpha1_user_proto_msgTypes[21].Exporter = func(v interface{}, i int) interface{} {
+			switch v := v.(*UpdateUserSettingsResponse); i {
+			case 0:
+				return &v.state
+			case 1:
+				return &v.sizeCache
+			case 2:
+				return &v.unknownFields
+			default:
+				return nil
+			}
+		}
+	}
+	file_buf_alpha_registry_v1alpha1_user_proto_msgTypes[20].OneofWrappers = []interface{}{}
+	type x struct{}
+	out := protoimpl.TypeBuilder{
+		File: protoimpl.DescBuilder{
+			GoPackagePath: reflect.TypeOf(x{}).PkgPath(),
+			RawDescriptor: file_buf_alpha_registry_v1alpha1_user_proto_rawDesc,
+			NumEnums:      2,
+			NumMessages:   22,
+			NumExtensions: 0,
+			NumServices:   1,
+		},
+		GoTypes:           file_buf_alpha_registry_v1alpha1_user_proto_goTypes,
+		DependencyIndexes: file_buf_alpha_registry_v1alpha1_user_proto_depIdxs,
+		EnumInfos:         file_buf_alpha_registry_v1alpha1_user_proto_enumTypes,
+		MessageInfos:      file_buf_alpha_registry_v1alpha1_user_proto_msgTypes,
+	}.Build()
+	File_buf_alpha_registry_v1alpha1_user_proto = out.File
+	file_buf_alpha_registry_v1alpha1_user_proto_rawDesc = nil
+	file_buf_alpha_registry_v1alpha1_user_proto_goTypes = nil
+	file_buf_alpha_registry_v1alpha1_user_proto_depIdxs = nil
+}
