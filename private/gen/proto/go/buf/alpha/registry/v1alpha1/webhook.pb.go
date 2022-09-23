@@ -132,4 +132,124 @@ func (x *CreateWebhookRequest) ProtoReflect() protoreflect.Message {
 }
 
 // Deprecated: Use CreateWebhookRequest.ProtoReflect.Descriptor instead.
-func (*CreateWebhookRe
+func (*CreateWebhookRequest) Descriptor() ([]byte, []int) {
+	return file_buf_alpha_registry_v1alpha1_webhook_proto_rawDescGZIP(), []int{0}
+}
+
+func (x *CreateWebhookRequest) GetWebhookEvent() WebhookEvent {
+	if x != nil {
+		return x.WebhookEvent
+	}
+	return WebhookEvent_WEBHOOK_EVENT_UNSPECIFIED
+}
+
+func (x *CreateWebhookRequest) GetOwnerName() string {
+	if x != nil {
+		return x.OwnerName
+	}
+	return ""
+}
+
+func (x *CreateWebhookRequest) GetRepositoryName() string {
+	if x != nil {
+		return x.RepositoryName
+	}
+	return ""
+}
+
+func (x *CreateWebhookRequest) GetCallbackUrl() string {
+	if x != nil {
+		return x.CallbackUrl
+	}
+	return ""
+}
+
+// CreateWebhookResponse is the proto response representation
+// of a webhook request.
+type CreateWebhookResponse struct {
+	state         protoimpl.MessageState
+	sizeCache     protoimpl.SizeCache
+	unknownFields protoimpl.UnknownFields
+
+	// Created webhook subscription.
+	Webhook *Webhook `protobuf:"bytes,1,opt,name=webhook,proto3" json:"webhook,omitempty"`
+}
+
+func (x *CreateWebhookResponse) Reset() {
+	*x = CreateWebhookResponse{}
+	if protoimpl.UnsafeEnabled {
+		mi := &file_buf_alpha_registry_v1alpha1_webhook_proto_msgTypes[1]
+		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
+		ms.StoreMessageInfo(mi)
+	}
+}
+
+func (x *CreateWebhookResponse) String() string {
+	return protoimpl.X.MessageStringOf(x)
+}
+
+func (*CreateWebhookResponse) ProtoMessage() {}
+
+func (x *CreateWebhookResponse) ProtoReflect() protoreflect.Message {
+	mi := &file_buf_alpha_registry_v1alpha1_webhook_proto_msgTypes[1]
+	if protoimpl.UnsafeEnabled && x != nil {
+		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
+		if ms.LoadMessageInfo() == nil {
+			ms.StoreMessageInfo(mi)
+		}
+		return ms
+	}
+	return mi.MessageOf(x)
+}
+
+// Deprecated: Use CreateWebhookResponse.ProtoReflect.Descriptor instead.
+func (*CreateWebhookResponse) Descriptor() ([]byte, []int) {
+	return file_buf_alpha_registry_v1alpha1_webhook_proto_rawDescGZIP(), []int{1}
+}
+
+func (x *CreateWebhookResponse) GetWebhook() *Webhook {
+	if x != nil {
+		return x.Webhook
+	}
+	return nil
+}
+
+// DeleteWebhookRequest is the request for unsubscribing to a webhook.
+type DeleteWebhookRequest struct {
+	state         protoimpl.MessageState
+	sizeCache     protoimpl.SizeCache
+	unknownFields protoimpl.UnknownFields
+
+	// The id of the webhook subscription to delete.
+	WebhookId string `protobuf:"bytes,1,opt,name=webhook_id,json=webhookId,proto3" json:"webhook_id,omitempty"`
+}
+
+func (x *DeleteWebhookRequest) Reset() {
+	*x = DeleteWebhookRequest{}
+	if protoimpl.UnsafeEnabled {
+		mi := &file_buf_alpha_registry_v1alpha1_webhook_proto_msgTypes[2]
+		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
+		ms.StoreMessageInfo(mi)
+	}
+}
+
+func (x *DeleteWebhookRequest) String() string {
+	return protoimpl.X.MessageStringOf(x)
+}
+
+func (*DeleteWebhookRequest) ProtoMessage() {}
+
+func (x *DeleteWebhookRequest) ProtoReflect() protoreflect.Message {
+	mi := &file_buf_alpha_registry_v1alpha1_webhook_proto_msgTypes[2]
+	if protoimpl.UnsafeEnabled && x != nil {
+		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
+		if ms.LoadMessageInfo() == nil {
+			ms.StoreMessageInfo(mi)
+		}
+		return ms
+	}
+	return mi.MessageOf(x)
+}
+
+// Deprecated: Use DeleteWebhookRequest.ProtoReflect.Descriptor instead.
+func (*DeleteWe
