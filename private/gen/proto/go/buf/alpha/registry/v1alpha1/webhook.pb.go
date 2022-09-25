@@ -653,4 +653,49 @@ var file_buf_alpha_registry_v1alpha1_webhook_proto_rawDesc = []byte{
 	0x41, 0x6c, 0x70, 0x68, 0x61, 0x5c, 0x52, 0x65, 0x67, 0x69, 0x73, 0x74, 0x72, 0x79, 0x5c, 0x56,
 	0x31, 0x61, 0x6c, 0x70, 0x68, 0x61, 0x31, 0x5c, 0x47, 0x50, 0x42, 0x4d, 0x65, 0x74, 0x61, 0x64,
 	0x61, 0x74, 0x61, 0xea, 0x02, 0x1e, 0x42, 0x75, 0x66, 0x3a, 0x3a, 0x41, 0x6c, 0x70, 0x68, 0x61,
-	0x3a, 0x3a, 0x52, 0x65, 0x67, 0x69, 0x73, 0x74, 0x72, 0x7
+	0x3a, 0x3a, 0x52, 0x65, 0x67, 0x69, 0x73, 0x74, 0x72, 0x79, 0x3a, 0x3a, 0x56, 0x31, 0x61, 0x6c,
+	0x70, 0x68, 0x61, 0x31, 0x62, 0x06, 0x70, 0x72, 0x6f, 0x74, 0x6f, 0x33,
+}
+
+var (
+	file_buf_alpha_registry_v1alpha1_webhook_proto_rawDescOnce sync.Once
+	file_buf_alpha_registry_v1alpha1_webhook_proto_rawDescData = file_buf_alpha_registry_v1alpha1_webhook_proto_rawDesc
+)
+
+func file_buf_alpha_registry_v1alpha1_webhook_proto_rawDescGZIP() []byte {
+	file_buf_alpha_registry_v1alpha1_webhook_proto_rawDescOnce.Do(func() {
+		file_buf_alpha_registry_v1alpha1_webhook_proto_rawDescData = protoimpl.X.CompressGZIP(file_buf_alpha_registry_v1alpha1_webhook_proto_rawDescData)
+	})
+	return file_buf_alpha_registry_v1alpha1_webhook_proto_rawDescData
+}
+
+var file_buf_alpha_registry_v1alpha1_webhook_proto_enumTypes = make([]protoimpl.EnumInfo, 1)
+var file_buf_alpha_registry_v1alpha1_webhook_proto_msgTypes = make([]protoimpl.MessageInfo, 7)
+var file_buf_alpha_registry_v1alpha1_webhook_proto_goTypes = []interface{}{
+	(WebhookEvent)(0),             // 0: buf.alpha.registry.v1alpha1.WebhookEvent
+	(*CreateWebhookRequest)(nil),  // 1: buf.alpha.registry.v1alpha1.CreateWebhookRequest
+	(*CreateWebhookResponse)(nil), // 2: buf.alpha.registry.v1alpha1.CreateWebhookResponse
+	(*DeleteWebhookRequest)(nil),  // 3: buf.alpha.registry.v1alpha1.DeleteWebhookRequest
+	(*DeleteWebhookResponse)(nil), // 4: buf.alpha.registry.v1alpha1.DeleteWebhookResponse
+	(*ListWebhooksRequest)(nil),   // 5: buf.alpha.registry.v1alpha1.ListWebhooksRequest
+	(*ListWebhooksResponse)(nil),  // 6: buf.alpha.registry.v1alpha1.ListWebhooksResponse
+	(*Webhook)(nil),               // 7: buf.alpha.registry.v1alpha1.Webhook
+	(*timestamppb.Timestamp)(nil), // 8: google.protobuf.Timestamp
+}
+var file_buf_alpha_registry_v1alpha1_webhook_proto_depIdxs = []int32{
+	0, // 0: buf.alpha.registry.v1alpha1.CreateWebhookRequest.webhook_event:type_name -> buf.alpha.registry.v1alpha1.WebhookEvent
+	7, // 1: buf.alpha.registry.v1alpha1.CreateWebhookResponse.webhook:type_name -> buf.alpha.registry.v1alpha1.Webhook
+	7, // 2: buf.alpha.registry.v1alpha1.ListWebhooksResponse.webhooks:type_name -> buf.alpha.registry.v1alpha1.Webhook
+	0, // 3: buf.alpha.registry.v1alpha1.Webhook.event:type_name -> buf.alpha.registry.v1alpha1.WebhookEvent
+	8, // 4: buf.alpha.registry.v1alpha1.Webhook.create_time:type_name -> google.protobuf.Timestamp
+	8, // 5: buf.alpha.registry.v1alpha1.Webhook.update_time:type_name -> google.protobuf.Timestamp
+	1, // 6: buf.alpha.registry.v1alpha1.WebhookService.CreateWebhook:input_type -> buf.alpha.registry.v1alpha1.CreateWebhookRequest
+	3, // 7: buf.alpha.registry.v1alpha1.WebhookService.DeleteWebhook:input_type -> buf.alpha.registry.v1alpha1.DeleteWebhookRequest
+	5, // 8: buf.alpha.registry.v1alpha1.WebhookService.ListWebhooks:input_type -> buf.alpha.registry.v1alpha1.ListWebhooksRequest
+	2, // 9: buf.alpha.registry.v1alpha1.WebhookService.CreateWebhook:output_type -> buf.alpha.registry.v1alpha1.CreateWebhookResponse
+	4, // 10: buf.alpha.registry.v1alpha1.WebhookService.DeleteWebhook:output_type -> buf.alpha.registry.v1alpha1.DeleteWebhookResponse
+	6, // 11: buf.alpha.registry.v1alpha1.WebhookService.ListWebhooks:output_type -> buf.alpha.registry.v1alpha1.ListWebhooksResponse
+	9, // [9:12] is the sub-list for method output_type
+	6, // [6:9] is the sub-list for method input_type
+	6, // [6:6] is the sub-list for extension type_name
+	6, // [6:6] is the 
