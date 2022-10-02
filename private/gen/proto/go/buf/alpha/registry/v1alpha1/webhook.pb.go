@@ -698,4 +698,118 @@ var file_buf_alpha_registry_v1alpha1_webhook_proto_depIdxs = []int32{
 	9, // [9:12] is the sub-list for method output_type
 	6, // [6:9] is the sub-list for method input_type
 	6, // [6:6] is the sub-list for extension type_name
-	6, // [6:6] is the 
+	6, // [6:6] is the sub-list for extension extendee
+	0, // [0:6] is the sub-list for field type_name
+}
+
+func init() { file_buf_alpha_registry_v1alpha1_webhook_proto_init() }
+func file_buf_alpha_registry_v1alpha1_webhook_proto_init() {
+	if File_buf_alpha_registry_v1alpha1_webhook_proto != nil {
+		return
+	}
+	if !protoimpl.UnsafeEnabled {
+		file_buf_alpha_registry_v1alpha1_webhook_proto_msgTypes[0].Exporter = func(v interface{}, i int) interface{} {
+			switch v := v.(*CreateWebhookRequest); i {
+			case 0:
+				return &v.state
+			case 1:
+				return &v.sizeCache
+			case 2:
+				return &v.unknownFields
+			default:
+				return nil
+			}
+		}
+		file_buf_alpha_registry_v1alpha1_webhook_proto_msgTypes[1].Exporter = func(v interface{}, i int) interface{} {
+			switch v := v.(*CreateWebhookResponse); i {
+			case 0:
+				return &v.state
+			case 1:
+				return &v.sizeCache
+			case 2:
+				return &v.unknownFields
+			default:
+				return nil
+			}
+		}
+		file_buf_alpha_registry_v1alpha1_webhook_proto_msgTypes[2].Exporter = func(v interface{}, i int) interface{} {
+			switch v := v.(*DeleteWebhookRequest); i {
+			case 0:
+				return &v.state
+			case 1:
+				return &v.sizeCache
+			case 2:
+				return &v.unknownFields
+			default:
+				return nil
+			}
+		}
+		file_buf_alpha_registry_v1alpha1_webhook_proto_msgTypes[3].Exporter = func(v interface{}, i int) interface{} {
+			switch v := v.(*DeleteWebhookResponse); i {
+			case 0:
+				return &v.state
+			case 1:
+				return &v.sizeCache
+			case 2:
+				return &v.unknownFields
+			default:
+				return nil
+			}
+		}
+		file_buf_alpha_registry_v1alpha1_webhook_proto_msgTypes[4].Exporter = func(v interface{}, i int) interface{} {
+			switch v := v.(*ListWebhooksRequest); i {
+			case 0:
+				return &v.state
+			case 1:
+				return &v.sizeCache
+			case 2:
+				return &v.unknownFields
+			default:
+				return nil
+			}
+		}
+		file_buf_alpha_registry_v1alpha1_webhook_proto_msgTypes[5].Exporter = func(v interface{}, i int) interface{} {
+			switch v := v.(*ListWebhooksResponse); i {
+			case 0:
+				return &v.state
+			case 1:
+				return &v.sizeCache
+			case 2:
+				return &v.unknownFields
+			default:
+				return nil
+			}
+		}
+		file_buf_alpha_registry_v1alpha1_webhook_proto_msgTypes[6].Exporter = func(v interface{}, i int) interface{} {
+			switch v := v.(*Webhook); i {
+			case 0:
+				return &v.state
+			case 1:
+				return &v.sizeCache
+			case 2:
+				return &v.unknownFields
+			default:
+				return nil
+			}
+		}
+	}
+	type x struct{}
+	out := protoimpl.TypeBuilder{
+		File: protoimpl.DescBuilder{
+			GoPackagePath: reflect.TypeOf(x{}).PkgPath(),
+			RawDescriptor: file_buf_alpha_registry_v1alpha1_webhook_proto_rawDesc,
+			NumEnums:      1,
+			NumMessages:   7,
+			NumExtensions: 0,
+			NumServices:   1,
+		},
+		GoTypes:           file_buf_alpha_registry_v1alpha1_webhook_proto_goTypes,
+		DependencyIndexes: file_buf_alpha_registry_v1alpha1_webhook_proto_depIdxs,
+		EnumInfos:         file_buf_alpha_registry_v1alpha1_webhook_proto_enumTypes,
+		MessageInfos:      file_buf_alpha_registry_v1alpha1_webhook_proto_msgTypes,
+	}.Build()
+	File_buf_alpha_registry_v1alpha1_webhook_proto = out.File
+	file_buf_alpha_registry_v1alpha1_webhook_proto_rawDesc = nil
+	file_buf_alpha_registry_v1alpha1_webhook_proto_goTypes = nil
+	file_buf_alpha_registry_v1alpha1_webhook_proto_depIdxs = nil
+}
