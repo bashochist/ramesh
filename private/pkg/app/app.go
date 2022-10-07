@@ -224,4 +224,111 @@ type EnvStdioContainer interface {
 // Equivalent to os.Environ.
 //
 // Sorted.
-func Environ(envContainer EnvContainer) []string 
+func Environ(envContainer EnvContainer) []string {
+	var environ []string
+	envContainer.ForEachEnv(func(key string, value string) {
+		environ = append(environ, key+"="+value)
+	})
+	sort.Strings(environ)
+	return environ
+}
+
+// EnvironMap returns all environment variables in a map.
+//
+// No key will have an empty value.
+func EnvironMap(envContainer EnvContainer) map[string]string {
+	m := make(map[string]string)
+	envContainer.ForEachEnv(func(key string, value string) {
+		// This should be done anyways per the EnvContainer documentation but just to make sure
+		if value != "" {
+			m[key] = value
+		}
+	})
+	return m
+}
+
+// Args returns all arguments.
+//
+// Equivalent to os.Args.
+func Args(argList ArgContainer) []string {
+	numArgs := argList.NumArgs()
+	args := make([]string, numArgs)
+	for i := 0; i < numArgs; i++ {
+		args[i] = argList.Arg(i)
+	}
+	return args
+}
+
+// IsDevStdin returns true if the path is the equivalent of /dev/stdin.
+func IsDevStdin(path string) bool {
+	return path != "" && path == DevStdinFilePath
+}
+
+// IsDevStdout returns true if the path is the equivalent of /dev/stdout.
+func IsDevStdout(path string) bool {
+	return path != "" && path == DevStdoutFilePath
+}
+
+// IsDevStderr returns true if the path is the equivalent of /dev/stderr.
+func IsDevStderr(path string) bool {
+	return path != "" && path == DevStderrFilePath
+}
+
+// IsDevNull returns true if the path is the equivalent of /dev/null.
+func IsDevNull(path string) bool {
+	return path != "" && path == DevNullFilePath
+}
+
+// Main runs the application using the OS Container and calling os.Exit on the return value of Run.
+func Main(ctx context.Context, f func(context.Context, Container) error) {
+	container, err := NewContainerForOS()
+	if err != nil {
+		printError(container, err)
+		os.Exit(GetExitCode(err))
+	}
+	os.Exit(GetExitCode(Run(ctx, container, f)))
+}
+
+// Run runs the application using the container.
+//
+// The run will be stopped on interrupt signal.
+// The exit code can be determined using GetExitCode.
+func Run(ctx context.Context, container Container, f func(context.Context, Container) error) error {
+	ctx, cancel := interrupt.WithCancel(ctx)
+	defer cancel()
+	if err := f(ctx, container); err != nil {
+		printError(container, err)
+		return err
+	}
+	return nil
+}
+
+// NewError returns a new Error that contains an exit code.
+//
+// The exit code cannot be 0.
+func NewError(exitCode int, message string) error {
+	return newAppError(exitCode, message)
+}
+
+// NewErrorf returns a new error that contains an exit code.
+//
+// The exit code cannot be 0.
+func NewErrorf(exitCode int, format string, args ...interface{}) error {
+	return newAppError(exitCode, fmt.Sprintf(format, args...))
+}
+
+// GetExitCode gets the exit code.
+//
+// If err == nil, this returns 0.
+// If err was created by this package, this returns the exit code from the error.
+// Otherwise, this returns 1.
+func GetExitCode(err error) int {
+	if err == nil {
+		return 0
+	}
+	appErr := &appError{}
+	if errors.As(err, &appErr) {
+		return appErr.exitCode
+	}
+	return 1
+}
