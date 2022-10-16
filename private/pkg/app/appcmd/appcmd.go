@@ -160,4 +160,98 @@ func run(
 						Short: "Generate auto-completion scripts for powershell",
 						Args:  cobra.NoArgs,
 						Run: func(ctx context.Context, container app.Container) error {
-							return cobraCommand.GenPowerShellCompletion(cont
+							return cobraCommand.GenPowerShellCompletion(container.Stdout())
+						},
+					},
+					{
+						Use:   "zsh",
+						Short: "Generate auto-completion scripts for zsh",
+						Args:  cobra.NoArgs,
+						Run: func(ctx context.Context, container app.Container) error {
+							return cobraCommand.GenZshCompletion(container.Stdout())
+						},
+					},
+				},
+			},
+			&runErr,
+		)
+		if err != nil {
+			return err
+		}
+		cobraCommand.AddCommand(shellCobraCommand)
+		manpagesCobraCommand, err := commandToCobra(
+			ctx,
+			container,
+			&Command{
+				Use:    "manpages",
+				Args:   cobra.ExactArgs(1),
+				Hidden: true,
+				Run: func(ctx context.Context, container app.Container) error {
+					return doc.GenManTree(
+						cobraCommand,
+						&doc.GenManHeader{
+							Title:   "Buf",
+							Section: "1",
+						},
+						container.Arg(0),
+					)
+				},
+			},
+			&runErr,
+		)
+		if err != nil {
+			return err
+		}
+		cobraCommand.AddCommand(manpagesCobraCommand)
+		webpagesCobraCommand, err := commandToCobra(
+			ctx,
+			container,
+			newWebpagesCommand(cobraCommand),
+			&runErr,
+		)
+		if err != nil {
+			return err
+		}
+		cobraCommand.AddCommand(webpagesCobraCommand)
+	}
+
+	cobraCommand.SetOut(container.Stderr())
+	args := app.Args(container)[1:]
+	// cobra will implicitly create __complete and __completeNoDesc subcommands
+	// https://github.com/spf13/cobra/blob/4590150168e93f4b017c6e33469e26590ba839df/completions.go#L14-L17
+	// at the very last possible point, to enable them to be overridden. Unfortunately
+	// the creation of the subcommands uses hidden helper methods (unlike the automatic help command support).
+	// See https://github.com/spf13/cobra/blob/4590150168e93f4b017c6e33469e26590ba839df/completions.go#L134.
+	//
+	// Additionally, the automatically generated commands inherit the output of the root command,
+	// which we are ensuring is always stderr.
+	// https://github.com/spf13/cobra/blob/4590150168e93f4b017c6e33469e26590ba839df/completions.go#L175
+	//
+	// bash completion has much more detailed code generation and doesn't rely on the __completion command
+	// in most cases, the zsh and fish completion implementation however exclusively rely on these commands.
+	// Those completion implementations send stderr to /dev/null
+	// https://github.com/spf13/cobra/blob/4590150168e93f4b017c6e33469e26590ba839df/zsh_completions.go#L135
+	// and the automatically generated __complete command sends extra data to /dev/null so we cannot
+	// work around this by minimally changing the code generation commands, we would have to rewrite the
+	// __completion command which is much more complicated.
+	//
+	// Instead of all that, we can peek at the positionals and if the sub command starts with __complete
+	// we sets its output to stdout. This would mean that we cannot add a "real" sub-command that starts with
+	// __complete _and_ has its output set to stderr. This shouldn't ever be a problem.
+	//
+	// SetOut sets the output location for usage, help, and version messages by default.
+	if len(args) > 0 && strings.HasPrefix(args[0], "__complete") {
+		cobraCommand.SetOut(container.Stdout())
+	}
+	cobraCommand.SetArgs(args)
+	// SetErr sets the output location for error messages.
+	cobraCommand.SetErr(container.Stderr())
+	cobraCommand.SetIn(container.Stdin())
+
+	if err := cobraCommand.Execute(); err != nil {
+		return err
+	}
+	return runErr
+}
+
+func commandTo
