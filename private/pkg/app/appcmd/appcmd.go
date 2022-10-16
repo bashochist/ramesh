@@ -66,4 +66,98 @@ type Command struct {
 	SubCommands []*Command
 	// Version the version of the command.
 	//
-	// If this is specified, a flag --ver
+	// If this is specified, a flag --version will be added to the command
+	// that precedes all other functionality, and which prints the version
+	// to stdout.
+	Version string
+}
+
+// NewInvalidArgumentError creates a new invalidArgumentError, indicating that
+// the error was caused by argument validation. This causes us to print the usage
+// help text for the command that it is returned from.
+func NewInvalidArgumentError(message string) error {
+	return newInvalidArgumentError(message)
+}
+
+// NewInvalidArgumentErrorf creates a new InvalidArgumentError, indicating that
+// the error was caused by argument validation. This causes us to print the usage
+// help text for the command that it is returned from.
+func NewInvalidArgumentErrorf(format string, args ...interface{}) error {
+	return NewInvalidArgumentError(fmt.Sprintf(format, args...))
+}
+
+// Main runs the application using the OS container and calling os.Exit on the return value of Run.
+func Main(ctx context.Context, command *Command) {
+	app.Main(ctx, newRunFunc(command))
+}
+
+// Run runs the application using the container.
+func Run(ctx context.Context, container app.Container, command *Command) error {
+	return app.Run(ctx, container, newRunFunc(command))
+}
+
+// BindMultiple is a convenience function for binding multiple flag functions.
+func BindMultiple(bindFuncs ...func(*pflag.FlagSet)) func(*pflag.FlagSet) {
+	return func(flagSet *pflag.FlagSet) {
+		for _, bindFunc := range bindFuncs {
+			bindFunc(flagSet)
+		}
+	}
+}
+
+func newRunFunc(command *Command) func(context.Context, app.Container) error {
+	return func(ctx context.Context, container app.Container) error {
+		return run(ctx, container, command)
+	}
+}
+
+func run(
+	ctx context.Context,
+	container app.Container,
+	command *Command,
+) error {
+	var runErr error
+
+	cobraCommand, err := commandToCobra(ctx, container, command, &runErr)
+	if err != nil {
+		return err
+	}
+
+	// Cobra 1.2.0 introduced default completion commands under
+	// "<binary> completion <bash/zsh/fish/powershell>"". Since we have
+	// our own completion commands, disable the generation of the default
+	// commands.
+	cobraCommand.CompletionOptions.DisableDefaultCmd = true
+
+	// If the root command is not the only command, add a hidden manpages command
+	// and a visible completion command.
+	if len(command.SubCommands) > 0 {
+		shellCobraCommand, err := commandToCobra(
+			ctx,
+			container,
+			&Command{
+				Use:   "completion",
+				Short: "Generate auto-completion scripts for commonly used shells",
+				SubCommands: []*Command{
+					{
+						Use:   "bash",
+						Short: "Generate auto-completion scripts for bash",
+						Args:  cobra.NoArgs,
+						Run: func(ctx context.Context, container app.Container) error {
+							return cobraCommand.GenBashCompletion(container.Stdout())
+						},
+					},
+					{
+						Use:   "fish",
+						Short: "Generate auto-completion scripts for fish",
+						Args:  cobra.NoArgs,
+						Run: func(ctx context.Context, container app.Container) error {
+							return cobraCommand.GenFishCompletion(container.Stdout(), true)
+						},
+					},
+					{
+						Use:   "powershell",
+						Short: "Generate auto-completion scripts for powershell",
+						Args:  cobra.NoArgs,
+						Run: func(ctx context.Context, container app.Container) error {
+							return cobraCommand.GenPowerShellCompletion(cont
