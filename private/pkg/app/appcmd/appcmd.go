@@ -254,4 +254,109 @@ func run(
 	return runErr
 }
 
-func commandTo
+func commandToCobra(
+	ctx context.Context,
+	container app.Container,
+	command *Command,
+	runErrAddr *error,
+) (*cobra.Command, error) {
+	if err := commandValidate(command); err != nil {
+		return nil, err
+	}
+	cobraCommand := &cobra.Command{
+		Use:        command.Use,
+		Aliases:    command.Aliases,
+		Args:       command.Args,
+		Deprecated: command.Deprecated,
+		Hidden:     command.Hidden,
+		Short:      strings.TrimSpace(command.Short),
+	}
+	cobraCommand.SetHelpTemplate(`{{.Short}}
+
+{{with .Long}}{{. | trimTrailingWhitespaces}}
+
+{{end}}{{if or .Runnable .HasSubCommands}}{{.UsageString}}{{end}}`)
+	cobraCommand.SetHelpFunc(
+		func(c *cobra.Command, _ []string) {
+			if err := tmpl(container.Stdout(), c.HelpTemplate(), c); err != nil {
+				c.PrintErrln(err)
+			}
+		},
+	)
+	if command.Long != "" {
+		cobraCommand.Long = strings.TrimSpace(command.Long)
+	}
+	if command.BindFlags != nil {
+		command.BindFlags(cobraCommand.Flags())
+	}
+	if command.BindPersistentFlags != nil {
+		command.BindPersistentFlags(cobraCommand.PersistentFlags())
+	}
+	if command.NormalizeFlag != nil {
+		cobraCommand.Flags().SetNormalizeFunc(normalizeFunc(command.NormalizeFlag))
+	}
+	if command.NormalizePersistentFlag != nil {
+		cobraCommand.PersistentFlags().SetNormalizeFunc(normalizeFunc(command.NormalizePersistentFlag))
+	}
+	if command.Run != nil {
+		cobraCommand.Run = func(_ *cobra.Command, args []string) {
+			runErr := command.Run(ctx, app.NewContainerForArgs(container, args...))
+			if asErr := (&invalidArgumentError{}); errors.As(runErr, &asErr) {
+				// Print usage for failing command if an args error is returned.
+				// This has to be done at this level since the usage must relate
+				// to the command executed.
+				printUsage(container, cobraCommand.UsageString())
+			}
+			*runErrAddr = runErr
+		}
+	}
+	if len(command.SubCommands) > 0 {
+		// command.Run will not be set per validation
+		cobraCommand.Run = func(cmd *cobra.Command, args []string) {
+			printUsage(container, cobraCommand.UsageString())
+			if len(args) == 0 {
+				*runErrAddr = errors.New("Sub-command required.")
+			} else {
+				*runErrAddr = fmt.Errorf("Unknown sub-command: %s", strings.Join(args, " "))
+			}
+		}
+		for _, subCommand := range command.SubCommands {
+			subCobraCommand, err := commandToCobra(ctx, container, subCommand, runErrAddr)
+			if err != nil {
+				return nil, err
+			}
+			cobraCommand.AddCommand(subCobraCommand)
+		}
+	}
+	if command.Version != "" {
+		doVersion := false
+		oldRun := cobraCommand.Run
+		cobraCommand.Flags().BoolVar(
+			&doVersion,
+			"version",
+			false,
+			"Print the version",
+		)
+		cobraCommand.Run = func(cmd *cobra.Command, args []string) {
+			if doVersion {
+				_, err := container.Stdout().Write([]byte(command.Version + "\n"))
+				*runErrAddr = err
+				return
+			}
+			oldRun(cmd, args)
+		}
+	}
+	// appcommand prints errors, disable to prevent duplicates.
+	cobraCommand.SilenceErrors = true
+	return cobraCommand, nil
+}
+
+func commandValidate(command *Command) error {
+	if command.Use == "" {
+		return errors.New("must set Command.Use")
+	}
+	if command.Long != "" && command.Short == "" {
+		return errors.New("must set Command.Short if Command.Long is set")
+	}
+	if command.Run != nil && len(command.SubCommands) > 0 {
+		return errors.New("cannot set both Command.Run and Command.SubC
