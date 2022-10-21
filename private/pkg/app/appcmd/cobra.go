@@ -52,4 +52,7 @@ func tmpl(w io.Writer, text string, data interface{}) error {
 	t.Funcs(templateFuncs)
 	t, err := t.Parse(text)
 	if err != nil {
-		ret
+		return err
+	}
+	return t.Execute(w, data)
+}
