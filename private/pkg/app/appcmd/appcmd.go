@@ -359,4 +359,20 @@ func commandValidate(command *Command) error {
 		return errors.New("must set Command.Short if Command.Long is set")
 	}
 	if command.Run != nil && len(command.SubCommands) > 0 {
-		return errors.New("cannot set both Command.Run and Command.SubC
+		return errors.New("cannot set both Command.Run and Command.SubCommands")
+	}
+	if command.Run == nil && len(command.SubCommands) == 0 {
+		return errors.New("must set one of Command.Run and Command.SubCommands")
+	}
+	return nil
+}
+
+func normalizeFunc(f func(*pflag.FlagSet, string) string) func(*pflag.FlagSet, string) pflag.NormalizedName {
+	return func(flagSet *pflag.FlagSet, name string) pflag.NormalizedName {
+		return pflag.NormalizedName(f(flagSet, name))
+	}
+}
+
+func printUsage(container app.StderrContainer, usage string) {
+	_, _ = container.Stderr().Write([]byte(usage + "\n"))
+}
