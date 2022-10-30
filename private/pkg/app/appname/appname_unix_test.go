@@ -125,4 +125,13 @@ func testRoundTrip(t *testing.T, appName string, env map[string]string, dirPath 
 	require.NoError(t, err)
 	_, err = os.Lstat(filepath.Join(dirPath, configFileName))
 	require.NoError(t, err)
-	outputTestConfig
+	outputTestConfig := &testConfig{}
+	err = ReadConfig(container, outputTestConfig)
+	require.NoError(t, err)
+	require.Equal(t, inputTestConfig, outputTestConfig)
+}
+
+type testConfig struct {
+	Bar string
+	Baz string
+}
