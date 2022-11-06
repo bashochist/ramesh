@@ -163,4 +163,109 @@ func NewResponseWriter(logger *zap.Logger) ResponseWriter {
 type WriteResponseOption func(*writeResponseOptions)
 
 // WriteResponseWithInsertionPointReadBucket returns a new WriteResponseOption that uses the given
-// Read
+// ReadBucket to read from for insertion points.
+//
+// If this is not specified, insertion points are not supported.
+func WriteResponseWithInsertionPointReadBucket(
+	insertionPointReadBucket storage.ReadBucket,
+) WriteResponseOption {
+	return func(writeResponseOptions *writeResponseOptions) {
+		writeResponseOptions.insertionPointReadBucket = insertionPointReadBucket
+	}
+}
+
+// PluginResponse encapsulates a CodeGeneratorResponse,
+// along with the name of the plugin that created it.
+type PluginResponse struct {
+	Response   *pluginpb.CodeGeneratorResponse
+	PluginName string
+	PluginOut  string
+}
+
+// NewPluginResponse retruns a new *PluginResponse.
+func NewPluginResponse(
+	response *pluginpb.CodeGeneratorResponse,
+	pluginName string,
+	pluginOut string,
+) *PluginResponse {
+	return &PluginResponse{
+		Response:   response,
+		PluginName: pluginName,
+		PluginOut:  pluginOut,
+	}
+}
+
+// ValidatePluginResponses validates that each file is only defined by a single *PluginResponse.
+func ValidatePluginResponses(pluginResponses []*PluginResponse) error {
+	seen := make(map[string]string)
+	for _, pluginResponse := range pluginResponses {
+		for _, file := range pluginResponse.Response.File {
+			if file.GetInsertionPoint() != "" {
+				// We expect insertion points to write
+				// to files that already exist.
+				continue
+			}
+			fileName := filepath.Join(pluginResponse.PluginOut, file.GetName())
+			if pluginName, ok := seen[fileName]; ok {
+				return fmt.Errorf(
+					"file %q was generated multiple times: once by plugin %q and again by plugin %q",
+					fileName,
+					pluginName,
+					pluginResponse.PluginName,
+				)
+			}
+			seen[fileName] = pluginResponse.PluginName
+		}
+	}
+	return nil
+}
+
+// newRunFunc returns a new RunFunc for app.Main and app.Run.
+func newRunFunc(handler Handler) func(context.Context, app.Container) error {
+	return func(ctx context.Context, container app.Container) error {
+		input, err := io.ReadAll(container.Stdin())
+		if err != nil {
+			return err
+		}
+		request := &pluginpb.CodeGeneratorRequest{}
+		// We do not know the FileDescriptorSet before unmarshaling this
+		if err := protoencoding.NewWireUnmarshaler(nil).Unmarshal(input, request); err != nil {
+			return err
+		}
+		if err := protodescriptor.ValidateCodeGeneratorRequest(request); err != nil {
+			return err
+		}
+		responseWriter := newResponseBuilder(container)
+		if err := handler.Handle(ctx, container, responseWriter, request); err != nil {
+			return err
+		}
+		response := responseWriter.toResponse()
+		if err := protodescriptor.ValidateCodeGeneratorResponse(response); err != nil {
+			return err
+		}
+		data, err := protoencoding.NewWireMarshaler().Marshal(response)
+		if err != nil {
+			return err
+		}
+		_, err = container.Stdout().Write(data)
+		return err
+	}
+}
+
+// NewResponseBuilder returns a new ResponseBuilder.
+func NewResponseBuilder(container app.StderrContainer) ResponseBuilder {
+	return newResponseBuilder(container)
+}
+
+// leadingWhitespace iterates through the given string,
+// and returns the leading whitespace substring, if any,
+// respecting utf-8 encoding.
+//
+//	leadingWhitespace("\u205F   foo ") -> "\u205F   "
+func leadingWhitespace(buf []byte) []byte {
+	leadingSize := 0
+	iterBuf := buf
+	for len(iterBuf) > 0 {
+		r, size := utf8.DecodeRune(iterBuf)
+		// protobuf strings must always be valid UTF8
+		//
