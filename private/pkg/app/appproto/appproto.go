@@ -61,4 +61,106 @@ type ResponseBuilder interface {
 	AddError(message string)
 	// SetFeatureProto3Optional sets the proto3 optional feature.
 	SetFeatureProto3Optional()
-	// toResponse returns the resulting CodeGe
+	// toResponse returns the resulting CodeGeneratorResponse. This must
+	// only be called after all writing has been completed.
+	toResponse() *pluginpb.CodeGeneratorResponse
+}
+
+// Handler is a protoc plugin handler.
+type Handler interface {
+	// Handle handles the plugin.
+	//
+	// This function can assume the request is valid.
+	// This should only return error on system error.
+	// Plugin generation errors should be added with AddError.
+	// See https://github.com/protocolbuffers/protobuf/blob/95e6c5b4746dd7474d540ce4fb375e3f79a086f8/src/google/protobuf/compiler/plugin.proto#L100
+	Handle(
+		ctx context.Context,
+		container app.EnvStderrContainer,
+		responseWriter ResponseBuilder,
+		request *pluginpb.CodeGeneratorRequest,
+	) error
+}
+
+// HandlerFunc is a handler function.
+type HandlerFunc func(
+	context.Context,
+	app.EnvStderrContainer,
+	ResponseBuilder,
+	*pluginpb.CodeGeneratorRequest,
+) error
+
+// Handle implements Handler.
+func (h HandlerFunc) Handle(
+	ctx context.Context,
+	container app.EnvStderrContainer,
+	responseWriter ResponseBuilder,
+	request *pluginpb.CodeGeneratorRequest,
+) error {
+	return h(ctx, container, responseWriter, request)
+}
+
+// Main runs the plugin using app.Main and the Handler.
+func Main(ctx context.Context, handler Handler) {
+	app.Main(ctx, newRunFunc(handler))
+}
+
+// Run runs the plugin using app.Main and the Handler.
+//
+// The exit code can be determined using app.GetExitCode.
+func Run(ctx context.Context, container app.Container, handler Handler) error {
+	return app.Run(ctx, container, newRunFunc(handler))
+}
+
+// Generator executes the Handler using protoc's plugin execution logic.
+//
+// If multiple requests are specified, these are executed in parallel and the
+// result is combined into one response that is written.
+type Generator interface {
+	// Generate generates a CodeGeneratorResponse for the given CodeGeneratorRequests.
+	//
+	// A new ResponseBuilder is constructed for every invocation of Generate and is
+	// used to consolidate all of the CodeGeneratorResponse_Files returned from a single
+	// plugin into a single CodeGeneratorResponse.
+	Generate(
+		ctx context.Context,
+		container app.EnvStderrContainer,
+		requests []*pluginpb.CodeGeneratorRequest,
+	) (*pluginpb.CodeGeneratorResponse, error)
+}
+
+// NewGenerator returns a new Generator.
+func NewGenerator(
+	logger *zap.Logger,
+	handler Handler,
+) Generator {
+	return newGenerator(logger, handler)
+}
+
+// ResponseWriter handles the response and writes it to the given storage.WriteBucket
+// without executing any plugins and handles insertion points as needed.
+type ResponseWriter interface {
+	// WriteResponse writes to the bucket with the given response. In practice, the
+	// WriteBucket is most often an in-memory bucket.
+	//
+	// CodeGeneratorResponses are consolidated into the bucket, and insertion points
+	// are applied in-place so that they can only access the files created in a single
+	// generation invocation (just like protoc).
+	WriteResponse(
+		ctx context.Context,
+		writeBucket storage.WriteBucket,
+		response *pluginpb.CodeGeneratorResponse,
+		options ...WriteResponseOption,
+	) error
+}
+
+// NewResponseWriter returns a new ResponseWriter.
+func NewResponseWriter(logger *zap.Logger) ResponseWriter {
+	return newResponseWriter(logger)
+}
+
+// WriteResponseOption is an option for WriteResponse.
+type WriteResponseOption func(*writeResponseOptions)
+
+// WriteResponseWithInsertionPointReadBucket returns a new WriteResponseOption that uses the given
+// Read
