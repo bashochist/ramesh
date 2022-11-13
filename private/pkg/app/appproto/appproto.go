@@ -268,4 +268,31 @@ func leadingWhitespace(buf []byte) []byte {
 	for len(iterBuf) > 0 {
 		r, size := utf8.DecodeRune(iterBuf)
 		// protobuf strings must always be valid UTF8
-		//
+		// https://developers.google.com/protocol-buffers/docs/proto3#scalar
+		// Additionally, utf8.RuneError is not a space so we'll terminate
+		// and return the leading, valid, UTF8 whitespace sequence.
+		if !unicode.IsSpace(r) {
+			out := make([]byte, leadingSize)
+			copy(out, buf)
+			return out
+		}
+		leadingSize += size
+		iterBuf = iterBuf[size:]
+	}
+	return buf
+}
+
+// scanWithPrefixAndLineEnding iterates over each of the given scanner's lines
+// prepends prefix, and appends the newline sequence.
+func scanWithPrefixAndLineEnding(scanner *bufio.Scanner, prefix []byte, newline []byte) []byte {
+	result := bytes.NewBuffer(nil)
+	result.Grow(averageInsertionPointSize)
+	for scanner.Scan() {
+		// These writes cannot fail, they will panic if they cannot
+		// allocate
+		_, _ = result.Write(prefix)
+		_, _ = result.Write(scanner.Bytes())
+		_, _ = result.Write(newline)
+	}
+	return result.Bytes()
+}
