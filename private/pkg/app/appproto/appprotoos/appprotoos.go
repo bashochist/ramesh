@@ -63,4 +63,6 @@ type ResponseWriterOption func(*responseWriterOptions)
 // the directory if it does not exist.
 func ResponseWriterWithCreateOutDirIfNotExists() ResponseWriterOption {
 	return func(responseWriterOptions *responseWriterOptions) {
-		responseWriterOptions.createO
+		responseWriterOptions.createOutDirIfNotExists = true
+	}
+}
