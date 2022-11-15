@@ -1,3 +1,4 @@
+
 // Copyright 2020-2023 Buf Technologies, Inc.
 //
 // Licensed under the Apache License, Version 2.0 (the "License");
@@ -12,8 +13,24 @@
 // See the License for the specific language governing permissions and
 // limitations under the License.
 
-// Generated. DO NOT EDIT.
+package app
 
-package appproto
+type argContainer struct {
+	values []string
+}
 
-import _ "github.com/bufbuild/buf/private/usage"
+func newArgContainer(s []string) *argContainer {
+	values := make([]string, len(s))
+	copy(values, s)
+	return &argContainer{
+		values: values,
+	}
+}
+
+func (a *argContainer) NumArgs() int {
+	return len(a.values)
+}
+
+func (a *argContainer) Arg(i int) string {
+	return a.values[i]
+}

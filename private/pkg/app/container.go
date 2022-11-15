@@ -12,8 +12,28 @@
 // See the License for the specific language governing permissions and
 // limitations under the License.
 
-// Generated. DO NOT EDIT.
+package app
 
-package appproto
+type container struct {
+	EnvContainer
+	StdinContainer
+	StdoutContainer
+	StderrContainer
+	ArgContainer
+}
 
-import _ "github.com/bufbuild/buf/private/usage"
+func newContainer(
+	envContainer EnvContainer,
+	stdinContainer StdinContainer,
+	stdoutContainer StdoutContainer,
+	stderrContainer StderrContainer,
+	argContainer ArgContainer,
+) *container {
+	return &container{
+		EnvContainer:    envContainer,
+		StdinContainer:  stdinContainer,
+		StdoutContainer: stdoutContainer,
+		StderrContainer: stderrContainer,
+		ArgContainer:    argContainer,
+	}
+}

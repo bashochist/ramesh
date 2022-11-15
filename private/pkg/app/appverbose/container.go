@@ -1,3 +1,4 @@
+
 // Copyright 2020-2023 Buf Technologies, Inc.
 //
 // Licensed under the Apache License, Version 2.0 (the "License");
@@ -12,8 +13,20 @@
 // See the License for the specific language governing permissions and
 // limitations under the License.
 
-// Generated. DO NOT EDIT.
+package appverbose
 
-package appproto
+import "github.com/bufbuild/buf/private/pkg/verbose"
 
-import _ "github.com/bufbuild/buf/private/usage"
+type container struct {
+	verbosePrinter verbose.Printer
+}
+
+func newContainer(verbosePrinter verbose.Printer) *container {
+	return &container{
+		verbosePrinter: verbosePrinter,
+	}
+}
+
+func (c *container) VerbosePrinter() verbose.Printer {
+	return c.verbosePrinter
+}

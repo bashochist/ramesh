@@ -12,8 +12,12 @@
 // See the License for the specific language governing permissions and
 // limitations under the License.
 
-// Generated. DO NOT EDIT.
+package app
 
-package appproto
+import (
+	"errors"
+	"strings"
+)
 
-import _ "github.com/bufbuild/buf/private/usage"
+type envContainer struct {
+	v
