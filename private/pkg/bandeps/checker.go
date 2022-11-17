@@ -1,3 +1,4 @@
+
 // Copyright 2020-2023 Buf Technologies, Inc.
 //
 // Licensed under the Apache License, Version 2.0 (the "License");
@@ -12,27 +13,10 @@
 // See the License for the specific language governing permissions and
 // limitations under the License.
 
-package app
+package bandeps
 
 import (
-	"io"
+	"context"
+	"sync"
 
-	"github.com/bufbuild/buf/private/pkg/ioextended"
-)
-
-type stdinContainer struct {
-	reader io.Reader
-}
-
-func newStdinContainer(reader io.Reader) *stdinContainer {
-	if reader == nil {
-		reader = ioextended.DiscardReader
-	}
-	return &stdinContainer{
-		reader: reader,
-	}
-}
-
-func (s *stdinContainer) Stdin() io.Reader {
-	return s.reader
-}
+	"github.com/bufbuild/buf/private/pkg/app"

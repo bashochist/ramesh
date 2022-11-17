@@ -20,19 +20,19 @@ import (
 	"github.com/bufbuild/buf/private/pkg/ioextended"
 )
 
-type stdinContainer struct {
-	reader io.Reader
+type stdoutContainer struct {
+	writer io.Writer
 }
 
-func newStdinContainer(reader io.Reader) *stdinContainer {
-	if reader == nil {
-		reader = ioextended.DiscardReader
+func newStdoutContainer(writer io.Writer) *stdoutContainer {
+	if writer == nil {
+		writer = io.Discard
 	}
-	return &stdinContainer{
-		reader: reader,
+	return &stdoutContainer{
+		writer: ioextended.LockedWriter(writer),
 	}
 }
 
-func (s *stdinContainer) Stdin() io.Reader {
-	return s.reader
+func (s *stdoutContainer) Stdout() io.Writer {
+	return s.writer
 }
