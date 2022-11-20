@@ -44,4 +44,18 @@ func (v *violation) Dep() string {
 	return v.dep
 }
 
-func (v 
+func (v *violation) Note() string {
+	return v.note
+}
+
+func (v *violation) String() string {
+	return v.pkg + ` cannot depend on ` + v.dep + `: ` + v.note + `.`
+}
+
+func (v *violation) key() string {
+	hash := sha256.New()
+	_, _ = hash.Write([]byte(v.pkg))
+	_, _ = hash.Write([]byte(v.dep))
+	_, _ = hash.Write([]byte(v.note))
+	return string(hash.Sum(nil))
+}
