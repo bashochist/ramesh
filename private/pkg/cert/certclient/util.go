@@ -24,4 +24,45 @@ import (
 // NewClientTLSConfigFromRootCertFiles creates a new tls.Config from a root certificate files.
 func NewClientTLSConfigFromRootCertFiles(rootCertFilePaths ...string) (*tls.Config, error) {
 	rootCertDatas := make([][]byte, len(rootCertFilePaths))
-	f
+	for i, rootCertFilePath := range rootCertFilePaths {
+		rootCertData, err := os.ReadFile(rootCertFilePath)
+		if err != nil {
+			return nil, err
+		}
+		rootCertDatas[i] = rootCertData
+	}
+	return newClientTLSConfigFromRootCertDatas(rootCertDatas...)
+}
+
+// newClientTLSConfigFromRootCertDatas creates a new tls.Config from root certificate datas.
+func newClientTLSConfigFromRootCertDatas(rootCertDatas ...[]byte) (*tls.Config, error) {
+	certPool := x509.NewCertPool()
+	for _, rootCertData := range rootCertDatas {
+		if !certPool.AppendCertsFromPEM(rootCertData) {
+			return nil, errors.New("failed to append root certificate")
+		}
+	}
+	return newClientTLSConfigFromRootCertPool(certPool), nil
+}
+
+// newClientTLSConfigFromRootCertPool creates a new tls.Config from a root certificate pool.
+func newClientTLSConfigFromRootCertPool(certPool *x509.CertPool) *tls.Config {
+	return &tls.Config{
+		MinVersion: tls.VersionTLS12,
+		RootCAs:    certPool,
+	}
+}
+
+// newClientSystemTLSConfig creates a new tls.Config that uses the system cert pool for verifying
+// server certificates.
+func newClientSystemTLSConfig() *tls.Config {
+	return &tls.Config{
+		MinVersion: tls.VersionTLS12,
+		// An empty TLS config will use the system certificate pool
+		// when verifying the servers certificate. This is because
+		// not setting any RootCAs will set `x509.VerifyOptions.Roots`
+		// to nil, which triggers the loading of system certs (including
+		// on Windows somehow) within (*x509.Certificate).Verify.
+		RootCAs: nil,
+	}
+}
