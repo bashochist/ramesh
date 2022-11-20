@@ -162,4 +162,107 @@ func (s *state) packagesForPackageExpressionUncached(
 	packageExpression string,
 ) (map[string]struct{}, error) {
 	ctx, span := s.tracer.Start(ctx, "packagesForPackageExpressionUncached", trace.WithAttributes(
-		attribute.Key("packageExpression").String(pack
+		attribute.Key("packageExpression").String(packageExpression),
+	))
+	defer span.End()
+
+	data, err := command.RunStdout(ctx, s.envStdioContainer, s.runner, `go`, `list`, packageExpression)
+	if err != nil {
+		span.RecordError(err)
+		span.SetStatus(codes.Error, err.Error())
+		return nil, err
+	}
+	return stringutil.SliceToMap(getNonEmptyLines(string(data))), nil
+}
+
+func (s *state) depsForPackage(
+	ctx context.Context,
+	pkg string,
+) (map[string]struct{}, error) {
+	defer func() {
+		// not worrying about locks
+		s.logger.Debug("cache", zap.Int("calls", s.calls), zap.Int("hits", s.cacheHits))
+	}()
+
+	s.packageToDepsLock.RLock(pkg)
+	s.lock.RLock()
+	depResult, ok := s.packageToDeps[pkg]
+	s.lock.RUnlock()
+	s.packageToDepsLock.RUnlock(pkg)
+	if ok {
+		s.lock.Lock()
+		s.calls++
+		s.cacheHits++
+		s.lock.Unlock()
+		return depResult.Deps, depResult.Err
+	}
+
+	s.packageToDepsLock.Lock(pkg)
+	defer s.packageToDepsLock.Unlock(pkg)
+
+	s.lock.RLock()
+	depResult, ok = s.packageToDeps[pkg]
+	s.lock.RUnlock()
+	if ok {
+		s.lock.Lock()
+		s.calls++
+		s.cacheHits++
+		s.lock.Unlock()
+		return depResult.Deps, depResult.Err
+	}
+	deps, err := s.depsForPackageUncached(ctx, pkg)
+	// we always hold key lock and then this lock so lock ordering is ok
+	s.lock.Lock()
+	s.packageToDeps[pkg] = newDepsResult(deps, err)
+	s.calls++
+	s.lock.Unlock()
+	return deps, err
+}
+
+func (s *state) depsForPackageUncached(
+	ctx context.Context,
+	pkg string,
+) (map[string]struct{}, error) {
+	ctx, span := s.tracer.Start(ctx, "depsForPackageUncached", trace.WithAttributes(
+		attribute.Key("package").String(pkg),
+	))
+	defer span.End()
+
+	data, err := command.RunStdout(ctx, s.envStdioContainer, s.runner, `go`, `list`, `-f`, `{{join .Deps "\n"}}`, pkg)
+	if err != nil {
+		span.RecordError(err)
+		span.SetStatus(codes.Error, err.Error())
+		return nil, err
+	}
+	return stringutil.SliceToMap(getNonEmptyLines(string(data))), nil
+}
+
+type packagesResult struct {
+	Packages map[string]struct{}
+	Err      error
+}
+
+func newPackagesResult(
+	packages map[string]struct{},
+	err error,
+) *packagesResult {
+	return &packagesResult{
+		Packages: packages,
+		Err:      err,
+	}
+}
+
+type depsResult struct {
+	Deps map[string]struct{}
+	Err  error
+}
+
+func newDepsResult(
+	deps map[string]struct{},
+	err error,
+) *depsResult {
+	return &depsResult{
+		Deps: deps,
+		Err:  err,
+	}
+}
