@@ -51,4 +51,115 @@ func newState(
 	runner command.Runner,
 ) *state {
 	return &state{
-		logger:        
+		logger:                          logger,
+		envStdioContainer:               envStdioContainer,
+		runner:                          runner,
+		violationMap:                    make(map[string]Violation),
+		packageExpressionToPackages:     make(map[string]*packagesResult),
+		packageExpressionToPackagesLock: newKeyRWLock(),
+		packageToDeps:                   make(map[string]*depsResult),
+		packageToDepsLock:               newKeyRWLock(),
+		tracer:                          otel.GetTracerProvider().Tracer(tracerName),
+	}
+}
+
+func (s *state) PackagesForPackageExpressions(
+	ctx context.Context,
+	packageExpressions ...string,
+) (map[string]struct{}, error) {
+	packages := make(map[string]struct{})
+	for _, packageExpression := range packageExpressions {
+		iPackages, err := s.packagesForPackageExpression(ctx, packageExpression)
+		if err != nil {
+			return nil, err
+		}
+		addMaps(packages, iPackages)
+	}
+	return packages, nil
+}
+
+func (s *state) DepsForPackages(
+	ctx context.Context,
+	pkgs ...string,
+) (map[string]struct{}, error) {
+	deps := make(map[string]struct{})
+	for _, pkg := range pkgs {
+		iDeps, err := s.depsForPackage(ctx, pkg)
+		if err != nil {
+			return nil, err
+		}
+		addMaps(deps, iDeps)
+	}
+	return deps, nil
+}
+
+func (s *state) AddViolation(violation Violation) {
+	violationKey := violation.key()
+	s.lock.Lock()
+	if _, ok := s.violationMap[violationKey]; !ok {
+		s.violationMap[violationKey] = violation
+	}
+	s.lock.Unlock()
+}
+
+func (s *state) Violations() []Violation {
+	s.lock.RLock()
+	violations := make([]Violation, 0, len(s.violationMap))
+	for _, violation := range s.violationMap {
+		violations = append(violations, violation)
+	}
+	s.lock.RUnlock()
+	sortViolations(violations)
+	return violations
+}
+
+func (s *state) packagesForPackageExpression(
+	ctx context.Context,
+	packageExpression string,
+) (map[string]struct{}, error) {
+	defer func() {
+		// not worrying about locks
+		s.logger.Debug("cache", zap.Int("calls", s.calls), zap.Int("hits", s.cacheHits))
+	}()
+
+	s.packageExpressionToPackagesLock.RLock(packageExpression)
+	s.lock.RLock()
+	packageResult, ok := s.packageExpressionToPackages[packageExpression]
+	s.lock.RUnlock()
+	s.packageExpressionToPackagesLock.RUnlock(packageExpression)
+	if ok {
+		s.lock.Lock()
+		s.calls++
+		s.cacheHits++
+		s.lock.Unlock()
+		return packageResult.Packages, packageResult.Err
+	}
+
+	s.packageExpressionToPackagesLock.Lock(packageExpression)
+	defer s.packageExpressionToPackagesLock.Unlock(packageExpression)
+
+	s.lock.RLock()
+	packageResult, ok = s.packageExpressionToPackages[packageExpression]
+	s.lock.RUnlock()
+	if ok {
+		s.lock.Lock()
+		s.calls++
+		s.cacheHits++
+		s.lock.Unlock()
+		return packageResult.Packages, packageResult.Err
+	}
+	packages, err := s.packagesForPackageExpressionUncached(ctx, packageExpression)
+	// we always hold key lock and then this lock so lock ordering is ok
+	s.lock.Lock()
+	s.packageExpressionToPackages[packageExpression] = newPackagesResult(packages, err)
+	s.calls++
+	s.lock.Unlock()
+	return packages, err
+}
+
+func (s *state) packagesForPackageExpressionUncached(
+	ctx context.Context,
+	packageExpression string,
+) (map[string]struct{}, error) {
+	ctx, span := s.tracer.Start(ctx, "packagesForPackageExpressionUncached", trace.WithAttributes(
+		attribute.Key("packageExpression").String(pack
