@@ -82,4 +82,14 @@ func LockWithTimeout(timeout time.Duration) LockOption {
 
 // LockWithRetryDelay returns a new LockOption that sets the lock retry delay.
 //
-// Lock will try to lock on this delay up un
+// Lock will try to lock on this delay up until the lock timeout.
+func LockWithRetryDelay(retryDelay time.Duration) LockOption {
+	return func(lockOptions *lockOptions) {
+		lockOptions.retryDelay = retryDelay
+	}
+}
+
+// NewNopLocker returns a new no-op Locker.
+func NewNopLocker() Locker {
+	return newNopLocker()
+}
