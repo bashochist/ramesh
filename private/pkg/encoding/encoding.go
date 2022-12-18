@@ -94,4 +94,109 @@ func UnmarshalYAMLNonStrict(data []byte, v interface{}) error {
 		return nil
 	}
 	yamlDecoder := NewYAMLDecoderNonStrict(bytes.NewReader(data))
-	if err := yamlDecoder.Decode(v); err != 
+	if err := yamlDecoder.Decode(v); err != nil {
+		return fmt.Errorf("could not unmarshal as YAML: %v", err)
+	}
+	return nil
+}
+
+// UnmarshalJSONOrYAMLNonStrict unmarshals the data as JSON or YAML in order, returning
+// a user error with both errors on failure.
+//
+// If the data length is 0, this is a no-op.
+func UnmarshalJSONOrYAMLNonStrict(data []byte, v interface{}) error {
+	if len(data) == 0 {
+		return nil
+	}
+	if jsonErr := UnmarshalJSONNonStrict(data, v); jsonErr != nil {
+		if yamlErr := UnmarshalYAMLNonStrict(data, v); yamlErr != nil {
+			return multierr.Append(jsonErr, yamlErr)
+		}
+	}
+	return nil
+}
+
+// GetJSONStringOrStringValue returns the JSON string for the RawMessage if the
+// RawMessage is a string, and the raw value as a string otherwise.
+//
+// If the RawMessage is empty, this returns "".
+func GetJSONStringOrStringValue(rawMessage json.RawMessage) string {
+	if len(rawMessage) == 0 {
+		return ""
+	}
+	var s string
+	if err := json.Unmarshal(rawMessage, &s); err == nil {
+		return s
+	}
+	return string(rawMessage)
+}
+
+// MarshalYAML marshals the given value into YAML.
+func MarshalYAML(v interface{}) (_ []byte, retErr error) {
+	buffer := bytes.NewBuffer(nil)
+	yamlEncoder := NewYAMLEncoder(buffer)
+	defer func() {
+		retErr = multierr.Append(retErr, yamlEncoder.Close())
+	}()
+	if err := yamlEncoder.Encode(v); err != nil {
+		return nil, err
+	}
+	return buffer.Bytes(), nil
+}
+
+// NewYAMLEncoder creates a new YAML encoder reader from the Writer.
+// The encoder must be closed after use.
+func NewYAMLEncoder(writer io.Writer) *yaml.Encoder {
+	yamlEncoder := yaml.NewEncoder(writer)
+	yamlEncoder.SetIndent(2)
+	return yamlEncoder
+}
+
+// NewYAMLDecoderStrict creates a new YAML decoder from the reader.
+func NewYAMLDecoderStrict(reader io.Reader) *yaml.Decoder {
+	yamlDecoder := yaml.NewDecoder(reader)
+	yamlDecoder.KnownFields(true)
+	return yamlDecoder
+}
+
+// NewYAMLDecoderNonStrict creates a new YAML decoder from the reader.
+func NewYAMLDecoderNonStrict(reader io.Reader) *yaml.Decoder {
+	return yaml.NewDecoder(reader)
+}
+
+// InterfaceSliceOrStringToCommaSepString parses the input as a
+// slice or string into a comma separated string. This is commonly
+// used with JSON or YAML fields that need to support both string slices
+// and string literals.
+func InterfaceSliceOrStringToCommaSepString(in interface{}) (string, error) {
+	values, err := InterfaceSliceOrStringToStringSlice(in)
+	if err != nil {
+		return "", err
+	}
+	return strings.Join(values, ","), nil
+}
+
+func InterfaceSliceOrStringToStringSlice(in interface{}) ([]string, error) {
+	if in == nil {
+		return nil, nil
+	}
+	switch t := in.(type) {
+	case string:
+		return []string{t}, nil
+	case []interface{}:
+		if len(t) == 0 {
+			return nil, nil
+		}
+		res := make([]string, len(t))
+		for i, elem := range t {
+			s, ok := elem.(string)
+			if !ok {
+				return nil, fmt.Errorf("could not convert element %T to a string", elem)
+			}
+			res[i] = s
+		}
+		return res, nil
+	default:
+		return nil, fmt.Errorf("could not interpret %T as string or string slice", in)
+	}
+}
