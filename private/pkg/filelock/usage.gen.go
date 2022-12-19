@@ -12,14 +12,8 @@
 // See the License for the specific language governing permissions and
 // limitations under the License.
 
+// Generated. DO NOT EDIT.
+
 package filelock
 
-type nopUnlocker struct{}
-
-func newNopUnlocker() *nopUnlocker {
-	return &nopUnlocker{}
-}
-
-func (l *nopUnlocker) Unlock() error {
-	return nil
-}
+import _ "github.com/bufbuild/buf/private/usage"
