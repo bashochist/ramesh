@@ -48,4 +48,95 @@ func TestRealClean(t *testing.T) {
 func TestWalkSymlinkSuccessNoSymlinks(t *testing.T) {
 	t.Parallel()
 	filePaths, err := testWalkGetRegularFilePaths(
-		filepath.Join("testdata", "symlin
+		filepath.Join("testdata", "symlink_success"),
+	)
+	require.NoError(t, err)
+	require.Equal(
+		t,
+		[]string{
+			"file.proto",
+		},
+		filePaths,
+	)
+}
+
+func TestWalkSymlinkSuccessSymlinks(t *testing.T) {
+	t.Parallel()
+	filePaths, err := testWalkGetRegularFilePaths(
+		filepath.Join("testdata", "symlink_success"),
+		WalkWithSymlinks(),
+	)
+	require.NoError(t, err)
+	require.Equal(
+		t,
+		[]string{
+			"1.proto",
+			"a/b/1.proto",
+			"a/b/2.proto",
+			"a/b/2.txt",
+			"a/bar.yaml",
+			"a/file.proto",
+			"ab/1.proto",
+			"ab/2.proto",
+			"ab/2.txt",
+			"file.proto",
+		},
+		filePaths,
+	)
+}
+
+func TestWalkSymlinkLoopNoSymlinks(t *testing.T) {
+	t.Parallel()
+	filePaths, err := testWalkGetRegularFilePaths(
+		filepath.Join("testdata", "symlink_loop"),
+	)
+	require.NoError(t, err)
+	require.Equal(
+		t,
+		[]string{
+			"file.proto",
+		},
+		filePaths,
+	)
+}
+
+func TestWalkSymlinkLoopSymlinks(t *testing.T) {
+	t.Parallel()
+	filePaths, err := testWalkGetRegularFilePaths(
+		filepath.Join("testdata", "symlink_loop"),
+		WalkWithSymlinks(),
+	)
+	require.NoError(t, err)
+	require.Equal(
+		t,
+		[]string{
+			"file.proto",
+		},
+		filePaths,
+	)
+}
+
+func testWalkGetRegularFilePaths(dirPath string, options ...WalkOption) ([]string, error) {
+	var filePaths []string
+	if err := Walk(
+		dirPath,
+		func(path string, fileInfo os.FileInfo, err error) error {
+			if err != nil {
+				return err
+			}
+			if fileInfo.Mode().IsRegular() {
+				relPath, err := filepath.Rel(dirPath, path)
+				if err != nil {
+					return err
+				}
+				filePaths = append(filePaths, relPath)
+			}
+			return nil
+		},
+		options...,
+	); err != nil {
+		return nil, err
+	}
+	sort.Strings(filePaths)
+	return filePaths, nil
+}
