@@ -12,34 +12,8 @@
 // See the License for the specific language governing permissions and
 // limitations under the License.
 
-package git
+// Generated. DO NOT EDIT.
 
-type branch struct {
-	branch string
-}
+package main
 
-func newBranch(name string) *branch {
-	return &branch{
-		branch: name,
-	}
-}
-
-func (r *branch) cloneBranch() string {
-	if r == nil {
-		return ""
-	}
-	return r.branch
-}
-
-func (r branch) checkout() string {
-	return ""
-}
-
-// Used for logging
-func (r *branch) MarshalJSON() ([]byte, error) {
-	return []byte(`"` + r.cloneBranch() + `"`), nil
-}
-
-func (r *branch) String() string {
-	return r.cloneBranch()
-}
+import _ "github.com/bufbuild/buf/private/usage"
