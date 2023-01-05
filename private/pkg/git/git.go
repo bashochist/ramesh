@@ -57,4 +57,79 @@ func NewRefNameWithBranch(ref string, branch string) Name {
 type Cloner interface {
 	// CloneToBucket clones the repository to the bucket.
 	//
-	// The url must contain the sch
+	// The url must contain the scheme, including file:// if necessary.
+	// depth must be > 0.
+	CloneToBucket(
+		ctx context.Context,
+		envContainer app.EnvContainer,
+		url string,
+		depth uint32,
+		writeBucket storage.WriteBucket,
+		options CloneToBucketOptions,
+	) error
+}
+
+// CloneToBucketOptions are options for Clone.
+type CloneToBucketOptions struct {
+	Mapper            storage.Mapper
+	Name              Name
+	RecurseSubmodules bool
+}
+
+// NewCloner returns a new Cloner.
+func NewCloner(
+	logger *zap.Logger,
+	storageosProvider storageos.Provider,
+	runner command.Runner,
+	options ClonerOptions,
+) Cloner {
+	return newCloner(logger, storageosProvider, runner, options)
+}
+
+// ClonerOptions are options for a new Cloner.
+type ClonerOptions struct {
+	HTTPSUsernameEnvKey      string
+	HTTPSPasswordEnvKey      string
+	SSHKeyFileEnvKey         string
+	SSHKnownHostsFilesEnvKey string
+}
+
+// Lister lists files in git repositories.
+type Lister interface {
+	// ListFilesAndUnstagedFiles lists all files checked into git except those that
+	// were deleted, and also lists unstaged files.
+	//
+	// This does not list unstaged deleted files
+	// This does not list unignored files that were not added.
+	// This ignores regular files.
+	//
+	// This is used for situations like license headers where we want all the
+	// potential git files during development.
+	//
+	// The returned paths will be unnormalized.
+	//
+	// This is the equivalent of doing:
+	//
+	//	comm -23 \
+	//		<(git ls-files --cached --modified --others --no-empty-directory --exclude-standard | sort -u | grep -v -e IGNORE_PATH1 -e IGNORE_PATH2) \
+	//		<(git ls-files --deleted | sort -u)
+	ListFilesAndUnstagedFiles(
+		ctx context.Context,
+		envContainer app.EnvStdioContainer,
+		options ListFilesAndUnstagedFilesOptions,
+	) ([]string, error)
+}
+
+// NewLister returns a new Lister.
+func NewLister(runner command.Runner) Lister {
+	return newLister(runner)
+}
+
+// ListFilesAndUnstagedFilesOptions are options for ListFilesAndUnstagedFiles.
+type ListFilesAndUnstagedFilesOptions struct {
+	// IgnorePathRegexps are regexes of paths to ignore.
+	//
+	// These must be unnormalized in the manner of the local OS that the Lister
+	// is being applied to.
+	IgnorePathRegexps []*regexp.Regexp
+}
