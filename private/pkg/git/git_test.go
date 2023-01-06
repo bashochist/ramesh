@@ -36,4 +36,90 @@ import (
 )
 
 func TestGitCloner(t *testing.T) {
-	t.Paral
+	t.Parallel()
+	ctx := context.Background()
+	container, err := app.NewContainerForOS()
+	require.NoError(t, err)
+	runner := command.NewRunner()
+	originDir, workDir := createGitDirs(ctx, t, container, runner)
+
+	t.Run("default", func(t *testing.T) {
+		t.Parallel()
+		readBucket := readBucketForName(ctx, t, runner, workDir, 1, nil, false)
+
+		content, err := storage.ReadPath(ctx, readBucket, "test.proto")
+		require.NoError(t, err)
+		assert.Equal(t, "// commit 2", string(content), "expected the commit on local-branch to be checked out")
+		_, err = readBucket.Stat(ctx, "nonexistent")
+		assert.True(t, storage.IsNotExist(err))
+		_, err = storage.ReadPath(ctx, readBucket, "submodule/test.proto")
+		assert.True(t, storage.IsNotExist(err))
+	})
+
+	t.Run("default_submodule", func(t *testing.T) {
+		t.Parallel()
+		readBucket := readBucketForName(ctx, t, runner, workDir, 1, nil, true)
+
+		content, err := storage.ReadPath(ctx, readBucket, "test.proto")
+		require.NoError(t, err)
+		assert.Equal(t, "// commit 2", string(content), "expected the commit on local-branch to be checked out")
+		_, err = readBucket.Stat(ctx, "nonexistent")
+		assert.True(t, storage.IsNotExist(err))
+		content, err = storage.ReadPath(ctx, readBucket, "submodule/test.proto")
+		require.NoError(t, err)
+		assert.Equal(t, "// submodule", string(content))
+	})
+
+	t.Run("main", func(t *testing.T) {
+		t.Parallel()
+		readBucket := readBucketForName(ctx, t, runner, workDir, 1, NewBranchName("main"), false)
+
+		content, err := storage.ReadPath(ctx, readBucket, "test.proto")
+		require.NoError(t, err)
+		assert.Equal(t, "// commit 1", string(content))
+		_, err = readBucket.Stat(ctx, "nonexistent")
+		assert.True(t, storage.IsNotExist(err))
+	})
+
+	t.Run("origin/main", func(t *testing.T) {
+		t.Parallel()
+		readBucket := readBucketForName(ctx, t, runner, workDir, 1, NewBranchName("origin/main"), false)
+
+		content, err := storage.ReadPath(ctx, readBucket, "test.proto")
+		require.NoError(t, err)
+		assert.Equal(t, "// commit 3", string(content))
+		_, err = readBucket.Stat(ctx, "nonexistent")
+		assert.True(t, storage.IsNotExist(err))
+	})
+
+	t.Run("origin/remote-branch", func(t *testing.T) {
+		t.Parallel()
+		readBucket := readBucketForName(ctx, t, runner, workDir, 1, NewBranchName("origin/remote-branch"), false)
+
+		content, err := storage.ReadPath(ctx, readBucket, "test.proto")
+		require.NoError(t, err)
+		assert.Equal(t, "// commit 4", string(content))
+		_, err = readBucket.Stat(ctx, "nonexistent")
+		assert.True(t, storage.IsNotExist(err))
+	})
+
+	t.Run("remote-tag", func(t *testing.T) {
+		t.Parallel()
+		readBucket := readBucketForName(ctx, t, runner, workDir, 1, NewTagName("remote-tag"), false)
+
+		content, err := storage.ReadPath(ctx, readBucket, "test.proto")
+		require.NoError(t, err)
+		assert.Equal(t, "// commit 4", string(content))
+		_, err = readBucket.Stat(ctx, "nonexistent")
+		assert.True(t, storage.IsNotExist(err))
+	})
+
+	t.Run("branch_and_main_ref", func(t *testing.T) {
+		t.Parallel()
+		readBucket := readBucketForName(ctx, t, runner, workDir, 2, NewRefNameWithBranch("HEAD~", "main"), false)
+
+		content, err := storage.ReadPath(ctx, readBucket, "test.proto")
+		require.NoError(t, err)
+		assert.Equal(t, "// commit 0", string(content))
+		_, err = readBucket.Stat(ctx, "nonexistent")
+		assert.True(t
