@@ -122,4 +122,92 @@ func TestGitCloner(t *testing.T) {
 		require.NoError(t, err)
 		assert.Equal(t, "// commit 0", string(content))
 		_, err = readBucket.Stat(ctx, "nonexistent")
-		assert.True(t
+		assert.True(t, storage.IsNotExist(err))
+	})
+
+	t.Run("branch_and_ref", func(t *testing.T) {
+		t.Parallel()
+		readBucket := readBucketForName(ctx, t, runner, workDir, 2, NewRefNameWithBranch("local-branch~", "local-branch"), false)
+
+		content, err := storage.ReadPath(ctx, readBucket, "test.proto")
+		require.NoError(t, err)
+		assert.Equal(t, "// commit 1", string(content))
+		_, err = readBucket.Stat(ctx, "nonexistent")
+		assert.True(t, storage.IsNotExist(err))
+	})
+
+	t.Run("HEAD", func(t *testing.T) {
+		t.Parallel()
+		readBucket := readBucketForName(ctx, t, runner, workDir, 1, NewRefName("HEAD"), false)
+
+		content, err := storage.ReadPath(ctx, readBucket, "test.proto")
+		require.NoError(t, err)
+		assert.Equal(t, "// commit 2", string(content))
+		_, err = readBucket.Stat(ctx, "nonexistent")
+		assert.True(t, storage.IsNotExist(err))
+	})
+
+	t.Run("commit-local", func(t *testing.T) {
+		t.Parallel()
+		revParseBytes, err := command.RunStdout(ctx, container, runner, "git", "-C", workDir, "rev-parse", "HEAD~")
+		require.NoError(t, err)
+		readBucket := readBucketForName(ctx, t, runner, workDir, 2, NewRefName(strings.TrimSpace(string(revParseBytes))), false)
+
+		content, err := storage.ReadPath(ctx, readBucket, "test.proto")
+		require.NoError(t, err)
+		assert.Equal(t, "// commit 1", string(content))
+		_, err = readBucket.Stat(ctx, "nonexistent")
+		assert.True(t, storage.IsNotExist(err))
+	})
+
+	t.Run("commit-remote", func(t *testing.T) {
+		t.Parallel()
+		revParseBytes, err := command.RunStdout(ctx, container, runner, "git", "-C", originDir, "rev-parse", "remote-branch~")
+		require.NoError(t, err)
+		readBucket := readBucketForName(ctx, t, runner, workDir, 2, NewRefNameWithBranch(strings.TrimSpace(string(revParseBytes)), "origin/remote-branch"), false)
+
+		content, err := storage.ReadPath(ctx, readBucket, "test.proto")
+		require.NoError(t, err)
+		assert.Equal(t, "// commit 3", string(content))
+		_, err = readBucket.Stat(ctx, "nonexistent")
+		assert.True(t, storage.IsNotExist(err))
+	})
+}
+
+func readBucketForName(ctx context.Context, t *testing.T, runner command.Runner, path string, depth uint32, name Name, recurseSubmodules bool) storage.ReadBucket {
+	t.Helper()
+	storageosProvider := storageos.NewProvider(storageos.ProviderWithSymlinks())
+	cloner := NewCloner(zap.NewNop(), storageosProvider, runner, ClonerOptions{})
+	envContainer, err := app.NewEnvContainerForOS()
+	require.NoError(t, err)
+
+	readWriteBucket := storagemem.NewReadWriteBucket()
+	err = cloner.CloneToBucket(
+		ctx,
+		envContainer,
+		"file://"+filepath.Join(path, ".git"),
+		depth,
+		readWriteBucket,
+		CloneToBucketOptions{
+			Mapper:            storage.MatchPathExt(".proto"),
+			Name:              name,
+			RecurseSubmodules: recurseSubmodules,
+		},
+	)
+	require.NoError(t, err)
+	return readWriteBucket
+}
+
+func createGitDirs(
+	ctx context.Context,
+	t *testing.T,
+	container app.EnvStdioContainer,
+	runner command.Runner,
+) (string, string) {
+	tmpDir := t.TempDir()
+
+	submodulePath := filepath.Join(tmpDir, "submodule")
+	require.NoError(t, os.MkdirAll(submodulePath, os.ModePerm))
+	runCommand(ctx, t, container, runner, "git", "-C", submodulePath, "init")
+	runCommand(ctx, t, container, runner, "git", "-C", submodulePath, "config", "user.email", "tests@buf.build")
+	runComma
