@@ -258,4 +258,31 @@ func createGitDirs(
 	runCommand(ctx, t, container, runner, "git", "-C", originPath, "commit", "-m", "commit 3")
 
 	runCommand(ctx, t, container, runner, "git", "-C", originPath, "checkout", "-b", "remote-branch")
-	requ
+	require.NoError(t, os.WriteFile(filepath.Join(originPath, "test.proto"), []byte("// commit 4"), 0600))
+	runCommand(ctx, t, container, runner, "git", "-C", originPath, "add", "test.proto")
+	runCommand(ctx, t, container, runner, "git", "-C", originPath, "commit", "-m", "commit 4")
+	runCommand(ctx, t, container, runner, "git", "-C", originPath, "tag", "remote-tag")
+
+	runCommand(ctx, t, container, runner, "git", "-C", workPath, "fetch", "origin")
+	return originPath, workPath
+}
+
+func runCommand(
+	ctx context.Context,
+	t *testing.T,
+	container app.EnvStdioContainer,
+	runner command.Runner,
+	name string,
+	args ...string,
+) {
+	t.Helper()
+	output, err := command.RunStdout(ctx, container, runner, name, args...)
+	if err != nil {
+		var exitErr *exec.ExitError
+		var stdErr []byte
+		if errors.As(err, &exitErr) {
+			stdErr = exitErr.Stderr
+		}
+		assert.FailNow(t, err.Error(), "stdout: %s\nstderr: %s", output, stdErr)
+	}
+}
