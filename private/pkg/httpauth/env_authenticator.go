@@ -12,8 +12,35 @@
 // See the License for the specific language governing permissions and
 // limitations under the License.
 
-// Generated. DO NOT EDIT.
+package httpauth
 
-package githubtesting
+import (
+	"net/http"
 
-import _ "github.com/bufbuild/buf/private/usage"
+	"github.com/bufbuild/buf/private/pkg/app"
+)
+
+type envAuthenticator struct {
+	usernameKey string
+	passwordKey string
+}
+
+func newEnvAuthenticator(
+	usernameKey string,
+	passwordKey string,
+) *envAuthenticator {
+	return &envAuthenticator{
+		usernameKey: usernameKey,
+		passwordKey: passwordKey,
+	}
+}
+
+func (a *envAuthenticator) SetAuth(envContainer app.EnvContainer, request *http.Request) (bool, error) {
+	return setBasicAuth(
+		request,
+		envContainer.Env(a.usernameKey),
+		envContainer.Env(a.passwordKey),
+		a.usernameKey,
+		a.passwordKey,
+	)
+}
