@@ -43,4 +43,21 @@ func NewEnvAuthenticator(usernameKey string, passwordKey string) Authenticator {
 	)
 }
 
-// NewNetrcAut
+// NewNetrcAuthenticator returns a new netrc Authenticator.
+func NewNetrcAuthenticator() Authenticator {
+	return newNetrcAuthenticator()
+}
+
+// NewNopAuthenticator returns a new nop Authenticator.
+//
+// Always returns false and nil.
+func NewNopAuthenticator() Authenticator {
+	return newNopAuthenticator()
+}
+
+// NewMultiAuthenticator returns a new multi Authenticator.
+//
+// Stops on first matching SetAuth request.
+func NewMultiAuthenticator(authenticators ...Authenticator) Authenticator {
+	return newMultiAuthenticator(authenticators...)
+}
