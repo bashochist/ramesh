@@ -152,4 +152,69 @@ func run(ctx context.Context, container app.Container, flags *flags) error {
 			return err
 		}
 		if !bytes.Equal(data, modifiedData) {
-		
+			if flags.Diff {
+				diffData, err := diff.Diff(
+					ctx,
+					runner,
+					data,
+					modifiedData,
+					filename,
+					filename,
+				)
+				if err != nil {
+					return err
+				}
+				if len(diffData) > 0 {
+					if _, err := os.Stdout.Write(diffData); err != nil {
+						return err
+					}
+					if flags.ExitCode {
+						return app.NewError(100, "")
+					}
+				}
+			} else {
+				fileInfo, err := os.Stat(filename)
+				if err != nil {
+					return err
+				}
+				if err := os.WriteFile(filename, modifiedData, fileInfo.Mode().Perm()); err != nil {
+					return err
+				}
+			}
+		}
+	}
+	return nil
+}
+
+func getFilenames(
+	ctx context.Context,
+	container app.Container,
+	runner command.Runner,
+	ignores []string,
+) ([]string, error) {
+	if container.NumArgs() > 0 {
+		if len(ignores) > 0 {
+			return nil, appcmd.NewInvalidArgumentErrorf("cannot use flag %q with any arguments", ignoreFlagName)
+		}
+		return app.Args(container), nil
+	}
+	ignoreRegexps := make([]*regexp.Regexp, len(ignores))
+	for i, ignore := range ignores {
+		ignoreRegexp, err := regexp.CompilePOSIX(ignore)
+		if err != nil {
+			return nil, err
+		}
+		ignoreRegexps[i] = ignoreRegexp
+	}
+	return git.NewLister(runner).ListFilesAndUnstagedFiles(
+		ctx,
+		container,
+		git.ListFilesAndUnstagedFilesOptions{
+			IgnorePathRegexps: ignoreRegexps,
+		},
+	)
+}
+
+func newRequiredFlagError(flagName string) error {
+	return appcmd.NewInvalidArgumentErrorf("required flag %q not set", flagName)
+}
