@@ -68,3 +68,114 @@ type Manifest struct {
 }
 
 var _ encoding.TextMarshaler = (*Manifest)(nil)
+var _ encoding.TextUnmarshaler = (*Manifest)(nil)
+
+// NewFromReader builds a manifest from an encoded manifest, like one produced
+// by [Manifest.MarshalText].
+func NewFromReader(manifest io.Reader) (*Manifest, error) {
+	var m Manifest
+	scanner := bufio.NewScanner(manifest)
+	scanner.Split(splitManifest)
+	lineno := 0
+	for scanner.Scan() {
+		lineno++
+		encodedDigest, path, found := strings.Cut(scanner.Text(), "  ")
+		if !found {
+			return nil, newError(lineno, "invalid entry")
+		}
+		digest, err := NewDigestFromString(encodedDigest)
+		if err != nil {
+			return nil, newErrorWrapped(lineno, err)
+		}
+		if err := m.AddEntry(path, *digest); err != nil {
+			return nil, newErrorWrapped(lineno, err)
+		}
+	}
+	if err := scanner.Err(); err != nil {
+		if err == errNoFinalNewline {
+			return nil, newError(lineno, "partial record")
+		}
+		return nil, err
+	}
+	return &m, nil
+}
+
+// AddEntry adds an entry to the manifest with a path and its digest. It fails
+// if the path already exists in the manifest with a different digest.
+func (m *Manifest) AddEntry(path string, digest Digest) error {
+	if path == "" {
+		return errors.New("empty path")
+	}
+	if digest.Type() == "" || digest.Hex() == "" {
+		return errors.New("invalid digest")
+	}
+	if existingDigest, exists := m.pathToDigest[path]; exists {
+		if existingDigest.Equal(digest) {
+			return nil // same entry already in the manifest, nothing to do
+		}
+		return fmt.Errorf(
+			"cannot add digest %q for path %q (already associated to digest %q)",
+			digest.String(), path, existingDigest.String(),
+		)
+	}
+	if m.pathToDigest == nil {
+		m.pathToDigest = make(map[string]Digest)
+	}
+	m.pathToDigest[path] = digest
+	key := digest.String()
+	if m.digestToPaths == nil {
+		m.digestToPaths = make(map[string][]string)
+	}
+	m.digestToPaths[key] = append(m.digestToPaths[key], path)
+	return nil
+}
+
+// Paths returns all paths in the manifest.
+func (m *Manifest) Paths() []string {
+	paths := make([]string, 0, len(m.pathToDigest))
+	for path := range m.pathToDigest {
+		paths = append(paths, path)
+	}
+	return paths
+}
+
+// PathsFor returns one or more matching path for a given digest. The digest is
+// expected to be a lower-case hex encoded value. Returned paths are unordered.
+// Paths is nil and ok is false if no paths are found.
+func (m *Manifest) PathsFor(digest string) ([]string, bool) {
+	paths, ok := m.digestToPaths[digest]
+	if !ok || len(paths) == 0 {
+		return nil, false
+	}
+	return paths, true
+}
+
+// DigestFor returns the matching digest for the given path. The path must be an
+// exact match. Digest is nil and ok is false if no digest is found.
+func (m *Manifest) DigestFor(path string) (*Digest, bool) {
+	digest, ok := m.pathToDigest[path]
+	if !ok {
+		return nil, false
+	}
+	return &digest, true
+}
+
+// MarshalText encodes the manifest into its canonical form.
+func (m *Manifest) MarshalText() ([]byte, error) {
+	var coded bytes.Buffer
+	paths := m.Paths()
+	sort.Strings(paths)
+	for _, path := range paths {
+		digest := m.pathToDigest[path]
+		if _, err := fmt.Fprintf(&coded, "%s  %s\n", &digest, path); err != nil {
+			return nil, err
+		}
+	}
+	return coded.Bytes(), nil
+}
+
+// UnmarshalText decodes a manifest from text.
+//
+// See [NewFromReader] if your manifest is available in an io.Reader.
+func (m *Manifest) UnmarshalText(text []byte) error {
+	newm, err :=
