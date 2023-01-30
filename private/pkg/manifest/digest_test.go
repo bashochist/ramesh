@@ -167,4 +167,47 @@ func mustDigestShake256(t *testing.T, content []byte) *manifest.Digest {
 	require.NoError(t, err)
 	require.NotNil(t, digester)
 	digest, err := digester.Digest(bytes.NewReader(content))
-	require.
+	require.NoError(t, err)
+	return digest
+}
+
+func testInvalidDigestString(
+	t *testing.T,
+	desc string,
+	digest string,
+) {
+	t.Helper()
+	t.Run(desc, func(t *testing.T) {
+		t.Parallel()
+		_, err := manifest.NewDigestFromString(digest)
+		assert.ErrorContains(t, err, desc)
+	})
+}
+
+func testInvalidDigestHex(
+	t *testing.T,
+	desc string,
+	dtype manifest.DigestType,
+	hexstr string,
+) {
+	t.Helper()
+	t.Run(desc, func(t *testing.T) {
+		t.Parallel()
+		_, err := manifest.NewDigestFromHex(dtype, hexstr)
+		assert.ErrorContains(t, err, desc)
+	})
+}
+
+func testInvalidDigestBytes(
+	t *testing.T,
+	desc string,
+	dtype manifest.DigestType,
+	digest []byte,
+) {
+	t.Helper()
+	t.Run(desc, func(t *testing.T) {
+		t.Parallel()
+		_, err := manifest.NewDigestFromBytes(dtype, digest)
+		assert.ErrorContains(t, err, desc)
+	})
+}
