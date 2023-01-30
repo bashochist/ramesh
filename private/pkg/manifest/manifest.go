@@ -178,4 +178,39 @@ func (m *Manifest) MarshalText() ([]byte, error) {
 //
 // See [NewFromReader] if your manifest is available in an io.Reader.
 func (m *Manifest) UnmarshalText(text []byte) error {
-	newm, err :=
+	newm, err := NewFromReader(bytes.NewReader(text))
+	if err != nil {
+		return err
+	}
+	m.pathToDigest = newm.pathToDigest
+	m.digestToPaths = newm.digestToPaths
+	return nil
+}
+
+// Blob returns the manifest as a blob.
+func (m *Manifest) Blob() (Blob, error) {
+	manifestText, err := m.MarshalText()
+	if err != nil {
+		return nil, err
+	}
+	return NewMemoryBlobFromReader(bytes.NewReader(manifestText))
+}
+
+// Empty returns true if the manifest has no entries.
+func (m *Manifest) Empty() bool {
+	return len(m.pathToDigest) == 0 && len(m.digestToPaths) == 0
+}
+
+func splitManifest(data []byte, atEOF bool) (int, []byte, error) {
+	// Return a line without LF.
+	if i := bytes.IndexByte(data, '\n'); i >= 0 {
+		return i + 1, data[0:i], nil
+	}
+
+	// EOF occurred with a partial line.
+	if atEOF && len(data) != 0 {
+		return 0, nil, errNoFinalNewline
+	}
+
+	return 0, nil, nil
+}
