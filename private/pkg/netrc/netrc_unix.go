@@ -1,3 +1,4 @@
+
 // Copyright 2020-2023 Buf Technologies, Inc.
 //
 // Licensed under the Apache License, Version 2.0 (the "License");
@@ -12,8 +13,15 @@
 // See the License for the specific language governing permissions and
 // limitations under the License.
 
-// Generated. DO NOT EDIT.
+// Matching the unix-like build tags in the Golang source i.e. https://github.com/golang/go/blob/912f0750472dd4f674b69ca1616bfaf377af1805/src/os/file_unix.go#L6
 
-package netextended
+//go:build aix || darwin || dragonfly || freebsd || (js && wasm) || linux || netbsd || openbsd || solaris
+// +build aix darwin dragonfly freebsd js,wasm linux netbsd openbsd solaris
 
-import _ "github.com/bufbuild/buf/private/usage"
+package netrc
+
+// netrcFilename is the netrc filename.
+//
+// This will be .netrc for unix-like platforms including darwin.
+// This will be _netrc for windows.
+const netrcFilename = ".netrc"

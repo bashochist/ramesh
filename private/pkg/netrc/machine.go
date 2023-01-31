@@ -1,3 +1,4 @@
+
 // Copyright 2020-2023 Buf Technologies, Inc.
 //
 // Licensed under the Apache License, Version 2.0 (the "License");
@@ -12,8 +13,34 @@
 // See the License for the specific language governing permissions and
 // limitations under the License.
 
-// Generated. DO NOT EDIT.
+package netrc
 
-package netextended
+type machine struct {
+	name     string
+	login    string
+	password string
+}
 
-import _ "github.com/bufbuild/buf/private/usage"
+func newMachine(
+	name string,
+	login string,
+	password string,
+) *machine {
+	return &machine{
+		name:     name,
+		login:    login,
+		password: password,
+	}
+}
+
+func (m *machine) Name() string {
+	return m.name
+}
+
+func (m *machine) Login() string {
+	return m.login
+}
+
+func (m *machine) Password() string {
+	return m.password
+}
