@@ -243,4 +243,47 @@ func testPutMachinesSuccess(
 	envContainer := app.NewEnvContainer(map[string]string{"NETRC": filePath})
 	for _, machine := range machines {
 		machine, err := GetMachineForName(envContainer, machine.Name())
-		require.NoErr
+		require.NoError(t, err)
+		require.Nil(t, machine)
+	}
+
+	if createNetrcBeforePut {
+		_, err := os.Create(filePath)
+		require.NoError(t, err)
+	}
+
+	err := PutMachines(envContainer, machines...)
+	require.NoError(t, err)
+
+	for _, machine := range machines {
+		actualMachine, err := GetMachineForName(envContainer, machine.Name())
+		require.NoError(t, err)
+		assert.Equal(t, machine, actualMachine)
+	}
+}
+
+func testGetMachineForNameSuccess(
+	t *testing.T,
+	name string,
+	homeDirPath string,
+	expectedName string,
+	expectedLogin string,
+	expectedPassword string,
+) {
+	machine, err := GetMachineForName(app.NewEnvContainer(map[string]string{"HOME": homeDirPath}), name)
+	require.NoError(t, err)
+	require.NotNil(t, machine)
+	assert.Equal(t, expectedName, machine.Name())
+	assert.Equal(t, expectedLogin, machine.Login())
+	assert.Equal(t, expectedPassword, machine.Password())
+}
+
+func testGetMachineForNameNil(
+	t *testing.T,
+	name string,
+	homeDirPath string,
+) {
+	machine, err := GetMachineForName(app.NewEnvContainer(map[string]string{"HOME": homeDirPath}), name)
+	require.NoError(t, err)
+	require.Nil(t, machine)
+}
