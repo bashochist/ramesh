@@ -130,4 +130,117 @@ func TestPutMachines(t *testing.T) {
 }
 
 // https://github.com/bufbuild/buf/issues/611
-func TestPutLotsOfBigMachinesSingleLineFiles(t *tes
+func TestPutLotsOfBigMachinesSingleLineFiles(t *testing.T) {
+	t.Parallel()
+	size := 10
+	password := strings.Repeat("abcdefghijklmnopqrstuvwxyz", size)
+	machines := make([]Machine, 0, size)
+	buffer := bytes.NewBuffer(nil)
+	for i := 0; i < size; i++ {
+		// Write the file manually in single-line format as this is where the failure happens.
+		_, _ = buffer.WriteString(fmt.Sprintf("machine foo%d login bar%d password %s\n", i, i, password))
+		machines = append(
+			machines,
+			NewMachine(
+				fmt.Sprintf("foo%d", i),
+				fmt.Sprintf("bar%d", i),
+				password,
+			),
+		)
+	}
+	filePath := filepath.Join(t.TempDir(), netrcFilename)
+	err := os.WriteFile(filePath, buffer.Bytes(), 0600)
+	require.NoError(t, err)
+
+	envContainer := app.NewEnvContainer(map[string]string{"NETRC": filePath})
+	for _, machine := range machines {
+		// Make sure the existing file can be parsed.
+		actualMachine, err := GetMachineForName(envContainer, machine.Name())
+		require.NoError(t, err)
+		require.Equal(t, machine, actualMachine)
+	}
+
+	// Now, modify the file with an extra machine. This is when the file got corrupted.
+	extraMachine := NewMachine(
+		"baz.com",
+		"test@baz.com",
+		"password",
+	)
+	err = PutMachines(envContainer, extraMachine)
+	require.NoError(t, err)
+	machines = append(machines, extraMachine)
+	for _, machine := range machines {
+		// Verify all the machines work. This failed previously.
+		actualMachine, err := GetMachineForName(envContainer, machine.Name())
+		require.NoError(t, err)
+		require.Equal(t, machine, actualMachine)
+	}
+
+	// Modify some of the existing machines.
+	machines = make([]Machine, 0, size)
+	for i := 0; i < size; i++ {
+		modifiedPassword := password
+		if i%2 == 0 {
+			modifiedPassword = modifiedPassword + "Z"
+		}
+		machine := NewMachine(
+			fmt.Sprintf("foo%d", i),
+			fmt.Sprintf("bar%d", i),
+			modifiedPassword,
+		)
+		machines = append(machines, machine)
+		if i%2 == 0 {
+			err = PutMachines(envContainer, machine)
+			require.NoError(t, err)
+		}
+	}
+	machines = append(machines, extraMachine)
+	for _, machine := range machines {
+		actualMachine, err := GetMachineForName(envContainer, machine.Name())
+		require.NoError(t, err)
+		require.Equal(t, machine, actualMachine)
+	}
+}
+
+func TestDeleteMachineForName(t *testing.T) {
+	t.Parallel()
+	filePath := filepath.Join(t.TempDir(), netrcFilename)
+	envContainer := app.NewEnvContainer(map[string]string{"NETRC": filePath})
+	err := PutMachines(
+		envContainer,
+		NewMachine(
+			"bar.com",
+			"test@bar.com",
+			"password",
+		),
+		NewMachine(
+			"baz.com",
+			"test@baz.com",
+			"password",
+		),
+	)
+	require.NoError(t, err)
+	exists, err := DeleteMachineForName(envContainer, "bar.com")
+	require.NoError(t, err)
+	require.True(t, exists)
+	machine, err := GetMachineForName(envContainer, "bar.com")
+	require.NoError(t, err)
+	assert.Nil(t, machine)
+	machine, err = GetMachineForName(envContainer, "baz.com")
+	require.NoError(t, err)
+	assert.NotNil(t, machine)
+	exists, err = DeleteMachineForName(envContainer, "bar.com")
+	require.NoError(t, err)
+	require.False(t, exists)
+}
+
+func testPutMachinesSuccess(
+	t *testing.T,
+	createNetrcBeforePut bool,
+	machines ...Machine,
+) {
+	filePath := filepath.Join(t.TempDir(), netrcFilename)
+	envContainer := app.NewEnvContainer(map[string]string{"NETRC": filePath})
+	for _, machine := range machines {
+		machine, err := GetMachineForName(envContainer, machine.Name())
+		require.NoErr
