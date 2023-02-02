@@ -103,4 +103,79 @@ func MapAllEqualOrContainingPathMap(m map[string]struct{}, path string, pathType
 
 	n := make(map[string]struct{})
 
-	for potentialMatch 
+	for potentialMatch := range m {
+		if EqualsOrContainsPath(potentialMatch, path, pathType) {
+			n[potentialMatch] = struct{}{}
+		}
+	}
+	return n
+}
+
+// Components splits the path into its components.
+//
+// This calls filepath.Split repeatedly.
+//
+// The path is expected to be normalized.
+func Components(path string) []string {
+	var components []string
+
+	if len(path) < 1 {
+		return []string{"."}
+	}
+
+	dir := Unnormalize(path)
+
+	volumeComponent := filepath.VolumeName(dir)
+	if len(volumeComponent) > 0 {
+		// On Windows the volume of an absolute path could be one of the following 3 forms
+		// c.f. https://docs.microsoft.com/en-us/windows/win32/fileio/naming-a-file?redirectedfrom=MSDN#fully-qualified-vs-relative-paths
+		// * A disk designator: `C:\`
+		// * A UNC Path: `\\servername\share\`
+		//   c.f. https://docs.microsoft.com/en-us/openspecs/windows_protocols/ms-dfsc/149a3039-98ce-491a-9268-2f5ddef08192
+		// * A "current volume absolute path" `\`
+		//   This refers to the root of the current volume
+		//
+		// We do not support paths with string parsing disabled such as
+		// `\\?\path`
+		//
+		// If we did extract a volume name, we need to add a path separator to turn it into
+		// a path component. Volume Names without path separators have an implied "current directory"
+		// when performing a join operation, or using them as a path directly, which is not the
+		// intention of `Split` so we ensure they always mean "the root of this volume".
+		volumeComponent = volumeComponent + stringOSPathSeparator
+	}
+	if len(volumeComponent) < 1 && dir[0] == os.PathSeparator {
+		// If we didn't extract a volume name then the path is either
+		// absolute and starts with an os.PathSeparator (it must be exactly 1
+		// otherwise its a UNC path and we would have found a volume above) or it is relative.
+		// If it is absolute, we set the expected volume component to os.PathSeparator.
+		// otherwise we leave it as an empty string.
+		volumeComponent = stringOSPathSeparator
+	}
+	for {
+		var file string
+		dir, file = filepath.Split(dir)
+		// puts in reverse
+		components = append(components, file)
+
+		if dir == volumeComponent {
+			if volumeComponent != "" {
+				components = append(components, dir)
+			}
+			break
+		}
+
+		dir = strings.TrimSuffix(dir, stringOSPathSeparator)
+	}
+
+	// https://github.com/golang/go/wiki/SliceTricks#reversing
+	for i := len(components)/2 - 1; i >= 0; i-- {
+		opp := len(components) - 1 - i
+		components[i], components[opp] = components[opp], components[i]
+	}
+	for i, component := range components {
+		components[i] = Normalize(component)
+	}
+
+	return components
+}
