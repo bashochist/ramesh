@@ -10,4 +10,10 @@
 // distributed under the License is distributed on an "AS IS" BASIS,
 // WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
 // See the License for the specific language governing permissions and
-// limitations u
+// limitations under the License.
+
+// Generated. DO NOT EDIT.
+
+package osextended
+
+import _ "github.com/bufbuild/buf/private/usage"
