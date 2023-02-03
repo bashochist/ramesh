@@ -56,4 +56,10 @@ func (m *jsonMarshaler) Marshal(message proto.Message) ([]byte, error) {
 	// https://developers.google.com/protocol-buffers/docs/reference/go/faq#unstable-json
 	//
 	// We may need to do a full encoding/json encode/decode in the future if protojson
-	// produces non-deterministic outpu
+	// produces non-deterministic output.
+	buffer := bytes.NewBuffer(nil)
+	if err := json.Compact(buffer, data); err != nil {
+		return nil, err
+	}
+	return buffer.Bytes(), nil
+}
