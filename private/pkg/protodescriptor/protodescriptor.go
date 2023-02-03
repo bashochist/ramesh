@@ -73,4 +73,74 @@ func FileDescriptorProtoForFileDescriptor(fileDescriptor FileDescriptor) *descri
 	}
 	fileDescriptorProto := &descriptorpb.FileDescriptorProto{
 		Dependency:       fileDescriptor.GetDependency(),
-		PublicDependency: fileDescriptor.GetP
+		PublicDependency: fileDescriptor.GetPublicDependency(),
+		WeakDependency:   fileDescriptor.GetWeakDependency(),
+		MessageType:      fileDescriptor.GetMessageType(),
+		EnumType:         fileDescriptor.GetEnumType(),
+		Service:          fileDescriptor.GetService(),
+		Extension:        fileDescriptor.GetExtension(),
+		Options:          fileDescriptor.GetOptions(),
+		SourceCodeInfo:   fileDescriptor.GetSourceCodeInfo(),
+	}
+	// Note that if a *descriptorpb.FileDescriptorProto has a set but empty name, package,
+	// or syntax, this won't be an exact round trip. But for our use, we say this is fine.
+	if name := fileDescriptor.GetName(); name != "" {
+		fileDescriptorProto.Name = proto.String(name)
+	}
+	if pkg := fileDescriptor.GetPackage(); pkg != "" {
+		fileDescriptorProto.Package = proto.String(pkg)
+	}
+	if syntax := fileDescriptor.GetSyntax(); syntax != "" {
+		fileDescriptorProto.Syntax = proto.String(syntax)
+	}
+	if edition := fileDescriptor.GetEdition(); edition != "" {
+		fileDescriptorProto.Edition = proto.String(edition)
+	}
+	fileDescriptorProto.ProtoReflect().SetUnknown(fileDescriptor.ProtoReflect().GetUnknown())
+	return fileDescriptorProto
+}
+
+// FileDescriptorProtosForFileDescriptors is a convenience function since Go does not have generics.
+//
+// Note that this will not round trip exactly. If a *descriptorpb.FileDescriptorProto is turned into another
+// object that is a FileDescriptor, and then passed to this function, the return value will not be equal
+// if name, package, or syntax are set but empty. Instead, the return value will have these values unset.
+// For our/most purposes, this is fine.
+func FileDescriptorProtosForFileDescriptors(fileDescriptors ...FileDescriptor) []*descriptorpb.FileDescriptorProto {
+	fileDescriptorProtos := make([]*descriptorpb.FileDescriptorProto, len(fileDescriptors))
+	for i, fileDescriptor := range fileDescriptors {
+		fileDescriptorProtos[i] = FileDescriptorProtoForFileDescriptor(fileDescriptor)
+	}
+	return fileDescriptorProtos
+}
+
+// FileDescriptorSetForFileDescriptors returns a new *descriptorpb.FileDescriptorSet for the given FileDescriptors.
+//
+// Note that this will not round trip exactly. If a *descriptorpb.FileDescriptorProto is turned into another
+// object that is a FileDescriptor, and then passed to this function, the return value will not be equal
+// if name, package, or syntax are set but empty. Instead, the return value will have these values unset.
+// For our/most purposes, this is fine.
+func FileDescriptorSetForFileDescriptors(fileDescriptors ...FileDescriptor) *descriptorpb.FileDescriptorSet {
+	return &descriptorpb.FileDescriptorSet{
+		File: FileDescriptorProtosForFileDescriptors(fileDescriptors...),
+	}
+}
+
+// ValidateFileDescriptor validates the FileDescriptor.
+//
+// A *descriptorpb.FileDescriptorProto can be passed to this.
+func ValidateFileDescriptor(fileDescriptor FileDescriptor) error {
+	if fileDescriptor == nil {
+		return errors.New("nil FileDescriptor")
+	}
+	if err := ValidateProtoPath("FileDescriptor.Name", fileDescriptor.GetName()); err != nil {
+		return err
+	}
+	if err := ValidateProtoPaths("FileDescriptor.Dependency", fileDescriptor.GetDependency()); err != nil {
+		return err
+	}
+	return nil
+}
+
+// ValidateCodeGeneratorRequest validates the CodeGeneratorRequest.
+func ValidateCodeGeneratorRequest(request *pluginp
