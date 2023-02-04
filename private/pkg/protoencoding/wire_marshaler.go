@@ -12,8 +12,21 @@
 // See the License for the specific language governing permissions and
 // limitations under the License.
 
-// Generated. DO NOT EDIT.
-
 package protoencoding
 
-import _ "github.com/bufbuild/buf/private/usage"
+import (
+	"google.golang.org/protobuf/proto"
+)
+
+type wireMarshaler struct{}
+
+func newWireMarshaler() Marshaler {
+	return &wireMarshaler{}
+}
+
+func (m *wireMarshaler) Marshal(message proto.Message) ([]byte, error) {
+	options := proto.MarshalOptions{
+		Deterministic: true,
+	}
+	return options.Marshal(message)
+}

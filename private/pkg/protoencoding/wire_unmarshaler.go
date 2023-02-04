@@ -1,3 +1,4 @@
+
 // Copyright 2020-2023 Buf Technologies, Inc.
 //
 // Licensed under the Apache License, Version 2.0 (the "License");
@@ -12,8 +13,25 @@
 // See the License for the specific language governing permissions and
 // limitations under the License.
 
-// Generated. DO NOT EDIT.
-
 package protoencoding
 
-import _ "github.com/bufbuild/buf/private/usage"
+import (
+	"google.golang.org/protobuf/proto"
+)
+
+type wireUnmarshaler struct {
+	resolver Resolver
+}
+
+func newWireUnmarshaler(resolver Resolver) Unmarshaler {
+	return &wireUnmarshaler{
+		resolver: resolver,
+	}
+}
+
+func (m *wireUnmarshaler) Unmarshal(data []byte, message proto.Message) error {
+	options := proto.UnmarshalOptions{
+		Resolver: m.resolver,
+	}
+	return options.Unmarshal(data, message)
+}
