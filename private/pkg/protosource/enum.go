@@ -20,4 +20,82 @@ type enum struct {
 
 	values                             []EnumValue
 	allowAlias                         bool
-	
+	deprecatedLegacyJSONFieldConflicts bool
+	deprecated                         bool
+	allowAliasPath                     []int32
+	reservedEnumRanges                 []EnumRange
+	reservedNames                      []ReservedName
+	parent                             Message
+}
+
+func newEnum(
+	namedDescriptor namedDescriptor,
+	optionExtensionDescriptor optionExtensionDescriptor,
+	allowAlias bool,
+	deprecatedLegacyJSONFieldConflicts bool,
+	deprecated bool,
+	allowAliasPath []int32,
+	parent Message,
+) *enum {
+	return &enum{
+		namedDescriptor:                    namedDescriptor,
+		optionExtensionDescriptor:          optionExtensionDescriptor,
+		allowAlias:                         allowAlias,
+		deprecatedLegacyJSONFieldConflicts: deprecatedLegacyJSONFieldConflicts,
+		deprecated:                         deprecated,
+		allowAliasPath:                     allowAliasPath,
+		parent:                             parent,
+	}
+}
+
+func (e *enum) Values() []EnumValue {
+	return e.values
+}
+
+func (e *enum) AllowAlias() bool {
+	return e.allowAlias
+}
+
+func (e *enum) DeprecatedLegacyJSONFieldConflicts() bool {
+	return e.deprecatedLegacyJSONFieldConflicts
+}
+
+func (e *enum) Deprecated() bool {
+	return e.deprecated
+}
+
+func (e *enum) AllowAliasLocation() Location {
+	return e.getLocation(e.allowAliasPath)
+}
+
+func (e *enum) ReservedEnumRanges() []EnumRange {
+	return e.reservedEnumRanges
+}
+
+func (e *enum) ReservedTagRanges() []TagRange {
+	tagRanges := make([]TagRange, len(e.reservedEnumRanges))
+	for i, reservedEnumRange := range e.reservedEnumRanges {
+		tagRanges[i] = reservedEnumRange
+	}
+	return tagRanges
+}
+
+func (e *enum) ReservedNames() []ReservedName {
+	return e.reservedNames
+}
+
+func (e *enum) Parent() Message {
+	return e.parent
+}
+
+func (e *enum) addValue(value EnumValue) {
+	e.values = append(e.values, value)
+}
+
+func (e *enum) addReservedEnumRange(reservedEnumRange EnumRange) {
+	e.reservedEnumRanges = append(e.reservedEnumRanges, reservedEnumRange)
+}
+
+func (e *enum) addReservedName(reservedName ReservedName) {
+	e.reservedNames = append(e.reservedNames, reservedName)
+}
