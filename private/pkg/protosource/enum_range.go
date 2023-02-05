@@ -53,4 +53,6 @@ func (r *enumRange) End() int {
 	return r.end
 }
 
-func (r *enumRange) Max() bool
+func (r *enumRange) Max() bool {
+	return r.end == enumRangeInclusiveMax
+}
