@@ -20,4 +20,56 @@ import (
 )
 
 type namedDescriptor struct {
-	locationDesc
+	locationDescriptor
+
+	name        string
+	namePath    []int32
+	nestedNames []string
+}
+
+func newNamedDescriptor(
+	locationDescriptor locationDescriptor,
+	name string,
+	namePath []int32,
+	nestedNames []string,
+) (namedDescriptor, error) {
+	if name == "" {
+		return namedDescriptor{}, fmt.Errorf("no name in %q", locationDescriptor.File().Path())
+	}
+	return namedDescriptor{
+		locationDescriptor: locationDescriptor,
+		name:               name,
+		namePath:           namePath,
+		nestedNames:        nestedNames,
+	}, nil
+}
+
+func (n *namedDescriptor) FullName() string {
+	if n.File().Package() != "" {
+		return n.File().Package() + "." + n.NestedName()
+	}
+	return n.NestedName()
+}
+
+func (n *namedDescriptor) NestedName() string {
+	if len(n.nestedNames) == 0 {
+		return n.Name()
+	}
+	return strings.Join(n.nestedNames, ".") + "." + n.Name()
+}
+
+func (n *namedDescriptor) Name() string {
+	return n.name
+}
+
+func (n *namedDescriptor) NameLocation() Location {
+	nameLocation := n.getLocation(n.namePath)
+	location := n.getLocation(n.path)
+	if nameLocation != nil {
+		if location != nil {
+			return newMergeCommentLocation(nameLocation, location)
+		}
+		return nameLocation
+	}
+	return location
+}
