@@ -51,4 +51,16 @@ func (l *mergeCommentLocation) LeadingComments() string {
 	return l.delegate.LeadingComments()
 }
 
-func (l *mergeCommen
+func (l *mergeCommentLocation) TrailingComments() string {
+	if l.baseHasComments {
+		return l.base.TrailingComments()
+	}
+	return l.delegate.TrailingComments()
+}
+
+func (l *mergeCommentLocation) LeadingDetachedComments() []string {
+	if l.baseHasComments {
+		return l.base.LeadingDetachedComments()
+	}
+	return l.delegate.LeadingDetachedComments()
+}
