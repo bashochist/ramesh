@@ -101,4 +101,60 @@ func getMessageFieldExtendeePath(fieldIndex int, topLevelMessageIndex int, neste
 	return append(getMessageFieldPath(fieldIndex, topLevelMessageIndex, nestedMessageIndexes...), 2)
 }
 
-func getMessageExtensionPath(ext
+func getMessageExtensionPath(extensionIndex int, topLevelMessageIndex int, nestedMessageIndexes ...int) []int32 {
+	return append(getMessagePath(topLevelMessageIndex, nestedMessageIndexes...), 6, int32(extensionIndex))
+}
+
+func getMessageExtensionNamePath(extensionIndex int, topLevelMessageIndex int, nestedMessageIndexes ...int) []int32 {
+	return append(getMessageExtensionPath(extensionIndex, topLevelMessageIndex, nestedMessageIndexes...), 1)
+}
+
+func getMessageExtensionNumberPath(extensionIndex int, topLevelMessageIndex int, nestedMessageIndexes ...int) []int32 {
+	return append(getMessageExtensionPath(extensionIndex, topLevelMessageIndex, nestedMessageIndexes...), 3)
+}
+
+func getMessageExtensionTypePath(extensionIndex int, topLevelMessageIndex int, nestedMessageIndexes ...int) []int32 {
+	return append(getMessageExtensionPath(extensionIndex, topLevelMessageIndex, nestedMessageIndexes...), 5)
+}
+
+func getMessageExtensionTypeNamePath(extensionIndex int, topLevelMessageIndex int, nestedMessageIndexes ...int) []int32 {
+	return append(getMessageExtensionPath(extensionIndex, topLevelMessageIndex, nestedMessageIndexes...), 6)
+}
+
+func getMessageExtensionJSONNamePath(extensionIndex int, topLevelMessageIndex int, nestedMessageIndexes ...int) []int32 {
+	return append(getMessageExtensionPath(extensionIndex, topLevelMessageIndex, nestedMessageIndexes...), 10)
+}
+
+func getMessageExtensionJSTypePath(extensionIndex int, topLevelMessageIndex int, nestedMessageIndexes ...int) []int32 {
+	return append(getMessageExtensionPath(extensionIndex, topLevelMessageIndex, nestedMessageIndexes...), 8, 6)
+}
+
+func getMessageExtensionCTypePath(extensionIndex int, topLevelMessageIndex int, nestedMessageIndexes ...int) []int32 {
+	return append(getMessageExtensionPath(extensionIndex, topLevelMessageIndex, nestedMessageIndexes...), 8, 1)
+}
+
+func getMessageExtensionPackedPath(extensionIndex int, topLevelMessageIndex int, nestedMessageIndexes ...int) []int32 {
+	return append(getMessageExtensionPath(extensionIndex, topLevelMessageIndex, nestedMessageIndexes...), 8, 2)
+}
+
+func getMessageExtensionExtendeePath(extensionIndex int, topLevelMessageIndex int, nestedMessageIndexes ...int) []int32 {
+	return append(getMessageExtensionPath(extensionIndex, topLevelMessageIndex, nestedMessageIndexes...), 2)
+}
+
+func getMessageOneofPath(oneofIndex int, topLevelMessageIndex int, nestedMessageIndexes ...int) []int32 {
+	return append(getMessagePath(topLevelMessageIndex, nestedMessageIndexes...), 8, int32(oneofIndex))
+}
+
+func getMessageOneofNamePath(oneofIndex int, topLevelMessageIndex int, nestedMessageIndexes ...int) []int32 {
+	return append(getMessageOneofPath(oneofIndex, topLevelMessageIndex, nestedMessageIndexes...), 1)
+}
+
+func getMessageReservedRangePath(reservedRangeIndex int, topLevelMessageIndex int, nestedMessageIndexes ...int) []int32 {
+	return append(getMessagePath(topLevelMessageIndex, nestedMessageIndexes...), 9, int32(reservedRangeIndex))
+}
+
+func getMessageReservedNamePath(reservedNameIndex int, topLevelMessageIndex int, nestedMessageIndexes ...int) []int32 {
+	return append(getMessagePath(topLevelMessageIndex, nestedMessageIndexes...), 10, int32(reservedNameIndex))
+}
+
+func getMessageExtensionRangePath(extensionRan
