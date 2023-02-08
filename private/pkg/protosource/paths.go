@@ -31,4 +31,74 @@ var (
 	optimizeForPathKey          = getPathKey([]int32{8, 9})
 	ccGenericServicesPathKey    = getPathKey([]int32{8, 16})
 	javaGenericServicesPathKey  = getPathKey([]int32{8, 17})
-	pyGenericServicesPathKey    = getP
+	pyGenericServicesPathKey    = getPathKey([]int32{8, 18})
+	phpGenericServicesPathKey   = getPathKey([]int32{8, 42})
+	ccEnableArenasPathKey       = getPathKey([]int32{8, 31})
+	syntaxPathKey               = getPathKey([]int32{12})
+)
+
+func getDependencyPath(dependencyIndex int) []int32 {
+	return []int32{3, int32(dependencyIndex)}
+}
+
+func getMessagePath(topLevelMessageIndex int, nestedMessageIndexes ...int) []int32 {
+	path := []int32{4, int32(topLevelMessageIndex)}
+	for _, nestedMessageIndex := range nestedMessageIndexes {
+		path = append(path, 3, int32(nestedMessageIndex))
+	}
+	return path
+}
+
+func getMessageNamePath(messageIndex int, nestedMessageIndexes ...int) []int32 {
+	return append(getMessagePath(messageIndex, nestedMessageIndexes...), 1)
+}
+
+func getMessageMessageSetWireFormatPath(messageIndex int, nestedMessageIndexes ...int) []int32 {
+	return append(getMessagePath(messageIndex, nestedMessageIndexes...), 7, 1)
+}
+
+func getMessageNoStandardDescriptorAccessorPath(messageIndex int, nestedMessageIndexes ...int) []int32 {
+	return append(getMessagePath(messageIndex, nestedMessageIndexes...), 7, 2)
+}
+
+func getMessageFieldPath(fieldIndex int, topLevelMessageIndex int, nestedMessageIndexes ...int) []int32 {
+	return append(getMessagePath(topLevelMessageIndex, nestedMessageIndexes...), 2, int32(fieldIndex))
+}
+
+func getMessageFieldNamePath(fieldIndex int, topLevelMessageIndex int, nestedMessageIndexes ...int) []int32 {
+	return append(getMessageFieldPath(fieldIndex, topLevelMessageIndex, nestedMessageIndexes...), 1)
+}
+
+func getMessageFieldNumberPath(fieldIndex int, topLevelMessageIndex int, nestedMessageIndexes ...int) []int32 {
+	return append(getMessageFieldPath(fieldIndex, topLevelMessageIndex, nestedMessageIndexes...), 3)
+}
+
+func getMessageFieldTypePath(fieldIndex int, topLevelMessageIndex int, nestedMessageIndexes ...int) []int32 {
+	return append(getMessageFieldPath(fieldIndex, topLevelMessageIndex, nestedMessageIndexes...), 5)
+}
+
+func getMessageFieldTypeNamePath(fieldIndex int, topLevelMessageIndex int, nestedMessageIndexes ...int) []int32 {
+	return append(getMessageFieldPath(fieldIndex, topLevelMessageIndex, nestedMessageIndexes...), 6)
+}
+
+func getMessageFieldJSONNamePath(fieldIndex int, topLevelMessageIndex int, nestedMessageIndexes ...int) []int32 {
+	return append(getMessageFieldPath(fieldIndex, topLevelMessageIndex, nestedMessageIndexes...), 10)
+}
+
+func getMessageFieldJSTypePath(fieldIndex int, topLevelMessageIndex int, nestedMessageIndexes ...int) []int32 {
+	return append(getMessageFieldPath(fieldIndex, topLevelMessageIndex, nestedMessageIndexes...), 8, 6)
+}
+
+func getMessageFieldCTypePath(fieldIndex int, topLevelMessageIndex int, nestedMessageIndexes ...int) []int32 {
+	return append(getMessageFieldPath(fieldIndex, topLevelMessageIndex, nestedMessageIndexes...), 8, 1)
+}
+
+func getMessageFieldPackedPath(fieldIndex int, topLevelMessageIndex int, nestedMessageIndexes ...int) []int32 {
+	return append(getMessageFieldPath(fieldIndex, topLevelMessageIndex, nestedMessageIndexes...), 8, 2)
+}
+
+func getMessageFieldExtendeePath(fieldIndex int, topLevelMessageIndex int, nestedMessageIndexes ...int) []int32 {
+	return append(getMessageFieldPath(fieldIndex, topLevelMessageIndex, nestedMessageIndexes...), 2)
+}
+
+func getMessageExtensionPath(ext
