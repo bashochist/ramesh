@@ -157,4 +157,94 @@ func getMessageReservedNamePath(reservedNameIndex int, topLevelMessageIndex int,
 	return append(getMessagePath(topLevelMessageIndex, nestedMessageIndexes...), 10, int32(reservedNameIndex))
 }
 
-func getMessageExtensionRangePath(extensionRan
+func getMessageExtensionRangePath(extensionRangeIndex int, topLevelMessageIndex int, nestedMessageIndexes ...int) []int32 {
+	return append(getMessagePath(topLevelMessageIndex, nestedMessageIndexes...), 5, int32(extensionRangeIndex))
+}
+
+func getEnumPath(enumIndex int, nestedMessageIndexes ...int) []int32 {
+	if len(nestedMessageIndexes) == 0 {
+		return []int32{5, int32(enumIndex)}
+	}
+	path := []int32{4, int32(nestedMessageIndexes[0])}
+	for _, nestedMessageIndex := range nestedMessageIndexes[1:] {
+		path = append(path, 3, int32(nestedMessageIndex))
+	}
+	return append(path, 4, int32(enumIndex))
+}
+func getEnumNamePath(enumIndex int, nestedMessageIndexes ...int) []int32 {
+	return append(getEnumPath(enumIndex, nestedMessageIndexes...), 1)
+}
+
+func getEnumAllowAliasPath(enumIndex int, nestedMessageIndexes ...int) []int32 {
+	return append(getEnumPath(enumIndex, nestedMessageIndexes...), 3, 2)
+}
+
+func getEnumValuePath(enumIndex int, enumValueIndex int, nestedMessageIndexes ...int) []int32 {
+	return append(getEnumPath(enumIndex, nestedMessageIndexes...), 2, int32(enumValueIndex))
+}
+
+func getEnumValueNamePath(enumIndex int, enumValueIndex int, nestedMessageIndexes ...int) []int32 {
+	return append(getEnumValuePath(enumIndex, enumValueIndex, nestedMessageIndexes...), 1)
+}
+
+func getEnumValueNumberPath(enumIndex int, enumValueIndex int, nestedMessageIndexes ...int) []int32 {
+	return append(getEnumValuePath(enumIndex, enumValueIndex, nestedMessageIndexes...), 2)
+}
+
+func getEnumReservedRangePath(enumIndex int, reservedRangeIndex int, nestedMessageIndexes ...int) []int32 {
+	return append(getEnumPath(enumIndex, nestedMessageIndexes...), 4, int32(reservedRangeIndex))
+}
+
+func getEnumReservedNamePath(enumIndex int, reservedNameIndex int, nestedMessageIndexes ...int) []int32 {
+	return append(getEnumPath(enumIndex, nestedMessageIndexes...), 5, int32(reservedNameIndex))
+}
+
+func getServicePath(serviceIndex int) []int32 {
+	return []int32{6, int32(serviceIndex)}
+}
+
+func getServiceNamePath(serviceIndex int) []int32 {
+	return append(getServicePath(serviceIndex), 1)
+}
+
+func getMethodPath(serviceIndex int, methodIndex int) []int32 {
+	return []int32{6, int32(serviceIndex), 2, int32(methodIndex)}
+}
+
+func getMethodNamePath(serviceIndex int, methodIndex int) []int32 {
+	return append(getMethodPath(serviceIndex, methodIndex), 1)
+}
+
+func getMethodInputTypePath(serviceIndex int, methodIndex int) []int32 {
+	return append(getMethodPath(serviceIndex, methodIndex), 2)
+}
+
+func getMethodOutputTypePath(serviceIndex int, methodIndex int) []int32 {
+	return append(getMethodPath(serviceIndex, methodIndex), 3)
+}
+
+func getMethodIdempotencyLevelPath(serviceIndex int, methodIndex int) []int32 {
+	return append(getMethodPath(serviceIndex, methodIndex), 4, 34)
+}
+
+func getFileExtensionPath(fieldIndex int) []int32 {
+	return []int32{7, int32(fieldIndex)}
+}
+
+func getFileExtensionNamePath(fieldIndex int) []int32 {
+	return append(getFileExtensionPath(fieldIndex), 1)
+}
+
+func getFileExtensionNumberPath(fieldIndex int) []int32 {
+	return append(getFileExtensionPath(fieldIndex), 3)
+}
+
+func getFileExtensionTypePath(fieldIndex int) []int32 {
+	return append(getFileExtensionPath(fieldIndex), 5)
+}
+
+func getFileExtensionTypeNamePath(fieldIndex int) []int32 {
+	return append(getFileExtensionPath(fieldIndex), 6)
+}
+
+func getFileExtensio
