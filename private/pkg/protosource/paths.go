@@ -247,4 +247,22 @@ func getFileExtensionTypeNamePath(fieldIndex int) []int32 {
 	return append(getFileExtensionPath(fieldIndex), 6)
 }
 
-func getFileExtensio
+func getFileExtensionJSONNamePath(fieldIndex int) []int32 {
+	return append(getFileExtensionPath(fieldIndex), 10)
+}
+
+func getFileExtensionJSTypePath(fieldIndex int) []int32 {
+	return append(getFileExtensionPath(fieldIndex), 8, 6)
+}
+
+func getFileExtensionCTypePath(fieldIndex int) []int32 {
+	return append(getFileExtensionPath(fieldIndex), 8, 1)
+}
+
+func getFileExtensionPackedPath(fieldIndex int) []int32 {
+	return append(getFileExtensionPath(fieldIndex), 8, 2)
+}
+
+func getFileExtensionExtendeePath(fieldIndex int) []int32 {
+	return append(getFileExtensionPath(fieldIndex), 2)
+}
