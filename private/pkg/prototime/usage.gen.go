@@ -12,20 +12,8 @@
 // See the License for the specific language governing permissions and
 // limitations under the License.
 
+// Generated. DO NOT EDIT.
+
 package prototime
 
-import (
-	"time"
-
-	"google.golang.org/protobuf/types/known/timestamppb"
-)
-
-// NewTimestamp creates a new proto WKT timestamp from a time.Time.
-// It runs CheckValid() on the timestamp before returning.
-func NewTimestamp(t time.Time) (*timestamppb.Timestamp, error) {
-	timestamp := timestamppb.New(t)
-	if err := timestamp.CheckValid(); err != nil {
-		return nil, err
-	}
-	return timestamp, nil
-}
+import _ "github.com/bufbuild/buf/private/usage"
