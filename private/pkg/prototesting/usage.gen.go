@@ -14,6 +14,6 @@
 
 // Generated. DO NOT EDIT.
 
-package protostatstorage
+package prototesting
 
 import _ "github.com/bufbuild/buf/private/usage"

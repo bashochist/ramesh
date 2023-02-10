@@ -1,3 +1,4 @@
+
 // Copyright 2020-2023 Buf Technologies, Inc.
 //
 // Licensed under the Apache License, Version 2.0 (the "License");
@@ -12,8 +13,27 @@
 // See the License for the specific language governing permissions and
 // limitations under the License.
 
-// Generated. DO NOT EDIT.
+//go:build windows
+// +build windows
 
-package protostatstorage
+package prototesting
 
-import _ "github.com/bufbuild/buf/private/usage"
+import (
+	"path/filepath"
+)
+
+func getProtocIncludePath(protocBinPath string) (string, error) {
+	protocIncludePath, err := filepath.Abs(
+		filepath.Join(filepath.Dir(protocBinPath),
+			"..",
+			"lib",
+			"include",
+		))
+	if err != nil {
+		return "", err
+	}
+	if err := checkWKT(protocIncludePath); err != nil {
+		return "", err
+	}
+	return protocIncludePath, nil
+}
