@@ -44,4 +44,35 @@ func newCommand() *appcmd.Command {
 	}
 }
 
-f
+func run(ctx context.Context, container app.Container) error {
+	oneDirPath := filepath.Clean(container.Arg(0))
+	twoDirPath := filepath.Clean(container.Arg(1))
+	oneReadWriteBucket, err := storageos.NewProvider(storageos.ProviderWithSymlinks()).NewReadWriteBucket(oneDirPath)
+	if err != nil {
+		return err
+	}
+	twoReadWriteBucket, err := storageos.NewProvider(storageos.ProviderWithSymlinks()).NewReadWriteBucket(twoDirPath)
+	if err != nil {
+		return err
+	}
+	var oneExternalPathPrefix string
+	if oneDirPath != "." {
+		oneExternalPathPrefix = oneDirPath + string(os.PathSeparator)
+	}
+	var twoExternalPathPrefix string
+	if twoDirPath != "." {
+		twoExternalPathPrefix = twoDirPath + string(os.PathSeparator)
+	}
+	return storage.Diff(
+		ctx,
+		command.NewRunner(),
+		container.Stdout(),
+		oneReadWriteBucket,
+		twoReadWriteBucket,
+		storage.DiffWithExternalPaths(),
+		storage.DiffWithExternalPathPrefixes(
+			oneExternalPathPrefix,
+			twoExternalPathPrefix,
+		),
+	)
+}
