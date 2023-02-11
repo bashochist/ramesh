@@ -66,4 +66,25 @@ type PackageVersion interface {
 	// Will always be >=1.
 	Major() int
 	// Required.
-	StabilityL
+	StabilityLevel() StabilityLevel
+	// Optional.
+	// Only potentially set if the stability level is alpha or beta.
+	// Will always be >=1.
+	Minor() int
+	// Optional.
+	// Only potentially set if the stability level is alpha or beta.
+	// Will always be >=1.
+	Patch() int
+	// Optional.
+	// Only potentially set if the stability level is test.
+	Suffix() string
+
+	isPackageVersion()
+}
+
+// NewPackageVersionForPackage returns the PackageVersion for the package.
+//
+// Returns false if the package has no package version per the specifications.
+func NewPackageVersionForPackage(pkg string) (PackageVersion, bool) {
+	return newPackageVersionForPackage(pkg)
+}
