@@ -39,4 +39,54 @@ type limitedWriteBucket struct {
 	limit       int64
 }
 
-func newLimitedWriteBucket(buc
+func newLimitedWriteBucket(bucket WriteBucket, limit int64) *limitedWriteBucket {
+	return &limitedWriteBucket{
+		WriteBucket: bucket,
+		currentSize: atomic.NewInt64(0),
+		limit:       limit,
+	}
+}
+
+func (w *limitedWriteBucket) Put(ctx context.Context, path string, opts ...PutOption) (WriteObjectCloser, error) {
+	writeObjectCloser, err := w.WriteBucket.Put(ctx, path, opts...)
+	if err != nil {
+		return nil, err
+	}
+	return newLimitedWriteObjectCloser(writeObjectCloser, w.currentSize, w.limit), nil
+}
+
+type limitedWriteObjectCloser struct {
+	WriteObjectCloser
+
+	bucketSize *atomic.Int64
+	limit      int64
+}
+
+func newLimitedWriteObjectCloser(
+	writeObjectCloser WriteObjectCloser,
+	bucketSize *atomic.Int64,
+	limit int64,
+) *limitedWriteObjectCloser {
+	return &limitedWriteObjectCloser{
+		WriteObjectCloser: writeObjectCloser,
+		bucketSize:        bucketSize,
+		limit:             limit,
+	}
+}
+
+func (o *limitedWriteObjectCloser) Write(p []byte) (int, error) {
+	writeSize := int64(len(p))
+	newBucketSize := o.bucketSize.Add(writeSize)
+	if newBucketSize > o.limit {
+		o.bucketSize.Sub(writeSize)
+		return 0, &errWriteLimitReached{
+			Limit:       o.limit,
+			ExceedingBy: newBucketSize - o.limit,
+		}
+	}
+	writtenSize, err := o.WriteObjectCloser.Write(p)
+	if int64(writtenSize) < writeSize {
+		o.bucketSize.Sub(writeSize - int64(writtenSize))
+	}
+	return writtenSize, err
+}
