@@ -145,4 +145,29 @@ func (m *multiReadBucket) getObjectInfoAndDelegateIndex(
 		for i, objectInfo := range objectInfos {
 			externalPaths[i] = objectInfo.ExternalPath()
 		}
-		return nil, 0, NewErrExistsMultipleLocations(path, externalPaths
+		return nil, 0, NewErrExistsMultipleLocations(path, externalPaths...)
+	}
+}
+
+type nopReadBucket struct{}
+
+func (nopReadBucket) Get(ctx context.Context, path string) (ReadObjectCloser, error) {
+	return nil, nopGetStat(path)
+}
+
+func (nopReadBucket) Stat(ctx context.Context, path string) (ObjectInfo, error) {
+	return nil, nopGetStat(path)
+}
+
+func (nopReadBucket) Walk(ctx context.Context, prefix string, f func(ObjectInfo) error) error {
+	_, err := storageutil.ValidatePrefix(prefix)
+	return err
+}
+
+func nopGetStat(path string) error {
+	path, err := storageutil.ValidatePath(path)
+	if err != nil {
+		return err
+	}
+	return NewErrNotExist(path)
+}
