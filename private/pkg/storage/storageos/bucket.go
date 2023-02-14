@@ -12,8 +12,13 @@
 // See the License for the specific language governing permissions and
 // limitations under the License.
 
-// Generated. DO NOT EDIT.
+package storageos
 
-package storagemem
+import (
+	"context"
+	"errors"
+	"os"
+	"path/filepath"
+	"strings"
 
-import _ "github.com/bufbuild/buf/private/usage"
+	"gith
