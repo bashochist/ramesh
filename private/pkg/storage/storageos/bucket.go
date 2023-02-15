@@ -276,4 +276,116 @@ func (b *bucket) validateExternalPath(path string, externalPath string) error {
 		//
 		// In this case, the standard library will return an
 		// os.PathError, but there isn't an exported error value
-		/
+		// to check against (i.e. os.Is*). But we can still discover
+		// whether or not this is the case by checking if any of the
+		// path components represents a regular file (e.g. 'foo/bar').
+		//
+		// It's important that we detect these cases so that
+		// multi buckets don't unnecessarily fail when one of
+		// its delegates actually defines the path.
+		elements := strings.Split(normalpath.Normalize(externalPath), "/")
+		if len(elements) == 1 {
+			// The path is a single element, so there aren't
+			// any other files to check.
+			return err
+		}
+		for i := len(elements) - 1; i >= 0; i-- {
+			parentFileInfo, err := os.Stat(filepath.Join(elements[:i]...))
+			if err != nil {
+				continue
+			}
+			if parentFileInfo.Mode().IsRegular() {
+				// This error primarily serves as a sentinel error,
+				// but we preserve the original path argument so that
+				// the error still makes sense to the user.
+				return storage.NewErrNotExist(path)
+			}
+		}
+		return err
+	}
+	if !fileInfo.Mode().IsRegular() {
+		// making this a user error as any access means this was generally requested
+		// by the user, since we only call the function for Walk on regular files
+		return storage.NewErrNotExist(path)
+	}
+	return nil
+}
+
+func (b *bucket) getExternalPrefix(prefix string) (string, error) {
+	prefix, err := storageutil.ValidatePrefix(prefix)
+	if err != nil {
+		return "", err
+	}
+	realClean, err := filepathextended.RealClean(normalpath.Join(b.rootPath, prefix))
+	if err != nil {
+		return "", err
+	}
+	return normalpath.Unnormalize(realClean), nil
+}
+
+type readObjectCloser struct {
+	// we use ObjectInfo for Path, ExternalPath, etc to make sure this is static
+	// we put ObjectInfos in maps in other places so we do not want this to change
+	// this could be a problem if the underlying file is concurrently moved or resized however
+	storageutil.ObjectInfo
+
+	file *os.File
+}
+
+func newReadObjectCloser(
+	path string,
+	externalPath string,
+	file *os.File,
+) *readObjectCloser {
+	return &readObjectCloser{
+		ObjectInfo: storageutil.NewObjectInfo(
+			path,
+			externalPath,
+		),
+		file: file,
+	}
+}
+
+func (r *readObjectCloser) Read(p []byte) (int, error) {
+	n, err := r.file.Read(p)
+	return n, toStorageError(err)
+}
+
+func (r *readObjectCloser) Close() error {
+	return toStorageError(r.file.Close())
+}
+
+type writeObjectCloser struct {
+	file *os.File
+	// path is set during atomic writes to the final path where the file should be created.
+	// If set, the file is a temp file that needs to be renamed to this path if Write/Close are successful.
+	path string
+	// writeErr contains the first non-nil error caught by a call to Write.
+	// This is returned in Close for atomic writes to prevent writing an incomplete file.
+	writeErr atomic.Error
+}
+
+func newWriteObjectCloser(
+	file *os.File,
+	path string,
+) *writeObjectCloser {
+	return &writeObjectCloser{
+		file: file,
+		path: path,
+	}
+}
+
+func (w *writeObjectCloser) Write(p []byte) (int, error) {
+	n, err := w.file.Write(p)
+	if err != nil {
+		w.writeErr.CompareAndSwap(nil, err)
+	}
+	return n, toStorageError(err)
+}
+
+func (w *writeObjectCloser) SetExternalPath(string) error {
+	return storage.ErrSetExternalPathUnsupported
+}
+
+func (w *writeObjectCloser) Close() error {
+	err := toStorageEr
