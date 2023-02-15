@@ -139,4 +139,141 @@ func (b *bucket) Walk(
 				// just in case
 				path, err = normalpath.NormalizeAndValidate(path)
 				if err != nil {
-					retur
+					return err
+				}
+				if err := f(
+					storageutil.NewObjectInfo(
+						path,
+						externalPath,
+					),
+				); err != nil {
+					return err
+				}
+			}
+			return nil
+		},
+		walkOptions...,
+	); err != nil {
+		if os.IsNotExist(err) {
+			// Should be a no-op according to the spec.
+			return nil
+		}
+		return err
+	}
+	return nil
+}
+
+func (b *bucket) Put(ctx context.Context, path string, opts ...storage.PutOption) (storage.WriteObjectCloser, error) {
+	var putOptions storage.PutOptions
+	for _, opt := range opts {
+		opt(&putOptions)
+	}
+	externalPath, err := b.getExternalPath(path)
+	if err != nil {
+		return nil, err
+	}
+	externalDir := filepath.Dir(externalPath)
+	var fileInfo os.FileInfo
+	if b.symlinks {
+		fileInfo, err = os.Stat(externalDir)
+	} else {
+		fileInfo, err = os.Lstat(externalDir)
+	}
+	if err != nil {
+		if os.IsNotExist(err) {
+			if err := os.MkdirAll(externalDir, 0755); err != nil {
+				return nil, err
+			}
+		} else {
+			return nil, err
+		}
+	} else if !fileInfo.IsDir() {
+		return nil, newErrNotDir(externalDir)
+	}
+	var file *os.File
+	var finalPath string
+	if putOptions.Atomic {
+		file, err = os.CreateTemp(externalDir, ".tmp"+filepath.Base(externalPath)+"*")
+		finalPath = externalPath
+	} else {
+		file, err = os.Create(externalPath)
+	}
+	if err != nil {
+		return nil, err
+	}
+	return newWriteObjectCloser(
+		file,
+		finalPath,
+	), nil
+}
+
+func (b *bucket) Delete(ctx context.Context, path string) error {
+	externalPath, err := b.getExternalPath(path)
+	if err != nil {
+		return err
+	}
+	// Note: this deletes the file at the path, but it may
+	// leave orphan parent directories around that were
+	// created by the MkdirAll in Put.
+	if err := os.Remove(externalPath); err != nil {
+		if os.IsNotExist(err) {
+			return storage.NewErrNotExist(path)
+		}
+		return err
+	}
+	return nil
+}
+
+func (b *bucket) DeleteAll(ctx context.Context, prefix string) error {
+	externalPrefix, err := b.getExternalPrefix(prefix)
+	if err != nil {
+		return err
+	}
+	if err := os.RemoveAll(externalPrefix); err != nil {
+		// this is a no-nop per the documentation
+		if os.IsNotExist(err) {
+			return nil
+		}
+		return err
+	}
+	return nil
+}
+
+func (*bucket) SetExternalPathSupported() bool {
+	return false
+}
+
+func (b *bucket) getExternalPath(path string) (string, error) {
+	path, err := storageutil.ValidatePath(path)
+	if err != nil {
+		return "", err
+	}
+	realClean, err := filepathextended.RealClean(normalpath.Join(b.rootPath, path))
+	if err != nil {
+		return "", err
+	}
+	return normalpath.Unnormalize(realClean), nil
+}
+
+func (b *bucket) validateExternalPath(path string, externalPath string) error {
+	// this is potentially introducing two calls to a file
+	// instead of one, ie we do both Stat and Open as opposed to just Open
+	// we do this to make sure we are only reading regular files
+	var fileInfo os.FileInfo
+	var err error
+	if b.symlinks {
+		fileInfo, err = os.Stat(externalPath)
+	} else {
+		fileInfo, err = os.Lstat(externalPath)
+	}
+	if err != nil {
+		if os.IsNotExist(err) {
+			return storage.NewErrNotExist(path)
+		}
+		// The path might have a regular file in one of its
+		// elements (e.g. 'foo/bar/baz.proto' where 'bar' is a
+		// regular file).
+		//
+		// In this case, the standard library will return an
+		// os.PathError, but there isn't an exported error value
+		/
