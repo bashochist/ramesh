@@ -388,4 +388,51 @@ func (w *writeObjectCloser) SetExternalPath(string) error {
 }
 
 func (w *writeObjectCloser) Close() error {
-	err := toStorageEr
+	err := toStorageError(w.file.Close())
+	// This is an atomic write operation - we need to rename to the final path
+	if w.path != "" {
+		atomicWriteErr := multierr.Append(w.writeErr.Load(), err)
+		// Failed during Write or Close - remove temporary file without rename
+		if atomicWriteErr != nil {
+			return toStorageError(multierr.Append(atomicWriteErr, os.Remove(w.file.Name())))
+		}
+		if err := os.Rename(w.file.Name(), w.path); err != nil {
+			return toStorageError(multierr.Append(err, os.Remove(w.file.Name())))
+		}
+	}
+	return err
+}
+
+// newErrNotDir returns a new Error for a path not being a directory.
+func newErrNotDir(path string) *normalpath.Error {
+	return normalpath.NewError(path, errNotDir)
+}
+
+func toStorageError(err error) error {
+	if errors.Is(err, os.ErrClosed) {
+		return storage.ErrClosed
+	}
+	return err
+}
+
+// validateDirPathExists returns a non-nil error if the given dirPath
+// is not a valid directory path.
+func validateDirPathExists(dirPath string, symlinks bool) error {
+	var fileInfo os.FileInfo
+	var err error
+	if symlinks {
+		fileInfo, err = os.Stat(dirPath)
+	} else {
+		fileInfo, err = os.Lstat(dirPath)
+	}
+	if err != nil {
+		if os.IsNotExist(err) {
+			return storage.NewErrNotExist(dirPath)
+		}
+		return err
+	}
+	if !fileInfo.IsDir() {
+		return newErrNotDir(dirPath)
+	}
+	return nil
+}
