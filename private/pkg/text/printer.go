@@ -84,4 +84,14 @@ func (p *printer) In() {
 func (p *printer) Out() {
 	if p.curIndents == 0 {
 		p.recordError(errNegativeIndents)
-	} e
+	} else {
+		p.curIndents--
+	}
+}
+
+func (p *printer) recordError(err error) {
+	if p.errorRecorder == nil {
+		return
+	}
+	p.errorRecorder(err)
+}
