@@ -14,6 +14,6 @@
 
 // Generated. DO NOT EDIT.
 
-package storagetesting
+package stringjson
 
 import _ "github.com/bufbuild/buf/private/usage"
