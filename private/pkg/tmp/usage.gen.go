@@ -16,4 +16,4 @@
 
 package tmp
 
-import _ "github.com
+import _ "github.com/bufbuild/buf/private/usage"
