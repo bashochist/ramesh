@@ -30,4 +30,13 @@ func TestParallelizeWithImmediateCancellation(t *testing.T) {
 	var jobs []func(context.Context) error
 	for i := 0; i < 10; i++ {
 		jobs = append(jobs, func(_ context.Context) error {
-			executed.Inc
+			executed.Inc()
+			return nil
+		})
+	}
+	ctx, cancel := context.WithCancel(context.Background())
+	cancel()
+	err := Parallelize(ctx, jobs)
+	assert.Nil(t, err, "parallelize error")
+	assert.Equal(t, int64(0), executed.Load(), "jobs executed")
+}
