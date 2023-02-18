@@ -52,4 +52,28 @@ func WithH2C() ClientOption {
 // a proxy.
 //
 // The default is to use http.ProxyFromEnvironment
-func WithProxy(
+func WithProxy(proxyFunc Proxy) ClientOption {
+	return func(opts *clientOptions) {
+		opts.proxy = proxyFunc
+	}
+}
+
+// WithInterceptorFunc returns a new ClientOption to use a given interceptor.
+func WithInterceptorFunc(interceptorFunc ClientInterceptorFunc) ClientOption {
+	return func(opts *clientOptions) {
+		opts.interceptorFunc = interceptorFunc
+	}
+}
+
+// Proxy specifies a function to return a proxy for a given
+// Request. If the function returns a non-nil error, the
+// request is aborted with the provided error.
+type Proxy func(req *http.Request) (*url.URL, error)
+
+// NewClientWithTransport returns a new Client with the
+// given transport. This is a separate constructor so
+// that it's clear it cannot be used in combination
+// with other ClientOptions.
+func NewClientWithTransport(transport http.RoundTripper) *http.Client {
+	return newClientWithTransport(transport)
+}
