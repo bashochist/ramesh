@@ -7,4 +7,64 @@
 //      http://www.apache.org/licenses/LICENSE-2.0
 //
 // Unless required by applicable law or agreed to in writing, software
-// distributed under the
+// distributed under the License is distributed on an "AS IS" BASIS,
+// WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+// See the License for the specific language governing permissions and
+// limitations under the License.
+
+syntax = "proto3";
+
+package buf.alpha.registry.v1alpha1;
+
+import "buf/alpha/registry/v1alpha1/role.proto";
+
+// AuthzService supplies authorization helpers.
+service AuthzService {
+  // UserCanCreateOrganizationRepository returns whether the user is authorized
+  // to create repositories in an organization.
+  rpc UserCanCreateOrganizationRepository(UserCanCreateOrganizationRepositoryRequest) returns (UserCanCreateOrganizationRepositoryResponse);
+  // UserCanSeeRepositorySettings returns whether the user is authorized
+  // to see repository settings.
+  rpc UserCanSeeRepositorySettings(UserCanSeeRepositorySettingsRequest) returns (UserCanSeeRepositorySettingsResponse);
+  // UserCanSeeOrganizationSettings returns whether the user is authorized
+  // to see organization settings.
+  rpc UserCanSeeOrganizationSettings(UserCanSeeOrganizationSettingsRequest) returns (UserCanSeeOrganizationSettingsResponse);
+  // UserCanReadPlugin returns whether the user has read access to the specified plugin.
+  rpc UserCanReadPlugin(UserCanReadPluginRequest) returns (UserCanReadPluginResponse) {
+    option deprecated = true;
+  }
+  // UserCanCreatePluginVersion returns whether the user is authorized
+  // to create a plugin version under the specified plugin.
+  rpc UserCanCreatePluginVersion(UserCanCreatePluginVersionRequest) returns (UserCanCreatePluginVersionResponse) {
+    option deprecated = true;
+  }
+  // UserCanCreateTemplateVersion returns whether the user is authorized
+  // to create a template version under the specified template.
+  rpc UserCanCreateTemplateVersion(UserCanCreateTemplateVersionRequest) returns (UserCanCreateTemplateVersionResponse) {
+    option deprecated = true;
+  }
+  // UserCanCreateOrganizationPlugin returns whether the user is authorized to create
+  // a plugin in an organization.
+  rpc UserCanCreateOrganizationPlugin(UserCanCreateOrganizationPluginRequest) returns (UserCanCreateOrganizationPluginResponse) {
+    option deprecated = true;
+  }
+  // UserCanCreateOrganizationPlugin returns whether the user is authorized to create
+  // a template in an organization.
+  rpc UserCanCreateOrganizationTemplate(UserCanCreateOrganizationTemplateRequest) returns (UserCanCreateOrganizationTemplateResponse) {
+    option deprecated = true;
+  }
+  // UserCanSeePluginSettings returns whether the user is authorized
+  // to see plugin settings.
+  rpc UserCanSeePluginSettings(UserCanSeePluginSettingsRequest) returns (UserCanSeePluginSettingsResponse) {
+    option deprecated = true;
+  }
+  // UserCanSeeTemplateSettings returns whether the user is authorized
+  // to see template settings.
+  rpc UserCanSeeTemplateSettings(UserCanSeeTemplateSettingsRequest) returns (UserCanSeeTemplateSettingsResponse) {
+    option deprecated = true;
+  }
+  // UserCanAddOrganizationMember returns whether the user is authorized to add
+  // any members to the organization and the list of roles they can add.
+  rpc UserCanAddOrganizationMember(UserCanAddOrganizationMemberRequest) returns (UserCanAddOrganizationMemberResponse);
+  // UserCanUpdateOrganizationMember returns whether the user is authorized to update
+  // any members' membe
