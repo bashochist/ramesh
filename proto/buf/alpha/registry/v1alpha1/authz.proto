@@ -135,4 +135,129 @@ message UserCanSeeOrganizationSettingsRequest {
   string organization_id = 1;
 }
 
-message UserCanSeeOrganizationSettingsRes
+message UserCanSeeOrganizationSettingsResponse {
+  bool authorized = 1;
+}
+
+message UserCanReadPluginRequest {
+  option deprecated = true;
+  // The owner of the plugin.
+  string owner = 1;
+  // The name of the plugin.
+  string name = 2;
+}
+
+message UserCanReadPluginResponse {
+  option deprecated = true;
+  bool authorized = 1;
+}
+
+message UserCanCreatePluginVersionRequest {
+  option deprecated = true;
+  // The owner of the plugin.
+  string owner = 1;
+  // The name of the plugin.
+  string name = 2;
+}
+
+message UserCanCreatePluginVersionResponse {
+  option deprecated = true;
+  bool authorized = 1;
+}
+
+message UserCanCreateTemplateVersionRequest {
+  option deprecated = true;
+  // The owner of the template.
+  string owner = 1;
+  // The name of the template.
+  string name = 2;
+}
+
+message UserCanCreateTemplateVersionResponse {
+  option deprecated = true;
+  bool authorized = 1;
+}
+
+message UserCanCreateOrganizationPluginRequest {
+  option deprecated = true;
+  // The ID of the organization for which to check
+  // whether the user is authorized.
+  string organization_id = 1;
+}
+
+message UserCanCreateOrganizationPluginResponse {
+  option deprecated = true;
+  bool authorized = 1;
+}
+
+message UserCanCreateOrganizationTemplateRequest {
+  option deprecated = true;
+  // The ID of the organization for which to check
+  // whether the user is authorized.
+  string organization_id = 1;
+}
+
+message UserCanCreateOrganizationTemplateResponse {
+  option deprecated = true;
+  bool authorized = 1;
+}
+
+message UserCanSeePluginSettingsRequest {
+  option deprecated = true;
+  // The owner of the plugin.
+  string owner = 1;
+  // The name of the plugin.
+  string name = 2;
+}
+
+message UserCanSeePluginSettingsResponse {
+  option deprecated = true;
+  bool authorized = 1;
+}
+
+message UserCanSeeTemplateSettingsRequest {
+  option deprecated = true;
+  // The owner of the template.
+  string owner = 1;
+  // The name of the template.
+  string name = 2;
+}
+
+message UserCanSeeTemplateSettingsResponse {
+  option deprecated = true;
+  bool authorized = 1;
+}
+
+message UserCanAddOrganizationMemberRequest {
+  // The ID of the organization for which to check
+  // whether the user is authorized.
+  string organization_id = 1;
+}
+
+message UserCanAddOrganizationMemberResponse {
+  // The list of roles that the user is authorized to add, empty list means the user is
+  // not authorized to add any members.
+  repeated OrganizationRole authorized_roles = 1;
+}
+
+message UserCanUpdateOrganizationMemberRequest {
+  // The ID of the organization for which to check
+  // whether the user is authorized.
+  string organization_id = 1;
+}
+
+message UserCanUpdateOrganizationMemberResponse {
+  // The list of roles that the user is authorized to update (from and to), empty list means the user is
+  // not authorized to update any members' role.
+  repeated OrganizationRole authorized_roles = 1;
+}
+
+message UserCanRemoveOrganizationMemberRequest {
+  // The ID of the organization for which to check
+  // whether the user is authorized.
+  string organization_id = 1;
+}
+
+message UserCanRemoveOrganizationMemberResponse {
+  // The list of roles that the user is authorized to remove, empty list means the user is
+  // not authorized to remove any
