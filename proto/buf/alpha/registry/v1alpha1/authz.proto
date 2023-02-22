@@ -260,4 +260,102 @@ message UserCanRemoveOrganizationMemberRequest {
 
 message UserCanRemoveOrganizationMemberResponse {
   // The list of roles that the user is authorized to remove, empty list means the user is
-  // not authorized to remove any
+  // not authorized to remove any members.
+  repeated OrganizationRole authorized_roles = 1;
+}
+
+message UserCanDeleteOrganizationRequest {
+  // The ID of the organization for which to check
+  // whether the user is authorized.
+  string organization_id = 1;
+}
+
+message UserCanDeleteOrganizationResponse {
+  bool authorized = 1;
+}
+
+message UserCanDeleteRepositoryRequest {
+  // The ID of the repository for which to check
+  // whether the user is authorized.
+  string repository_id = 1;
+}
+
+message UserCanDeleteRepositoryResponse {
+  bool authorized = 1;
+}
+
+message UserCanDeleteTemplateRequest {
+  option deprecated = true;
+  // The ID of the template for which to check
+  // whether the user is authorized.
+  string template_id = 1;
+}
+
+message UserCanDeleteTemplateResponse {
+  option deprecated = true;
+  bool authorized = 1;
+}
+
+message UserCanDeletePluginRequest {
+  option deprecated = true;
+  // The ID of the plugin for which to check
+  // whether the user is authorized.
+  string plugin_id = 1;
+}
+
+message UserCanDeletePluginResponse {
+  option deprecated = true;
+  bool authorized = 1;
+}
+
+message UserCanDeleteUserRequest {}
+
+message UserCanDeleteUserResponse {
+  bool authorized = 1;
+}
+
+message UserCanSeeServerAdminPanelRequest {}
+
+message UserCanSeeServerAdminPanelResponse {
+  bool authorized = 1;
+}
+
+message UserCanManageRepositoryContributorsRequest {
+  // The ID of the repository for which to check
+  // whether the user is authorized.
+  string repository_id = 1;
+}
+
+message UserCanManageRepositoryContributorsResponse {
+  // The list of roles that the user is authorized to manage, empty list means the user is
+  // not authorized to manage any contributors.
+  repeated RepositoryRole authorized_roles = 1;
+}
+
+message UserCanManagePluginContributorsRequest {
+  option deprecated = true;
+  // The ID of the plugin for which to check
+  // whether the user is authorized.
+  string plugin_id = 1;
+}
+
+message UserCanManagePluginContributorsResponse {
+  option deprecated = true;
+  // The list of roles that the user is authorized to manage, empty list means the user is
+  // not authorized to manage any contributors.
+  repeated PluginRole authorized_roles = 1;
+}
+
+message UserCanManageTemplateContributorsRequest {
+  option deprecated = true;
+  // The ID of the template for which to check
+  // whether the user is authorized.
+  string template_id = 1;
+}
+
+message UserCanManageTemplateContributorsResponse {
+  option deprecated = true;
+  // The list of roles that the user is authorized to manage, empty list means the user is
+  // not authorized to manage any contributors.
+  repeated TemplateRole authorized_roles = 1;
+}
