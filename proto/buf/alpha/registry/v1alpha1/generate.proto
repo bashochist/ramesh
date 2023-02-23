@@ -36,4 +36,74 @@ message RuntimeLibrary {
   // The name of the runtime library dependency. The format should match the
   // format used for dependencies in the dependency management tooling of the
   // associated language ecosystem. This is set by the user using Dockerfile Labels.
-  // For example, for the plugin "proto
+  // For example, for the plugin "protoc-gen-go", this might be "google.golang.org/protobuf".
+  string name = 1;
+  // The version of the runtime library dependency associated with the generated
+  // code. The format should match the format used for dependency versions in the
+  // dependency management tooling of the associated language ecosystem.
+  // This is set by the user using Dockerfile Labels.
+  // For example, for the plugin "protoc-gen-go", this might be "v1.26.0".
+  string version = 2;
+}
+
+message PluginReference {
+  // The owner of the plugin which identifies the
+  // plugins to use with this generation.
+  string owner = 1;
+  // The name of the plugin which identifies the
+  // plugins to use with this generation.
+  string name = 2;
+  // The plugin version to use with this generation.
+  string version = 3;
+  // The parameters to pass to the plugin. These will
+  // be merged into a single, comma-separated string.
+  repeated string parameters = 4;
+}
+
+// GenerateService manages remote generation requests.
+service GenerateService {
+  // GeneratePlugins generates an array of files given the provided
+  // module reference and plugin version and option tuples. No attempt
+  // is made at merging insertion points.
+  rpc GeneratePlugins(GeneratePluginsRequest) returns (GeneratePluginsResponse);
+  // GenerateTemplate generates an array of files given the provided
+  // module reference and template version.
+  rpc GenerateTemplate(GenerateTemplateRequest) returns (GenerateTemplateResponse);
+}
+
+message GeneratePluginsRequest {
+  // The image to run plugins against to generate the desired file outputs.
+  //
+  // All image files that are not imports and not well-known types will be generated.
+  // If you want to filter what files are generated, modify the image.
+  // If you want to include imports, set include_imports.
+  buf.alpha.image.v1.Image image = 1;
+  // The array of plugins to use.
+  repeated PluginReference plugins = 2;
+  // Include imports from the Image in generation.
+  bool include_imports = 3;
+  // Include Well-Known Types from the Image in generation.
+  //
+  // include_imports must be set if include_well_known_types is set.
+  bool include_well_known_types = 4;
+}
+
+message GeneratePluginsResponse {
+  // Contains all the responses from the generated plugins. The order
+  // is defined by the order of the plugins in the request.
+  repeated google.protobuf.compiler.CodeGeneratorResponse responses = 1;
+  // An optional array defining runtime libraries that the generated code
+  // requires to run, as specified by the plugin author. This may contain
+  // duplicate entries as the generation can be the result of multiple plugins,
+  // each of which declares its own runtime library dependencies. The libraries
+  // returned are lexicographically ordered by their name, but not deduplicated.
+  // How to handle duplicate libraries is left to the user.
+  repeated RuntimeLibrary runtime_libraries = 2;
+}
+
+message GenerateTemplateRequest {
+  // The image to run plugins against to generate the desired file outputs.
+  //
+  // All image files that are not imports and not well-known types will be generated.
+  // If you want to filter what files are generated, modify the image.
+  // If you want to include 
