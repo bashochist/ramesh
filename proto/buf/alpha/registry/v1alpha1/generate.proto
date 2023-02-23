@@ -106,4 +106,32 @@ message GenerateTemplateRequest {
   //
   // All image files that are not imports and not well-known types will be generated.
   // If you want to filter what files are generated, modify the image.
-  // If you want to include 
+  // If you want to include imports, set include_imports.
+  buf.alpha.image.v1.Image image = 1;
+  // The owner of the template which identifies the
+  // plugins to use with this generation.
+  string template_owner = 2;
+  // The name of the template which identifies the
+  // plugins to use with this generation.
+  string template_name = 3;
+  // The template version to use to determine the
+  // plugin versions in the template.
+  string template_version = 4;
+  // Include imports from the Image in generation.
+  bool include_imports = 5;
+  // Include Well-Known Types from the Image in generation.
+  //
+  // include_imports must be set if include_well_known_types is set.
+  bool include_well_known_types = 6;
+}
+
+message GenerateTemplateResponse {
+  // files contains all the files output by the generation,
+  // in lexicographical order.
+  repeated File files = 1;
+  // An optional array defining runtime libraries that the generated code
+  // requires to run. This may contain duplicate entries as the generation
+  // can be the result of multiple plugins, each of which declares its own
+  // runtime library dependencies.
+  repeated RuntimeLibrary runtime_libraries = 2;
+}
