@@ -14,4 +14,63 @@
 
 syntax = "proto3";
 
-package buf.alpha.registry.v
+package buf.alpha.registry.v1alpha1;
+
+import "buf/alpha/registry/v1alpha1/role.proto";
+import "buf/alpha/registry/v1alpha1/verification_status.proto";
+import "google/protobuf/timestamp.proto";
+
+message Organization {
+  // primary key, unique, immutable
+  string id = 1;
+  // immutable
+  google.protobuf.Timestamp create_time = 2;
+  // mutable
+  google.protobuf.Timestamp update_time = 3;
+  // unique, mutable
+  string name = 4;
+  // description is the user configurable description of the organization.
+  string description = 5;
+  // url is the user configurable URL in the description of the organization,
+  // always included the scheme and will not have a #fragment suffix.
+  string url = 6;
+  // verification status of the organization, configurable by server admin.
+  VerificationStatus verification_status = 7;
+}
+
+// OrganizationMembership is a nested structure that contains
+// the organization and user membership information on that organization.
+message OrganizationMembership {
+  Organization organization = 1;
+  OrganizationRole organization_role = 2;
+}
+
+// OrganizationService is the Organization service.
+service OrganizationService {
+  // GetOrganization gets a organization by ID.
+  rpc GetOrganization(GetOrganizationRequest) returns (GetOrganizationResponse);
+  // GetOrganizationByName gets a organization by name.
+  rpc GetOrganizationByName(GetOrganizationByNameRequest) returns (GetOrganizationByNameResponse);
+  // ListOrganizations lists all organizations.
+  rpc ListOrganizations(ListOrganizationsRequest) returns (ListOrganizationsResponse);
+  // ListUserOrganizations lists all organizations a user is member of.
+  rpc ListUserOrganizations(ListUserOrganizationsRequest) returns (ListUserOrganizationsResponse);
+  // CreateOrganization creates a new organization.
+  rpc CreateOrganization(CreateOrganizationRequest) returns (CreateOrganizationResponse);
+  // DeleteOrganization deletes a organization.
+  rpc DeleteOrganization(DeleteOrganizationRequest) returns (DeleteOrganizationResponse);
+  // DeleteOrganizationByName deletes a organization by name.
+  rpc DeleteOrganizationByName(DeleteOrganizationByNameRequest) returns (DeleteOrganizationByNameResponse);
+  // AddOrganizationMember add a role to an user in the organization.
+  rpc AddOrganizationMember(AddOrganizationMemberRequest) returns (AddOrganizationMemberResponse);
+  // UpdateOrganizationMember update the user's membership information in the organization.
+  rpc UpdateOrganizationMember(UpdateOrganizationMemberRequest) returns (UpdateOrganizationMemberResponse);
+  // RemoveOrganizationMember remove the role of an user in the organization.
+  rpc RemoveOrganizationMember(RemoveOrganizationMemberRequest) returns (RemoveOrganizationMemberResponse);
+  // SetOrganizationMember sets the role of a user in the organization.
+  rpc SetOrganizationMember(SetOrganizationMemberRequest) returns (SetOrganizationMemberResponse);
+  // GetOrganizationSettings gets the settings of an organization, including organization base roles.
+  rpc GetOrganizationSettings(GetOrganizationSettingsRequest) returns (GetOrganizationSettingsResponse);
+  // UpdateOrganizationSettings update the organization settings including base roles.
+  rpc UpdateOrganizationSettings(UpdateOrganizationSettingsRequest) returns (UpdateOrganizationSettingsResponse);
+  // AddOrganizationGroup adds an IdP Group to the organization
