@@ -407,3 +407,183 @@ message GetTemplateRequest {
 message GetTemplateResponse {
   Template template = 1;
 }
+
+message ListTemplatesRequest {
+  uint32 page_size = 1;
+  // The first page is returned if this is empty.
+  string page_token = 2;
+  bool reverse = 3;
+}
+
+message ListTemplatesResponse {
+  repeated Template templates = 1;
+  // There are no more pages if this is empty.
+  string next_page_token = 2;
+}
+
+message ListTemplatesUserCanAccessRequest {
+  uint32 page_size = 1;
+  // The first page is returned if this is empty.
+  string page_token = 2;
+  bool reverse = 3;
+}
+
+message ListTemplatesUserCanAccessResponse {
+  repeated Template templates = 1;
+  // There are no more pages if this is empty.
+  string next_page_token = 2;
+}
+
+message ListUserTemplatesRequest {
+  // The owner of the templates to list for.
+  string owner = 1;
+  uint32 page_size = 2;
+  // The first page is returned if this is empty.
+  string page_token = 3;
+  bool reverse = 4;
+}
+
+message ListUserTemplatesResponse {
+  repeated Template templates = 1;
+  // There are no more pages if this is empty.
+  string next_page_token = 2;
+}
+
+message GetTemplateVersionRequest {
+  // The owner of the template the version belongs to.
+  string owner = 1;
+  // The name of the template the version belongs to.
+  string name = 2;
+  // The name of the version.
+  string version = 3;
+}
+
+message GetTemplateVersionResponse {
+  TemplateVersion template_version = 1;
+}
+
+message ListOrganizationTemplatesRequest {
+  // The organization of the templates to list for.
+  string organization = 1;
+  uint32 page_size = 2;
+  // The first page is returned if this is empty.
+  string page_token = 3;
+  bool reverse = 4;
+}
+
+message ListOrganizationTemplatesResponse {
+  repeated Template templates = 1;
+  // There are no more pages if this is empty.
+  string next_page_token = 2;
+}
+
+message ListTemplateVersionsRequest {
+  // The owner of the template to list versions for.
+  string owner = 1;
+  // The name of the template to list versions for.
+  string name = 2;
+  // The number of items to return.
+  uint32 page_size = 3;
+  // The first page is returned if this is empty.
+  string page_token = 4;
+  bool reverse = 5;
+}
+
+message ListTemplateVersionsResponse {
+  repeated TemplateVersion template_versions = 1;
+  // There are no more pages if this is empty.
+  string next_page_token = 2;
+}
+
+message CreateTemplateRequest {
+  // The owner of the template. This will be either a username
+  // or organization name.
+  string owner = 1;
+  // The name of the template version, i.e. "grpc-go".
+  string name = 2;
+  // Whether the created template should be available to any user
+  // or only those authorized through organization membership
+  // or being the creator.
+  PluginVisibility visibility = 3;
+  // The plugins and associated runtime configuration that make
+  // up this template.
+  repeated PluginConfig plugin_configs = 4;
+}
+
+message CreateTemplateResponse {
+  // The created template.
+  Template template = 1;
+}
+
+message DeleteTemplateRequest {
+  // The owner of the template to delete.
+  string owner = 1;
+  // The name of the template to delete.
+  string name = 2;
+}
+
+message DeleteTemplateResponse {}
+
+message CreateTemplateVersionRequest {
+  // The name of the template version, i.e. "v1".
+  string name = 1;
+  // The owner of the template.
+  string template_owner = 2;
+  // The name of the template.
+  string template_name = 3;
+  // A map from plugin owner and name to version for the plugins
+  // defined in the template. Every plugin in the template
+  // must have a corresponding version in this array.
+  repeated PluginVersionMapping plugin_versions = 4;
+}
+
+message CreateTemplateVersionResponse {
+  // The created template version.
+  TemplateVersion template_version = 1;
+}
+
+message SetTemplateContributorRequest {
+  // The ID of the template for which the user's role will be set.
+  string template_id = 1;
+  // The ID of the user whose role will be set.
+  string user_id = 2;
+  // The role to assign to the user.
+  // Setting UNSPECIFIED means removing the user's role.
+  TemplateRole template_role = 3;
+}
+
+message SetTemplateContributorResponse {}
+
+message ListTemplateContributorsRequest {
+  string template_id = 1;
+  uint32 page_size = 2;
+  // The first page is returned if this is empty.
+  string page_token = 3;
+  bool reverse = 4;
+}
+
+message ListTemplateContributorsResponse {
+  repeated TemplateContributor users = 1;
+  // There are no more pages if this is empty.
+  string next_page_token = 2;
+}
+
+message DeprecateTemplateRequest {
+  // The owner of the template.
+  string owner = 1;
+  // The name of the template.
+  string name = 2;
+  // A message shown along with the deprecation warning for this template.
+  string message = 3;
+}
+
+message DeprecateTemplateResponse {}
+
+message UndeprecateTemplateRequest {
+  // The owner of the template.
+  string owner = 1;
+  // The name of the template.
+  string name = 2;
+}
+
+message UndeprecateTemplateResponse {}
