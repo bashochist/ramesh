@@ -73,4 +73,124 @@ service OrganizationService {
   rpc GetOrganizationSettings(GetOrganizationSettingsRequest) returns (GetOrganizationSettingsResponse);
   // UpdateOrganizationSettings update the organization settings including base roles.
   rpc UpdateOrganizationSettings(UpdateOrganizationSettingsRequest) returns (UpdateOrganizationSettingsResponse);
-  // AddOrganizationGroup adds an IdP Group to the organization
+  // AddOrganizationGroup adds an IdP Group to the organization.
+  rpc AddOrganizationGroup(AddOrganizationGroupRequest) returns (AddOrganizationGroupResponse);
+  // RemoveOrganizationGroup removes an IdP Group from the organization.
+  rpc RemoveOrganizationGroup(RemoveOrganizationGroupRequest) returns (RemoveOrganizationGroupResponse);
+}
+
+message GetOrganizationRequest {
+  string id = 1;
+}
+
+message GetOrganizationResponse {
+  Organization organization = 1;
+}
+
+message GetOrganizationByNameRequest {
+  string name = 1;
+}
+
+message GetOrganizationByNameResponse {
+  Organization organization = 1;
+}
+
+message ListOrganizationsRequest {
+  uint32 page_size = 1;
+  // The first page is returned if this is empty.
+  string page_token = 2;
+  bool reverse = 3;
+}
+
+message ListOrganizationsResponse {
+  repeated Organization organizations = 1;
+  // There are no more pages if this is empty.
+  string next_page_token = 2;
+}
+
+message ListUserOrganizationsRequest {
+  // The ID of the user whose organizations should be listed.
+  string user_id = 1;
+  uint32 page_size = 2;
+  // The first page is returned if this is empty.
+  string page_token = 3;
+  bool reverse = 4;
+}
+
+message ListUserOrganizationsResponse {
+  repeated OrganizationMembership organizations = 1;
+  // There are no more pages if this is empty.
+  string next_page_token = 2;
+}
+
+message CreateOrganizationRequest {
+  // Must be unique across organizations.
+  string name = 1;
+}
+
+message CreateOrganizationResponse {
+  Organization organization = 1;
+}
+
+message DeleteOrganizationRequest {
+  string id = 1;
+}
+
+message DeleteOrganizationResponse {}
+
+message DeleteOrganizationByNameRequest {
+  string name = 1;
+}
+
+message DeleteOrganizationByNameResponse {}
+
+message AddOrganizationMemberRequest {
+  // The ID of the organization for which the user will be added to.
+  string organization_id = 1;
+  // The ID of the user for which to be added to the organization.
+  string user_id = 2;
+  // The new role of the user in the organization.
+  OrganizationRole organization_role = 3;
+}
+
+message AddOrganizationMemberResponse {}
+
+message UpdateOrganizationMemberRequest {
+  // The ID of the organization for which the member belongs to.
+  string organization_id = 1;
+  // The ID of the user for which to be updated the role.
+  string user_id = 2;
+  // The new role of the user in the organization.
+  OrganizationRole organization_role = 3;
+}
+
+message UpdateOrganizationMemberResponse {}
+
+message RemoveOrganizationMemberRequest {
+  // The ID of the organization for which the member belongs to.
+  string organization_id = 1;
+  // The ID of the user for which to be removed the role.
+  string user_id = 2;
+}
+
+message RemoveOrganizationMemberResponse {}
+
+message SetOrganizationMemberRequest {
+  // The ID of the organization for which the user's role will be set.
+  string organization_id = 1;
+  // The ID of the user whose role will be set.
+  string user_id = 2;
+  // The role to assign to the user.
+  // Setting UNSPECIFIED means removing the user's role.
+  OrganizationRole organization_role = 3;
+}
+
+message SetOrganizationMemberResponse {}
+
+message GetOrganizationSettingsRequest {
+  // The ID of the organization for which to get the settings.
+  string organization_id = 1;
+}
+
+message GetOrganizationSettingsResponse {
+  RepositoryRole repository_base_role = 
