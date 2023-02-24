@@ -1,0 +1,409 @@
+
+// Copyright 2020-2023 Buf Technologies, Inc.
+//
+// Licensed under the Apache License, Version 2.0 (the "License");
+// you may not use this file except in compliance with the License.
+// You may obtain a copy of the License at
+//
+//      http://www.apache.org/licenses/LICENSE-2.0
+//
+// Unless required by applicable law or agreed to in writing, software
+// distributed under the License is distributed on an "AS IS" BASIS,
+// WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+// See the License for the specific language governing permissions and
+// limitations under the License.
+
+syntax = "proto3";
+
+package buf.alpha.registry.v1alpha1;
+
+import "buf/alpha/registry/v1alpha1/generate.proto";
+import "buf/alpha/registry/v1alpha1/role.proto";
+import "buf/alpha/registry/v1alpha1/user.proto";
+import "google/protobuf/timestamp.proto";
+
+option deprecated = true;
+
+// Plugin represents a protoc plugin, such as protoc-gen-go.
+message Plugin {
+  // The ID of the plugin, which uniquely identifies the plugin.
+  string id = 1;
+  // The name of the plugin, i.e. "protoc-gen-go".
+  string name = 2;
+  // The name of the owner of the plugin. Either a username or
+  // organization name.
+  string owner = 3;
+  // The visibility of the plugin.
+  PluginVisibility visibility = 4;
+  // deprecated means this plugin is deprecated.
+  bool deprecated = 5;
+  // deprecation_message is the message shown if the plugin is deprecated.
+  string deprecation_message = 6;
+  // The creation time of the plugin.
+  google.protobuf.Timestamp create_time = 7;
+  // The last update time of the plugin object.
+  google.protobuf.Timestamp update_time = 8;
+}
+
+// PluginVersion represents a specific build of a plugin,
+// such as protoc-gen-go v1.4.0.
+message PluginVersion {
+  // The ID of the plugin version, which uniquely identifies the plugin version.
+  // Mostly used for pagination.
+  string id = 1;
+  // The name of the version, i.e. "v1.4.0".
+  string name = 2;
+  // The name of the plugin to which this version relates.
+  string plugin_name = 3;
+  // The owner of the plugin to which this version relates.
+  string plugin_owner = 4;
+  // The full container image digest associated with this plugin version including
+  // the algorithm.
+  // Ref: https://github.com/opencontainers/image-spec/blob/main/descriptor.md#digests
+  string container_image_digest = 5;
+  // Optionally define the runtime libraries.
+  repeated RuntimeLibrary runtime_libraries = 6;
+}
+
+// PluginVisibility defines the visibility options available
+// for Plugins and Templates.
+enum PluginVisibility {
+  PLUGIN_VISIBILITY_UNSPECIFIED = 0;
+  PLUGIN_VISIBILITY_PUBLIC = 1;
+  PLUGIN_VISIBILITY_PRIVATE = 2;
+}
+
+// Template defines a set of plugins that should be used together
+// i.e. "go-grpc" would include protoc-gen-go and protoc-gen-go-grpc.
+message Template {
+  // The ID of the template, which uniquely identifies the template.
+  string id = 1;
+  // The name of the template, i.e. "grpc-go".
+  string name = 2;
+  // The name of the owner of the template. Either a
+  // username or organization name.
+  string owner = 3;
+  // Must not contain duplicate plugins. Order of plugin configs
+  // dictates insertion point order. Note that we're
+  // intentionally putting most of the plugin configuration
+  // in the template, so that template versions are
+  // less likely to cause breakages for users.
+  repeated PluginConfig plugin_configs = 4;
+  // The visibility of the template.
+  PluginVisibility visibility = 5;
+  // deprecated means this template is deprecated.
+  bool deprecated = 8;
+  // deprecation_message is the message shown if the template is deprecated.
+  string deprecation_message = 9;
+  // The creation time of the template.
+  google.protobuf.Timestamp create_time = 10;
+  // The last update time of the template object.
+  google.protobuf.Timestamp update_time = 11;
+}
+
+// PluginConfig defines a runtime configuration for a plugin.
+message PluginConfig {
+  // deleted is no longer used and should be replaced by inaccessible.
+  reserved "deleted";
+  reserved 4;
+  // The owner of the plugin to which this config relates.
+  string plugin_owner = 1;
+  // The name of the plugin to which this config relates.
+  string plugin_name = 2;
+  // Parameters that should be provided to the plugin. These are
+  // joined with a "," before being provided to the plugin at runtime.
+  repeated string parameters = 3;
+  // True if the source plugin is inaccessible by the user.
+  bool inaccessible = 5;
+}
+
+// TemplateVersion defines a template at a
+// specific set of versions for the contained plugins.
+message TemplateVersion {
+  // The ID of the template version, which uniquely identifies the template version.
+  // Mostly used for pagination.
+  string id = 1;
+  // The name of the template version, i.e. "v1".
+  string name = 2;
+  // The owner of the template to which this version relates.
+  string template_owner = 3;
+  // The name of the template to which this version relates.
+  string template_name = 4;
+  // A map from plugin owner and name to version for the plugins
+  // defined in the template. Every plugin in the template
+  // must have a corresponding version in this array.
+  repeated PluginVersionMapping plugin_versions = 5;
+}
+
+// PluginVersionMapping maps a plugin_id to a version.
+message PluginVersionMapping {
+  // deleted is no longer used and should be replaced by inaccessible.
+  reserved "deleted";
+  reserved 4;
+  // The owner of the plugin to which this mapping relates.
+  string plugin_owner = 1;
+  // The name of the plugin to which this mapping relates.
+  string plugin_name = 2;
+  // The version of the plugin to use, i.e. "v1.4.0".
+  string version = 3;
+  // True if the source plugin is inaccessible by the user.
+  bool inaccessible = 5;
+}
+
+message PluginContributor {
+  User user = 1;
+  // The ID of the plugin which the role belongs to.
+  string plugin_id = 2;
+  // The role that the user has been explicitly assigned against the plugin.
+  PluginRole explicit_role = 3;
+  // Optionally defines the role that the user has implicitly against the plugin through the owning organization.
+  // If the plugin does not belong to an organization or the user is not part of the owning organization, this is unset.
+  PluginRole implicit_role = 4;
+}
+
+message TemplateContributor {
+  User user = 1;
+  // The ID of the template which the role belongs to.
+  string template_id = 2;
+  // The role that the user has been explicitly assigned against the template.
+  TemplateRole explicit_role = 3;
+  // Optionally defines the role that the user has implicitly against the template through the owning organization.
+  // If the template does not belong to an organization or the user is not part of the owning organization, this is unset.
+  TemplateRole implicit_role = 4;
+}
+
+// PluginService manages plugins.
+service PluginService {
+  // ListPlugins returns all the plugins available to the user. This includes
+  // public plugins, those uploaded to organizations the user is part of,
+  // and any plugins uploaded directly by the user.
+  rpc ListPlugins(ListPluginsRequest) returns (ListPluginsResponse);
+  // ListUserPlugins lists all plugins belonging to a user.
+  rpc ListUserPlugins(ListUserPluginsRequest) returns (ListUserPluginsResponse);
+  // ListOrganizationPlugins lists all plugins for an organization.
+  rpc ListOrganizationPlugins(ListOrganizationPluginsRequest) returns (ListOrganizationPluginsResponse);
+  // GetPluginVersion returns the plugin version, if found.
+  rpc GetPluginVersion(GetPluginVersionRequest) returns (GetPluginVersionResponse);
+  // ListPluginVersions lists all the versions available for the specified plugin.
+  rpc ListPluginVersions(ListPluginVersionsRequest) returns (ListPluginVersionsResponse);
+  // CreatePlugin creates a new plugin.
+  rpc CreatePlugin(CreatePluginRequest) returns (CreatePluginResponse);
+  // GetPlugin returns the plugin, if found.
+  rpc GetPlugin(GetPluginRequest) returns (GetPluginResponse);
+  // DeletePlugin deletes the plugin, if it exists. Note that deleting
+  // a plugin may cause breaking changes for templates using that plugin,
+  // and should be done with extreme care.
+  rpc DeletePlugin(DeletePluginRequest) returns (DeletePluginResponse);
+  // SetPluginContributor sets the role of a user in the plugin.
+  rpc SetPluginContributor(SetPluginContributorRequest) returns (SetPluginContributorResponse);
+  // ListPluginContributors returns the list of contributors that has an explicit role against the plugin.
+  // This does not include users who have implicit roles against the plugin, unless they have also been
+  // assigned a role explicitly.
+  rpc ListPluginContributors(ListPluginContributorsRequest) returns (ListPluginContributorsResponse);
+  // DeprecatePlugin deprecates the plugin, if found.
+  rpc DeprecatePlugin(DeprecatePluginRequest) returns (DeprecatePluginResponse);
+  // UndeprecatePlugin makes the plugin not deprecated and removes any deprecation_message.
+  rpc UndeprecatePlugin(UndeprecatePluginRequest) returns (UndeprecatePluginResponse);
+  // GetTemplate returns the template, if found.
+  rpc GetTemplate(GetTemplateRequest) returns (GetTemplateResponse);
+  // ListTemplates returns all the templates available to the user. This includes
+  // public templates, those owned by organizations the user is part of,
+  // and any created directly by the user.
+  rpc ListTemplates(ListTemplatesRequest) returns (ListTemplatesResponse);
+  // ListTemplatesUserCanAccess is like ListTemplates, but does not return
+  // public templates.
+  rpc ListTemplatesUserCanAccess(ListTemplatesUserCanAccessRequest) returns (ListTemplatesUserCanAccessResponse);
+  // ListUserPlugins lists all templates belonging to a user.
+  rpc ListUserTemplates(ListUserTemplatesRequest) returns (ListUserTemplatesResponse);
+  // ListOrganizationTemplates lists all templates for an organization.
+  rpc ListOrganizationTemplates(ListOrganizationTemplatesRequest) returns (ListOrganizationTemplatesResponse);
+  // GetTemplateVersion returns the template version, if found.
+  rpc GetTemplateVersion(GetTemplateVersionRequest) returns (GetTemplateVersionResponse);
+  // ListTemplateVersions lists all the template versions available for the specified template.
+  rpc ListTemplateVersions(ListTemplateVersionsRequest) returns (ListTemplateVersionsResponse);
+  // CreateTemplate creates a new template.
+  rpc CreateTemplate(CreateTemplateRequest) returns (CreateTemplateResponse);
+  // DeleteTemplate deletes the template, if it exists.
+  rpc DeleteTemplate(DeleteTemplateRequest) returns (DeleteTemplateResponse);
+  // CreateTemplateVersion creates a new template version.
+  rpc CreateTemplateVersion(CreateTemplateVersionRequest) returns (CreateTemplateVersionResponse);
+  // SetTemplateContributor sets the role of a user in the template.
+  rpc SetTemplateContributor(SetTemplateContributorRequest) returns (SetTemplateContributorResponse);
+  // ListTemplateContributors returns the list of contributors that has an explicit role against the template.
+  // This does not include users who have implicit roles against the template, unless they have also been
+  // assigned a role explicitly.
+  rpc ListTemplateContributors(ListTemplateContributorsRequest) returns (ListTemplateContributorsResponse);
+  // DeprecateTemplate deprecates the template, if found.
+  rpc DeprecateTemplate(DeprecateTemplateRequest) returns (DeprecateTemplateResponse);
+  // UndeprecateTemplate makes the template not deprecated and removes any deprecation_message.
+  rpc UndeprecateTemplate(UndeprecateTemplateRequest) returns (UndeprecateTemplateResponse);
+}
+
+message ListPluginsRequest {
+  uint32 page_size = 1;
+  // The first page is returned if this is empty.
+  string page_token = 2;
+  bool reverse = 3;
+}
+
+message ListPluginsResponse {
+  repeated Plugin plugins = 1;
+  // There are no more pages if this is empty.
+  string next_page_token = 2;
+}
+
+message ListUserPluginsRequest {
+  // The owner to list plugins for.
+  string owner = 1;
+  uint32 page_size = 2;
+  // The first page is returned if this is empty.
+  string page_token = 3;
+  bool reverse = 4;
+}
+
+message ListUserPluginsResponse {
+  repeated Plugin plugins = 1;
+  // There are no more pages if this is empty.
+  string next_page_token = 2;
+}
+
+message ListOrganizationPluginsRequest {
+  // The organization to list plugins for.
+  string organization = 1;
+  uint32 page_size = 2;
+  // The first page is returned if this is empty.
+  string page_token = 3;
+  bool reverse = 4;
+}
+
+message ListOrganizationPluginsResponse {
+  repeated Plugin plugins = 1;
+  // There are no more pages if this is empty.
+  string next_page_token = 2;
+}
+
+message GetPluginVersionRequest {
+  // The owner of the plugin the version belongs to.
+  string owner = 1;
+  // The name of the plugin the version belongs to.
+  string name = 2;
+  // The name of the version.
+  string version = 3;
+}
+
+message GetPluginVersionResponse {
+  PluginVersion plugin_version = 1;
+}
+
+message ListPluginVersionsRequest {
+  // The owner of the plugin to list versions for.
+  string owner = 1;
+  // The name of the plugin to list versions for.
+  string name = 2;
+  // The number of items to return.
+  uint32 page_size = 3;
+  // The first page is returned if this is empty.
+  string page_token = 4;
+  bool reverse = 5;
+}
+
+message ListPluginVersionsResponse {
+  repeated PluginVersion plugin_versions = 1;
+  // There are no more pages if this is empty.
+  string next_page_token = 2;
+}
+
+message CreatePluginRequest {
+  // The owner of the plugin. This must be either the name
+  // of the authenticated user or an organization the user is
+  // authorized to create plugins in.
+  string owner = 1;
+  // The name of the plugin, i.e. "protoc-gen-go".
+  string name = 2;
+  // Whether the created plugin should be available to any user
+  // or only those authorized through organization membership
+  // or being the creator.
+  PluginVisibility visibility = 3;
+}
+
+message CreatePluginResponse {
+  // The created plugin.
+  Plugin plugin = 1;
+}
+
+message GetPluginRequest {
+  // The owner of the plugin.
+  string owner = 1;
+  // The name of the plugin.
+  string name = 2;
+}
+
+message GetPluginResponse {
+  Plugin plugin = 1;
+}
+
+message DeletePluginRequest {
+  // The owner of the plugin to delete.
+  string owner = 1;
+  // The name of the plugin to delete.
+  string name = 2;
+}
+
+message DeletePluginResponse {}
+
+message SetPluginContributorRequest {
+  // The ID of the plugin for which the user's role will be set.
+  string plugin_id = 1;
+  // The ID of the user whose role will be set.
+  string user_id = 2;
+  // The role to assign to the user.
+  // Setting UNSPECIFIED means removing the user's role.
+  PluginRole plugin_role = 3;
+}
+
+message SetPluginContributorResponse {}
+
+message ListPluginContributorsRequest {
+  string plugin_id = 1;
+  uint32 page_size = 2;
+  // The first page is returned if this is empty.
+  string page_token = 3;
+  bool reverse = 4;
+}
+
+message ListPluginContributorsResponse {
+  repeated PluginContributor users = 1;
+  // There are no more pages if this is empty.
+  string next_page_token = 2;
+}
+
+message DeprecatePluginRequest {
+  // The owner of the plugin.
+  string owner = 1;
+  // The name of the plugin.
+  string name = 2;
+  // A message shown along with the deprecation warning for this plugin.
+  string message = 3;
+}
+
+message DeprecatePluginResponse {}
+
+message UndeprecatePluginRequest {
+  // The owner of the plugin.
+  string owner = 1;
+  // The name of the plugin.
+  string name = 2;
+}
+
+message UndeprecatePluginResponse {}
+
+message GetTemplateRequest {
+  // The owner of the template.
+  string owner = 1;
+  // The name of the template.
+  string name = 2;
+}
+
+message GetTemplateResponse {
+  Template template = 1;
+}
