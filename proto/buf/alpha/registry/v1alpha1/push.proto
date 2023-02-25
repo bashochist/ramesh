@@ -71,3 +71,5 @@ message PushManifestAndBlobsRequest {
 // PushManifestAndBlobsResponse is the pushed module pin, local to the used
 // remote.
 message PushManifestAndBlobsResponse {
+  LocalModulePin local_module_pin = 1;
+}
