@@ -30,4 +30,16 @@ message Resource {
 service ResourceService {
   // GetResourceByName takes a resource name and returns the
   // resource either as a repository or a plugin.
-  rpc GetResourceByName(GetResourceByNameRequest) returns (GetResourceByN
+  rpc GetResourceByName(GetResourceByNameRequest) returns (GetResourceByNameResponse);
+}
+
+message GetResourceByNameRequest {
+  // Owner of the requested resource.
+  string owner = 1;
+  // Name of the requested resource.
+  string name = 2;
+}
+
+message GetResourceByNameResponse {
+  Resource resource = 1;
+}
